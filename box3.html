@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>YoRHa — GAMMA Terminal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
+  :root {
+    --bg: #080806; --sand: #c8c2b5; --tan: #6a6458; --accent: #8a8070;
+    --dark: #141410; --white: #e8e2d4;
+    --green: #3a7a4a; --red: #cc3300; --blue: #2a5a8a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg); color: var(--sand);
+    font-family: 'Share Tech Mono', monospace;
+    width: 100vw; height: 100vh; overflow: hidden;
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  body::before {
+    content: ''; position: fixed; top:0; left:0; width:100%; height:100%;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+    pointer-events: none; z-index: 100;
+  }
+
+  #orientation-warning {
+    display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+    background: var(--bg); color: var(--sand); z-index: 999;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 10px; font-size: 18px;
+  }
+  @media screen and (orientation: portrait) { #orientation-warning { display: flex; } }
+
+  #start-screen {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: var(--bg); z-index: 200;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  }
+  .ss-title { font-family: 'Rajdhani', sans-serif; font-size: clamp(26px,8vw,56px); letter-spacing: 10px; color: var(--white); }
+  .ss-sub { font-size: 11px; letter-spacing: 4px; color: var(--tan); }
+  .ss-line { width: 160px; height: 1px; background: linear-gradient(90deg, transparent, var(--sand), transparent); }
+  .ss-desc { font-size: 11px; color: var(--tan); letter-spacing: 2px; text-align: center; line-height: 2; max-width: 360px; border: 1px solid rgba(200,194,181,0.12); padding: 15px 20px; }
+  #start-btn {
+    padding: 14px 45px; background: none; color: var(--red);
+    border: 2px solid var(--red); font-size: 18px; font-family: inherit;
+    cursor: pointer; letter-spacing: 4px; transition: all 0.2s;
+  }
+  #start-btn:hover { background: var(--red); color: var(--bg); }
+
+  /* HUD */
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; z-index: 50; pointer-events: none;
+    border-bottom: 1px solid rgba(200,194,181,0.08);
+    background: rgba(8,8,6,0.6);
+  }
+  .hud-section { font-size: 11px; color: var(--tan); letter-spacing: 2px; line-height: 1.7; }
+  .hud-val { color: var(--sand); }
+  .hud-timer { font-size: 26px; font-family: 'Rajdhani', sans-serif; font-weight: 700; color: var(--sand); }
+  .hud-timer.danger { color: var(--red); animation: pulse 0.5s infinite; }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  /* Main canvas area */
+  #canvas-wrap {
+    position: relative; flex: 1; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding-top: 55px; padding-bottom: 10px;
+  }
+  canvas { touch-action: none; }
+
+  /* Status message */
+  #status-msg {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; letter-spacing: 3px; color: var(--tan);
+    text-align: center; z-index: 50; pointer-events: none;
+  }
+
+  /* Puzzle progress */
+  #puzzle-progress {
+    position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; z-index: 50; pointer-events: none;
+  }
+  .pp-dot {
+    width: 8px; height: 8px; border: 1px solid rgba(200,194,181,0.4);
+    transition: background 0.3s;
+  }
+  .pp-dot.done { background: var(--sand); }
+  .pp-dot.active { background: var(--sand); animation: pulse 0.8s infinite; }
+
+  /* Overlays */
+  #gameover-screen {
+    display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(4,4,3,0.93); z-index: 300;
+    flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  }
+  .go-title { font-family: 'Rajdhani', sans-serif; font-size: 42px; letter-spacing: 6px; color: var(--red); }
+  .go-sub { font-size: 11px; letter-spacing: 3px; color: var(--tan); line-height: 2.5; text-align: center; }
+  #restart-btn {
+    padding: 12px 35px; background: none; color: var(--sand);
+    border: 2px solid rgba(200,194,181,0.35); font-size: 16px;
+    cursor: pointer; font-family: inherit; letter-spacing: 3px;
+    opacity: 0; animation: fadein 0.5s 0.4s forwards;
+  }
+  #win-screen {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(200,194,181,0.93); z-index: 400;
+    display: none; align-items: center; justify-content: center;
+  }
+  .win-box {
+    border: 2px solid #4a453a; background: #dad4c8;
+    padding: 40px; width: min(380px,88vw); text-align: center;
+    box-shadow: 10px 10px 0px #4a453a;
+    animation: slideup 0.4s ease-out;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .win-header { background: #4a453a; color: #dad4c8; margin: -40px -40px 25px; padding: 12px; font-size: 12px; letter-spacing: 4px; }
+  .win-code { font-size: 44px; margin: 10px 0 20px; padding: 15px; border: 2px dashed #4a453a; color: #4a453a; font-weight: bold; letter-spacing: 10px; }
+  .win-desc { font-size: 11px; color: #7a7468; letter-spacing: 2px; line-height: 2; margin-bottom: 25px; }
+  #continue-btn {
+    background: none; border: 2px solid #4a453a; color: #4a453a;
+    padding: 10px 30px; cursor: pointer; font-family: inherit; font-size: 14px; letter-spacing: 3px;
+  }
+  #continue-btn:hover { background: #4a453a; color: #dad4c8; }
+  @keyframes fadein { to { opacity: 1; } }
+  @keyframes slideup { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div id="orientation-warning">
+  <div style="font-size:22px;letter-spacing:4px">SYSTEM ERROR</div>
+  <div>ROTATE DEVICE TO LANDSCAPE</div>
+  <div style="font-size:12px;color:#6a6458">[ WIDE-BAND ACCESS REQUIRED ]</div>
+</div>
+
+<div id="start-screen">
+  <div class="ss-sub">[ TERMINAL GAMMA — LEVEL 003 ]</div>
+  <div class="ss-line"></div>
+  <div class="ss-title">NODE INFILTRATION</div>
+  <div class="ss-desc">
+    CONNECT ALL SOURCE NODES (■) TO TARGET NODES (◆)<br>
+    DRAW A PATH BETWEEN MATCHING COLORS<br>
+    FILL ALL GRID CELLS TO COMPLETE EACH PUZZLE<br>
+    <span style="color:#cc3300">⚠ PATHS CANNOT CROSS</span>
+  </div>
+  <button id="start-btn">BREACH GAMMA CORE</button>
+  <div class="ss-sub blink">[ HIGH THREAT ENVIRONMENT ]</div>
+</div>
+
+<div id="hud">
+  <div class="hud-section">
+    GAMMA TERMINAL<br>
+    PUZZLE <span class="hud-val" id="puzzle-num">1</span>/3
+  </div>
+  <div class="hud-timer" id="timer">40</div>
+  <div class="hud-section" style="text-align:right;">
+    NODES <span class="hud-val" id="nodes-done">0</span>/<span class="hud-val" id="nodes-total">0</span><br>
+    COVERAGE <span class="hud-val" id="coverage">0</span>%
+  </div>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="c"></canvas>
+</div>
+
+<div id="status-msg" class="blink">DRAW FROM SOURCE TO TARGET</div>
+<div id="puzzle-progress"></div>
+
+<div id="gameover-screen">
+  <div class="go-title">NODE COLLAPSE</div>
+  <div class="go-sub">INFILTRATION FAILED<br>NETWORK SECURITY ENGAGED<br>OPERATIVE NEUTRALIZED</div>
+  <button id="restart-btn">RETRY INFILTRATION</button>
+</div>
+
+<div id="win-screen">
+  <div class="win-box">
+    <div class="win-header">SYSTEM STATUS: NODE CONTROL ACHIEVED</div>
+    <div style="font-size:10px;letter-spacing:4px;color:#7a7468;margin-bottom:5px;">UNLOCK CODE</div>
+    <div class="win-code" id="win-code">----</div>
+    <div class="win-desc">ALL NODES INFILTRATED<br>GAMMA NETWORK COMPROMISED</div>
+    <button id="continue-btn" onclick="location.href='index.html'">RETURN TO NETWORK</button>
+  </div>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const CONFIG = { code: '9012', time: 40, puzzles: 3 };
+
+// Puzzles: grid size and color paths
+// Each puzzle is {size, colors: [{start:[r,c], end:[r,c], color, label}]}
+const PUZZLES = [
+  {
+    size: 5,
+    colors: [
+      { start:[0,0], end:[4,4], color:'#4a8fa8', label:'A' },
+      { start:[0,4], end:[4,0], color:'#cc5533', label:'B' },
+      { start:[2,0], end:[2,4], color:'#5a8a4a', label:'C' },
+      { start:[0,2], end:[4,2], color:'#9a7040', label:'D' },
+    ]
+  },
+  {
+    size: 6,
+    colors: [
+      { start:[0,0], end:[5,5], color:'#4a8fa8', label:'A' },
+      { start:[0,5], end:[5,0], color:'#cc5533', label:'B' },
+      { start:[0,2], end:[5,3], color:'#5a8a4a', label:'C' },
+      { start:[2,0], end:[3,5], color:'#9a7040', label:'D' },
+      { start:[1,3], end:[4,2], color:'#8a4a8a', label:'E' },
+    ]
+  },
+  {
+    size: 7,
+    colors: [
+      { start:[0,0], end:[6,6], color:'#4a8fa8', label:'A' },
+      { start:[0,6], end:[6,0], color:'#cc5533', label:'B' },
+      { start:[0,3], end:[6,3], color:'#5a8a4a', label:'C' },
+      { start:[3,0], end:[3,6], color:'#9a7040', label:'D' },
+      { start:[1,1], end:[5,5], color:'#8a4a8a', label:'E' },
+      { start:[1,5], end:[5,1], color:'#4a7a6a', label:'F' },
+    ]
+  }
+];
+
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioCtx();
+function sfx(type) {
+  if (audioCtx.state === 'suspended') return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  if (type === 'draw') {
+    o.type = 'sine'; o.frequency.setValueAtTime(400 + Math.random()*200, now);
+    g.gain.setValueAtTime(0.015, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.05);
+    o.start(now); o.stop(now+0.05);
+  } else if (type === 'connect') {
+    o.type = 'sine'; o.frequency.setValueAtTime(660, now); o.frequency.setValueAtTime(880, now+0.08);
+    g.gain.setValueAtTime(0.07, now); o.start(now); o.stop(now+0.2);
+  } else if (type === 'wrong') {
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(150, now);
+    g.gain.setValueAtTime(0.08, now); o.start(now); o.stop(now+0.2);
+  } else if (type === 'win') {
+    [330,440,550,660,880].forEach((f,i) => {
+      const o2 = audioCtx.createOscillator(), g2 = audioCtx.createGain();
+      o2.connect(g2); g2.connect(audioCtx.destination);
+      o2.type = 'sine'; o2.frequency.value = f;
+      g2.gain.setValueAtTime(0.05, now+i*0.08);
+      g2.gain.exponentialRampToValueAtTime(0.001, now+i*0.08+0.3);
+      o2.start(now+i*0.08); o2.stop(now+i*0.08+0.3);
+    });
+  }
+}
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let currentPuzzle = 0, puzzleDone = 0;
+let puzzle, CELL, GRID, OFFX, OFFY;
+let paths = [], activePath = null, activeColorIdx = -1;
+let grid = []; // grid[r][c] = colorIdx or -1
+let isOver = false, timeLeft = CONFIG.time, timerInterval;
+
+function resizeAndInit() {
+  const wrapEl = document.getElementById('canvas-wrap');
+  const W = wrapEl.clientWidth;
+  const H = wrapEl.clientHeight;
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  puzzle = PUZZLES[currentPuzzle];
+  GRID = puzzle.size;
+  CELL = Math.floor(Math.min(W, H) * 0.85 / GRID);
+  OFFX = Math.floor((W - CELL * GRID) / 2);
+  OFFY = Math.floor((H - CELL * GRID) / 2);
+
+  paths = puzzle.colors.map(c => ({ ...c, cells: [] }));
+  grid = Array.from({length: GRID}, () => Array(GRID).fill(-1));
+
+  // Place endpoints on grid
+  puzzle.colors.forEach((c, ci) => {
+    grid[c.start[0]][c.start[1]] = ci;
+    grid[c.end[0]][c.end[1]] = ci;
+  });
+
+  updateHUD();
+  buildProgressDots();
+  draw();
+}
+
+function buildProgressDots() {
+  const el = document.getElementById('puzzle-progress');
+  el.innerHTML = '';
+  for (let i = 0; i < CONFIG.puzzles; i++) {
+    const d = document.createElement('div');
+    d.className = 'pp-dot' + (i < currentPuzzle ? ' done' : i === currentPuzzle ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+
+function updateHUD() {
+  document.getElementById('puzzle-num').textContent = currentPuzzle + 1;
+  const connected = paths.filter(p => p.connected).length;
+  document.getElementById('nodes-done').textContent = connected;
+  document.getElementById('nodes-total').textContent = puzzle.colors.length;
+  const filled = grid.flat().filter(v => v >= 0).length;
+  const cov = Math.floor(filled / (GRID*GRID) * 100);
+  document.getElementById('coverage').textContent = cov;
+}
+
+function cellAt(px, py) {
+  const c = Math.floor((px - OFFX) / CELL);
+  const r = Math.floor((py - OFFY) / CELL);
+  if (r < 0 || r >= GRID || c < 0 || c >= GRID) return null;
+  return {r, c};
+}
+
+function cellCenter(r, c) {
+  return { x: OFFX + c*CELL + CELL/2, y: OFFY + r*CELL + CELL/2 };
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Grid
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      const x = OFFX + c*CELL, y = OFFY + r*CELL;
+      ctx.fillStyle = 'rgba(200,194,181,0.03)';
+      ctx.fillRect(x+1, y+1, CELL-2, CELL-2);
+      ctx.strokeStyle = 'rgba(200,194,181,0.08)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x+0.5, y+0.5, CELL-1, CELL-1);
+    }
+  }
+
+  // Paths
+  paths.forEach((p, pi) => {
+    if (p.cells.length < 2) return;
+    ctx.beginPath();
+    const s = cellCenter(p.cells[0][0], p.cells[0][1]);
+    ctx.moveTo(s.x, s.y);
+    p.cells.slice(1).forEach(([r,c]) => {
+      const pt = cellCenter(r, c);
+      ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = CELL * 0.38;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = p.connected ? 0.85 : 0.55;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  });
+
+  // Active path preview
+  if (activePath && activePath.length >= 2) {
+    const p = puzzle.colors[activeColorIdx];
+    ctx.beginPath();
+    const s = cellCenter(activePath[0][0], activePath[0][1]);
+    ctx.moveTo(s.x, s.y);
+    activePath.slice(1).forEach(([r,c]) => {
+      const pt = cellCenter(r,c);
+      ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = CELL * 0.38;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.globalAlpha = 0.7; ctx.stroke(); ctx.globalAlpha = 1;
+  }
+
+  // Nodes (endpoints)
+  puzzle.colors.forEach((p, pi) => {
+    [[p.start, false],[p.end, true]].forEach(([pos, isEnd]) => {
+      const {x,y} = cellCenter(pos[0], pos[1]);
+      const connected = paths[pi].connected;
+      // Outer ring
+      ctx.beginPath(); ctx.arc(x, y, CELL*0.36, 0, Math.PI*2);
+      ctx.fillStyle = connected ? p.color : 'rgba(8,8,6,0.8)';
+      ctx.fill();
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2.5; ctx.stroke();
+      // Label
+      ctx.fillStyle = connected ? '#fff' : p.color;
+      ctx.font = `bold ${CELL*0.32}px 'Rajdhani', monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(isEnd ? '◆' : '■', x, y);
+    });
+  });
+
+  // Coverage indicator
+  const filled = grid.flat().filter(v => v >= 0).length;
+  const cov = filled / (GRID*GRID);
+  // Small bar at bottom of grid
+  const bw = CELL * GRID;
+  const by = OFFY + GRID*CELL + 8;
+  ctx.fillStyle = 'rgba(200,194,181,0.08)';
+  ctx.fillRect(OFFX, by, bw, 4);
+  ctx.fillStyle = cov >= 1 ? '#5a8a4a' : '#c8c2b5';
+  ctx.fillRect(OFFX, by, bw * cov, 4);
+}
+
+function isAdjacent(r1,c1,r2,c2) {
+  return Math.abs(r1-r2) + Math.abs(c1-c2) === 1;
+}
+
+function clearPath(colorIdx) {
+  const p = paths[colorIdx];
+  // Clear grid cells (not endpoints)
+  const pc = puzzle.colors[colorIdx];
+  p.cells.forEach(([r,c]) => {
+    const isStart = r===pc.start[0] && c===pc.start[1];
+    const isEnd = r===pc.end[0] && c===pc.end[1];
+    if (!isStart && !isEnd) grid[r][c] = -1;
+  });
+  p.cells = [];
+  p.connected = false;
+}
+
+function onPointerStart(px, py) {
+  if (isOver) return;
+  const cell = cellAt(px, py);
+  if (!cell) return;
+  const {r, c} = cell;
+  const colorIdx = puzzle.colors.findIndex(col =>
+    (col.start[0]===r && col.start[1]===c) || (col.end[0]===r && col.end[1]===c)
+  );
+  if (colorIdx < 0) return;
+  // Clear existing path for this color
+  clearPath(colorIdx);
+  activeColorIdx = colorIdx;
+  activePath = [[r, c]];
+  grid[r][c] = colorIdx;
+  sfx('draw');
+  draw();
+}
+
+function onPointerMove(px, py) {
+  if (!activePath || isOver) return;
+  const cell = cellAt(px, py);
+  if (!cell) return;
+  const {r, c} = cell;
+  const last = activePath[activePath.length-1];
+  if (r === last[0] && c === last[1]) return;
+
+  // Check if adjacent
+  if (!isAdjacent(last[0], last[1], r, c)) return;
+
+  // Check if going back
+  if (activePath.length >= 2) {
+    const prev = activePath[activePath.length-2];
+    if (prev[0] === r && prev[1] === c) {
+      // Backtrack
+      const removing = activePath.pop();
+      const pc = puzzle.colors[activeColorIdx];
+      const isEndpoint = (removing[0]===pc.start[0]&&removing[1]===pc.start[1]) ||
+                         (removing[0]===pc.end[0]&&removing[1]===pc.end[1]);
+      if (!isEndpoint) grid[removing[0]][removing[1]] = -1;
+      draw(); return;
+    }
+  }
+
+  // Check if cell is occupied by another color
+  const existing = grid[r][c];
+  if (existing >= 0 && existing !== activeColorIdx) {
+    // Can't go here
+    return;
+  }
+
+  // Check if it's the endpoint of this color
+  const pc = puzzle.colors[activeColorIdx];
+  const isTarget = (r===pc.end[0]&&c===pc.end[1]&&activePath[0][0]===pc.start[0]&&activePath[0][1]===pc.start[1]) ||
+                   (r===pc.start[0]&&c===pc.start[1]&&activePath[0][0]===pc.end[0]&&activePath[0][1]===pc.end[1]);
+
+  activePath.push([r, c]);
+  grid[r][c] = activeColorIdx;
+  sfx('draw');
+
+  if (isTarget) {
+    // Connected!
+    paths[activeColorIdx].cells = [...activePath];
+    paths[activeColorIdx].connected = true;
+    sfx('connect');
+    activePath = null;
+    activeColorIdx = -1;
+    updateHUD();
+    checkWin();
+  }
+  draw();
+}
+
+function onPointerEnd() {
+  if (activePath) {
+    // Clear incomplete path
+    const pc = puzzle.colors[activeColorIdx];
+    activePath.forEach(([r,c]) => {
+      const isStart = r===pc.start[0]&&c===pc.start[1];
+      const isEnd = r===pc.end[0]&&c===pc.end[1];
+      if (!isStart && !isEnd) grid[r][c] = -1;
+    });
+    activePath = null; activeColorIdx = -1;
+    draw();
+  }
+}
+
+function checkWin() {
+  const allConnected = paths.every(p => p.connected);
+  const filled = grid.flat().filter(v => v >= 0).length;
+  const full = filled === GRID * GRID;
+
+  if (allConnected && full) {
+    puzzleDone++;
+    clearInterval(timerInterval);
+    if (puzzleDone >= CONFIG.puzzles) {
+      triggerWin();
+    } else {
+      document.getElementById('status-msg').textContent = 'PUZZLE BREACHED — LOADING NEXT NODE';
+      setTimeout(() => {
+        currentPuzzle++;
+        timeLeft = CONFIG.time;
+        resizeAndInit();
+        startTimer();
+        document.getElementById('status-msg').textContent = 'DRAW FROM SOURCE TO TARGET';
+        buildProgressDots();
+      }, 1200);
+    }
+  } else if (allConnected && !full) {
+    document.getElementById('status-msg').textContent = 'FILL ALL CELLS TO COMPLETE';
+  } else {
+    document.getElementById('status-msg').textContent = 'DRAW FROM SOURCE TO TARGET';
+  }
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) { clearInterval(timerInterval); triggerFail(); }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer');
+  el.textContent = timeLeft;
+  el.className = 'hud-timer' + (timeLeft <= 10 ? ' danger' : '');
+}
+
+function triggerFail() {
+  if (isOver) return;
+  isOver = true;
+  sfx('wrong');
+  setTimeout(() => { document.getElementById('gameover-screen').style.display = 'flex'; }, 400);
+}
+
+function triggerWin() {
+  if (isOver) return;
+  isOver = true;
+  sfx('win');
+  document.getElementById('win-code').textContent = CONFIG.code;
+  setTimeout(() => { document.getElementById('win-screen').style.display = 'flex'; }, 500);
+}
+
+// Touch/mouse events
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  onPointerStart(t.clientX, t.clientY);
+}, {passive:false});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  onPointerMove(t.clientX, t.clientY);
+}, {passive:false});
+canvas.addEventListener('touchend', e => { e.preventDefault(); onPointerEnd(); }, {passive:false});
+
+canvas.addEventListener('mousedown', e => onPointerStart(e.clientX, e.clientY));
+canvas.addEventListener('mousemove', e => { if (e.buttons) onPointerMove(e.clientX, e.clientY); });
+canvas.addEventListener('mouseup', () => onPointerEnd());
+
+window.addEventListener('resize', () => { if (!isOver) resizeAndInit(); });
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  document.getElementById('start-screen').style.display = 'none';
+  resizeAndInit();
+  startTimer();
+});
+document.getElementById('restart-btn').addEventListener('click', () => location.reload());
+</script>
+</body>
+</html>
