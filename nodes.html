@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<title>YoRHa — Nodes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@700&display=swap');
+  :root{--bg:#080806;--sand:#c8c2b5;--tan:#6a6458;--red:#cc3300;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--sand);font-family:'Share Tech Mono',monospace;width:100vw;height:100vh;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);pointer-events:none;z-index:100;}
+  #ow{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);color:var(--sand);z-index:999;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;font-size:18px;}
+  @media screen and (orientation:portrait){#ow{display:flex;}}
+  #start-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;}
+  .ss-id{font-size:10px;letter-spacing:5px;color:var(--tan);}
+  .ss-title{font-family:'Rajdhani',sans-serif;font-size:clamp(26px,8vw,54px);letter-spacing:10px;color:#e8e2d4;}
+  .ss-line{width:160px;height:1px;background:linear-gradient(90deg,transparent,var(--sand),transparent);}
+  .ss-desc{font-size:11px;color:var(--tan);letter-spacing:2px;text-align:center;line-height:2.2;border:1px solid rgba(200,194,181,0.1);padding:14px 20px;max-width:360px;}
+  #start-btn{padding:13px 42px;background:none;color:var(--red);border:2px solid var(--red);font-size:17px;font-family:inherit;cursor:pointer;letter-spacing:4px;transition:all 0.2s;}
+  #start-btn:hover{background:var(--red);color:var(--bg);}
+  #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:9px 14px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(200,194,181,0.07);background:rgba(8,8,6,0.6);}
+  .hud-s{font-size:11px;color:var(--tan);letter-spacing:2px;line-height:1.7;}
+  .hud-v{color:var(--sand);}
+  .hud-timer{font-size:25px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--sand);}
+  .hud-timer.danger{color:var(--red);animation:pulse 0.5s infinite;}
+  @keyframes pulse{50%{opacity:0.3;}}
+  #cwrap{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding-top:52px;padding-bottom:8px;}
+  #statusmsg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:3px;color:var(--tan);text-align:center;z-index:50;pointer-events:none;}
+  #pzdots{position:fixed;bottom:38px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:50;pointer-events:none;}
+  .pzdot{width:7px;height:7px;border:1px solid rgba(200,194,181,0.35);transition:background 0.3s;}
+  .pzdot.done{background:var(--sand);}
+  .pzdot.active{background:var(--sand);animation:pulse 0.8s infinite;}
+  #go-screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,4,3,0.93);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:17px;}
+  .go-title{font-family:'Rajdhani',sans-serif;font-size:40px;letter-spacing:6px;color:var(--red);}
+  .go-sub{font-size:11px;letter-spacing:3px;color:var(--tan);line-height:2.5;text-align:center;}
+  #restart-btn{padding:11px 32px;background:none;color:var(--sand);border:2px solid rgba(200,194,181,0.33);font-size:15px;cursor:pointer;font-family:inherit;letter-spacing:3px;opacity:0;animation:fi 0.5s 0.4s forwards;}
+  #win-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(200,194,181,0.93);z-index:400;display:none;align-items:center;justify-content:center;}
+  .win-box{border:2px solid #4a453a;background:#dad4c8;padding:38px;width:min(370px,87vw);text-align:center;box-shadow:10px 10px 0 #4a453a;animation:su 0.4s ease-out;font-family:'Share Tech Mono',monospace;}
+  .win-hdr{background:#4a453a;color:#dad4c8;margin:-38px -38px 22px;padding:11px;font-size:11px;letter-spacing:4px;}
+  .win-code{font-size:44px;margin:8px 0 20px;padding:14px;border:2px dashed #4a453a;color:#4a453a;font-weight:bold;letter-spacing:10px;}
+  .win-desc{font-size:11px;color:#7a7468;letter-spacing:2px;line-height:2;margin-bottom:22px;}
+  #cont-btn{background:none;border:2px solid #4a453a;color:#4a453a;padding:10px 28px;cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:3px;}
+  #cont-btn:hover{background:#4a453a;color:#dad4c8;}
+  @keyframes fi{to{opacity:1;}}
+  @keyframes su{from{transform:translateY(28px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .blink{animation:blink 1s step-end infinite;}
+  @keyframes blink{50%{opacity:0;}}
+</style>
+</head>
+<body>
+<div id="ow"><div style="font-size:20px;letter-spacing:4px">SYSTEM ERROR</div><div>ROTATE DEVICE TO LANDSCAPE</div></div>
+<div id="start-screen">
+  <div class="ss-id" id="ss-id">TERMINAL — ---</div>
+  <div class="ss-line"></div>
+  <div class="ss-title">NODE INFILTRATION</div>
+  <div class="ss-desc">CONNECT ■ SOURCE TO ◆ TARGET<br>MATCHING COLORS ONLY<br>FILL ALL GRID CELLS TO COMPLETE<br><span style="color:#cc3300">⚠ PATHS CANNOT CROSS</span></div>
+  <button id="start-btn">BREACH NODE CORE</button>
+  <div class="ss-id blink">[ HIGH THREAT ENVIRONMENT ]</div>
+</div>
+<div id="hud">
+  <div class="hud-s"><span id="hud-title">---</span><br>PUZZLE <span class="hud-v" id="pz-num">1</span>/<span class="hud-v" id="pz-total">3</span></div>
+  <div class="hud-timer" id="timer">--</div>
+  <div class="hud-s" style="text-align:right;">NODES <span class="hud-v" id="nd">0</span>/<span class="hud-v" id="ndt">0</span><br>FILL <span class="hud-v" id="cov">0</span>%</div>
+</div>
+<div id="cwrap"><canvas id="c"></canvas></div>
+<div id="statusmsg" class="blink">DRAW FROM SOURCE TO TARGET</div>
+<div id="pzdots"></div>
+<div id="go-screen">
+  <div class="go-title">NODE COLLAPSE</div>
+  <div class="go-sub">INFILTRATION FAILED<br>NETWORK SECURITY ENGAGED</div>
+  <button id="restart-btn">RETRY INFILTRATION</button>
+</div>
+<div id="win-screen">
+  <div class="win-box">
+    <div class="win-hdr">SYSTEM STATUS: NODE CONTROL ACHIEVED</div>
+    <div style="font-size:10px;letter-spacing:4px;color:#7a7468;margin-bottom:4px;">UNLOCK CODE</div>
+    <div class="win-code" id="win-code">----</div>
+    <div class="win-desc">ALL NODES INFILTRATED<br>NETWORK COMPROMISED</div>
+    <button id="cont-btn" onclick="history.back()">RETURN TO NETWORK</button>
+  </div>
+</div>
+<script>
+const urlCfg=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('cfg')||'{}'));
+const C={code:urlCfg.code||'0000',title:urlCfg.title||'UNKNOWN',diff:urlCfg.diff||1,puzzles:Math.min(3,urlCfg.puzzles||1),time:urlCfg.time||45};
+document.getElementById('ss-id').textContent=`TERMINAL — ${C.title}`;
+document.getElementById('hud-title').textContent=C.title;
+document.getElementById('pz-total').textContent=C.puzzles;
+
+const PUZZLES=[
+  {size:5,colors:[{start:[0,0],end:[4,4],color:'#4a8fa8',label:'A'},{start:[0,4],end:[4,0],color:'#cc5533',label:'B'},{start:[2,0],end:[2,4],color:'#5a8a4a',label:'C'},{start:[0,2],end:[4,2],color:'#9a7040',label:'D'}]},
+  {size:6,colors:[{start:[0,0],end:[5,5],color:'#4a8fa8',label:'A'},{start:[0,5],end:[5,0],color:'#cc5533',label:'B'},{start:[0,2],end:[5,3],color:'#5a8a4a',label:'C'},{start:[2,0],end:[3,5],color:'#9a7040',label:'D'},{start:[1,3],end:[4,2],color:'#8a4a8a',label:'E'}]},
+  {size:7,colors:[{start:[0,0],end:[6,6],color:'#4a8fa8',label:'A'},{start:[0,6],end:[6,0],color:'#cc5533',label:'B'},{start:[0,3],end:[6,3],color:'#5a8a4a',label:'C'},{start:[3,0],end:[3,6],color:'#9a7040',label:'D'},{start:[1,1],end:[5,5],color:'#8a4a8a',label:'E'},{start:[1,5],end:[5,1],color:'#4a7a6a',label:'F'}]}
+];
+
+const AC=window.AudioContext||window.webkitAudioContext,audioCtx=new AC();
+function sfx(t){if(audioCtx.state==='suspended')return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);const n=audioCtx.currentTime;if(t==='draw'){o.type='sine';o.frequency.setValueAtTime(400+Math.random()*200,n);g.gain.setValueAtTime(0.015,n);g.gain.exponentialRampToValueAtTime(0.001,n+0.05);o.start(n);o.stop(n+0.05);}else if(t==='connect'){o.type='sine';o.frequency.setValueAtTime(660,n);o.frequency.setValueAtTime(880,n+0.08);g.gain.setValueAtTime(0.07,n);o.start(n);o.stop(n+0.2);}else if(t==='wrong'){o.type='sawtooth';o.frequency.setValueAtTime(150,n);g.gain.setValueAtTime(0.08,n);o.start(n);o.stop(n+0.2);}else if(t==='win'){[330,440,550,660,880].forEach((f,i)=>{const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();o2.connect(g2);g2.connect(audioCtx.destination);o2.type='sine';o2.frequency.value=f;g2.gain.setValueAtTime(0.05,n+i*0.08);g2.gain.exponentialRampToValueAtTime(0.001,n+i*0.08+0.3);o2.start(n+i*0.08);o2.stop(n+i*0.08+0.3);});}}
+
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let curPz=0,pzDone=0,puzzle,CELL,GRID,OFFX,OFFY,paths=[],activePath=null,activeCI=-1,grid2=[],isOver=false,tl=C.time,timerIv;
+
+function resizeInit(){const wrap=document.getElementById('cwrap'),W=wrap.clientWidth,H=wrap.clientHeight;canvas.width=W;canvas.height=H;puzzle=PUZZLES[Math.min(curPz,2)];GRID=puzzle.size;CELL=Math.floor(Math.min(W,H)*0.84/GRID);OFFX=Math.floor((W-CELL*GRID)/2);OFFY=Math.floor((H-CELL*GRID)/2);paths=puzzle.colors.map(c=>({...c,cells:[]}));grid2=Array.from({length:GRID},()=>Array(GRID).fill(-1));puzzle.colors.forEach((c,ci)=>{grid2[c.start[0]][c.start[1]]=ci;grid2[c.end[0]][c.end[1]]=ci;});updateHUD();buildDots();draw();}
+
+function buildDots(){const el=document.getElementById('pzdots');el.innerHTML='';for(let i=0;i<C.puzzles;i++){const d=document.createElement('div');d.className='pzdot'+(i<pzDone?' done':i===curPz?' active':'');el.appendChild(d);}}
+function updateHUD(){document.getElementById('pz-num').textContent=curPz+1;const conn=paths.filter(p=>p.connected).length;document.getElementById('nd').textContent=conn;document.getElementById('ndt').textContent=puzzle.colors.length;const filled=grid2.flat().filter(v=>v>=0).length;document.getElementById('cov').textContent=Math.floor(filled/(GRID*GRID)*100);}
+function cellAt(px,py){const c=Math.floor((px-OFFX)/CELL),r=Math.floor((py-OFFY)/CELL);if(r<0||r>=GRID||c<0||c>=GRID)return null;return{r,c};}
+function cc(r,c){return{x:OFFX+c*CELL+CELL/2,y:OFFY+r*CELL+CELL/2};}
+function isAdj(r1,c1,r2,c2){return Math.abs(r1-r2)+Math.abs(c1-c2)===1;}
+function clearPath(ci){const p=paths[ci],pc=puzzle.colors[ci];p.cells.forEach(([r,c])=>{const iS=r===pc.start[0]&&c===pc.start[1],iE=r===pc.end[0]&&c===pc.end[1];if(!iS&&!iE)grid2[r][c]=-1;});p.cells=[];p.connected=false;}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++){const x=OFFX+c*CELL,y=OFFY+r*CELL;ctx.fillStyle='rgba(200,194,181,0.03)';ctx.fillRect(x+1,y+1,CELL-2,CELL-2);ctx.strokeStyle='rgba(200,194,181,0.07)';ctx.lineWidth=1;ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);}
+  paths.forEach((p,pi)=>{if(p.cells.length<2)return;ctx.beginPath();const s=cc(p.cells[0][0],p.cells[0][1]);ctx.moveTo(s.x,s.y);p.cells.slice(1).forEach(([r,c])=>{const pt=cc(r,c);ctx.lineTo(pt.x,pt.y);});ctx.strokeStyle=p.color;ctx.lineWidth=CELL*0.38;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=p.connected?0.85:0.55;ctx.stroke();ctx.globalAlpha=1;});
+  if(activePath&&activePath.length>=2){const p=puzzle.colors[activeCI];ctx.beginPath();const s=cc(activePath[0][0],activePath[0][1]);ctx.moveTo(s.x,s.y);activePath.slice(1).forEach(([r,c])=>{const pt=cc(r,c);ctx.lineTo(pt.x,pt.y);});ctx.strokeStyle=p.color;ctx.lineWidth=CELL*0.38;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=0.65;ctx.stroke();ctx.globalAlpha=1;}
+  puzzle.colors.forEach((p,pi)=>{[[p.start,false],[p.end,true]].forEach(([pos,isE])=>{const{x,y}=cc(pos[0],pos[1]),conn=paths[pi].connected;ctx.beginPath();ctx.arc(x,y,CELL*0.36,0,Math.PI*2);ctx.fillStyle=conn?p.color:'rgba(8,8,6,0.8)';ctx.fill();ctx.strokeStyle=p.color;ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle=conn?'#fff':p.color;ctx.font=`bold ${CELL*0.3}px 'Rajdhani',monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(isE?'◆':'■',x,y);});});
+  const filled=grid2.flat().filter(v=>v>=0).length,cov=filled/(GRID*GRID),bw=CELL*GRID,by=OFFY+GRID*CELL+7;ctx.fillStyle='rgba(200,194,181,0.06)';ctx.fillRect(OFFX,by,bw,4);ctx.fillStyle=cov>=1?'#5a8a4a':'#c8c2b5';ctx.fillRect(OFFX,by,bw*cov,4);
+}
+
+function onStart(px,py){if(isOver)return;const cell=cellAt(px,py);if(!cell)return;const{r,c}=cell;const ci=puzzle.colors.findIndex(col=>(col.start[0]===r&&col.start[1]===c)||(col.end[0]===r&&col.end[1]===c));if(ci<0)return;clearPath(ci);activeCI=ci;activePath=[[r,c]];grid2[r][c]=ci;sfx('draw');draw();}
+function onMove(px,py){if(!activePath||isOver)return;const cell=cellAt(px,py);if(!cell)return;const{r,c}=cell;const last=activePath[activePath.length-1];if(r===last[0]&&c===last[1])return;if(!isAdj(last[0],last[1],r,c))return;if(activePath.length>=2){const prev=activePath[activePath.length-2];if(prev[0]===r&&prev[1]===c){const rem=activePath.pop();const pc=puzzle.colors[activeCI];const isEP=(rem[0]===pc.start[0]&&rem[1]===pc.start[1])||(rem[0]===pc.end[0]&&rem[1]===pc.end[1]);if(!isEP)grid2[rem[0]][rem[1]]=-1;draw();return;}}const ex=grid2[r][c];if(ex>=0&&ex!==activeCI)return;const pc=puzzle.colors[activeCI];const isTgt=(r===pc.end[0]&&c===pc.end[1]&&activePath[0][0]===pc.start[0]&&activePath[0][1]===pc.start[1])||(r===pc.start[0]&&c===pc.start[1]&&activePath[0][0]===pc.end[0]&&activePath[0][1]===pc.end[1]);activePath.push([r,c]);grid2[r][c]=activeCI;sfx('draw');if(isTgt){paths[activeCI].cells=[...activePath];paths[activeCI].connected=true;sfx('connect');activePath=null;activeCI=-1;updateHUD();checkWin();}draw();}
+function onEnd(){if(activePath){const pc=puzzle.colors[activeCI];activePath.forEach(([r,c])=>{const iS=r===pc.start[0]&&c===pc.start[1],iE=r===pc.end[0]&&c===pc.end[1];if(!iS&&!iE)grid2[r][c]=-1;});activePath=null;activeCI=-1;draw();}}
+
+function checkWin(){const allConn=paths.every(p=>p.connected),filled=grid2.flat().filter(v=>v>=0).length,full=filled===GRID*GRID;if(allConn&&full){pzDone++;clearInterval(timerIv);if(pzDone>=C.puzzles){triggerWin();}else{document.getElementById('statusmsg').textContent='PUZZLE BREACHED — LOADING NEXT NODE';setTimeout(()=>{curPz++;tl=C.time;resizeInit();startTimer();document.getElementById('statusmsg').textContent='DRAW FROM SOURCE TO TARGET';buildDots();},1200);}}}
+function startTimer(){clearInterval(timerIv);updateTimerDisp();timerIv=setInterval(()=>{tl--;updateTimerDisp();if(tl<=0){clearInterval(timerIv);triggerFail();}},1000);}
+function updateTimerDisp(){const el=document.getElementById('timer');el.textContent=tl;el.className='hud-timer'+(tl<=10?' danger':'');}
+function triggerFail(){if(isOver)return;isOver=true;sfx('wrong');setTimeout(()=>document.getElementById('go-screen').style.display='flex',400);}
+function triggerWin(){if(isOver)return;isOver=true;sfx('win');document.getElementById('win-code').textContent=C.code;setTimeout(()=>document.getElementById('win-screen').style.display='flex',500);}
+
+canvas.addEventListener('touchstart',e=>{e.preventDefault();onStart(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();onEnd();},{passive:false});
+canvas.addEventListener('mousedown',e=>onStart(e.clientX,e.clientY));
+canvas.addEventListener('mousemove',e=>{if(e.buttons)onMove(e.clientX,e.clientY);});
+canvas.addEventListener('mouseup',()=>onEnd());
+window.addEventListener('resize',()=>{if(!isOver)resizeInit();});
+document.getElementById('start-btn').addEventListener('click',()=>{if(audioCtx.state==='suspended')audioCtx.resume();document.getElementById('start-screen').style.display='none';resizeInit();startTimer();});
+document.getElementById('restart-btn').addEventListener('click',()=>location.reload());
+</script>
+</body>
+</html>
