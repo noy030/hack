@@ -4,115 +4,150 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>YoRHa — Block Infiltration</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@700&display=swap');
-  :root{--bg:#080806;--sand:#c8c2b5;--tan:#6a6458;--red:#cc3300;--white:#e8e2d4;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--sand);font-family:'Share Tech Mono',monospace;width:100vw;height:100vh;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);pointer-events:none;z-index:100;}
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
 
-  #start-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;}
-  .ss-id{font-size:10px;letter-spacing:5px;color:var(--tan);}
-  .ss-title{font-family:'Rajdhani',sans-serif;font-size:clamp(24px,7vw,50px);letter-spacing:8px;color:var(--white);}
-  .ss-line{width:150px;height:1px;background:linear-gradient(90deg,transparent,var(--sand),transparent);}
-  .ss-desc{font-size:11px;color:var(--tan);letter-spacing:2px;text-align:center;line-height:2.2;border:1px solid rgba(200,194,181,0.1);padding:14px 20px;max-width:340px;}
-  #start-btn{padding:13px 42px;background:none;color:var(--red);border:2px solid var(--red);font-size:17px;font-family:inherit;cursor:pointer;letter-spacing:4px;transition:all 0.2s;}
-  #start-btn:hover{background:var(--red);color:var(--bg);}
+:root {
+  --bg:     #080806;
+  --bg2:    #111110;
+  --text:   #c8c2b5;
+  --mid:    #6a6458;
+  --accent: #c8c2b5;
+  --border: rgba(200,194,181,0.15);
+  --panel:  rgba(200,194,181,0.04);
+  --red:    #cc3300;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  width:100vw;height:100vh;overflow:hidden;
+  user-select:none;-webkit-user-select:none;touch-action:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);
+  pointer-events:none;z-index:200;
+}
 
-  /* HUD */
-  #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:9px 14px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(200,194,181,0.07);background:rgba(8,8,6,0.65);}
-  .hud-s{font-size:11px;color:var(--tan);letter-spacing:2px;line-height:1.7;}
-  .hud-v{color:var(--sand);}
-  .hud-timer{font-size:25px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--sand);}
-  .hud-timer.danger{color:var(--red);animation:pulse 0.5s infinite;}
-  @keyframes pulse{50%{opacity:0.3;}}
+/* START */
+#startscreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--bg);z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;padding:24px;
+}
+#startscreen::before,#startscreen::after{
+  content:'';position:absolute;width:44px;height:44px;
+  border-color:rgba(200,194,181,0.25);border-style:solid;
+}
+#startscreen::before{top:18px;left:18px;border-width:1px 0 0 1px;}
+#startscreen::after{bottom:18px;right:18px;border-width:0 1px 1px 0;}
+.ss-eye{font-size:10px;letter-spacing:6px;color:var(--mid);}
+.ss-div{width:150px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.ss-logo{font-family:'Rajdhani',sans-serif;font-size:clamp(22px,8vw,50px);font-weight:700;letter-spacing:9px;color:var(--text);position:relative;}
+.ss-logo::after{content:attr(data-text);position:absolute;top:0;left:0;color:var(--red);clip-path:polygon(0 38%,100% 38%,100% 56%,0 56%);transform:translate(3px,0);opacity:0.5;}
+.ss-brief{font-size:11px;color:var(--mid);letter-spacing:2px;text-align:center;line-height:2.4;border:1px solid var(--border);padding:14px 24px;background:var(--panel);position:relative;}
+.ss-brief::before{content:'[ TACTICAL BRIEFING ]';position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:3px;color:var(--mid);background:var(--bg);padding:0 8px;}
+#startbtn{padding:15px 50px;background:none;color:var(--red);border:1px solid var(--red);font-size:15px;font-family:inherit;cursor:pointer;letter-spacing:5px;transition:all 0.2s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+#startbtn:hover{background:var(--red);color:var(--bg);}
+#startbtn:active{transform:scale(0.96);}
+.ss-foot{font-size:9px;letter-spacing:4px;color:var(--mid);}
+.ss-foot span{animation:blink 1.2s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
 
-  /* Board */
-  #board-wrap{display:flex;align-items:center;justify-content:center;width:100%;flex:1;padding-top:52px;padding-bottom:55px;}
-  #board{position:relative;}
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:9px 14px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(200,194,181,0.06);background:rgba(8,8,6,0.7);}
+.huds{font-size:10px;color:var(--mid);letter-spacing:2px;line-height:1.8;}
+.hudv{color:var(--text);}
+.hudtimer{font-size:24px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
+.hudtimer.danger{color:var(--red);animation:pulse 0.5s infinite;}
+@keyframes pulse{50%{opacity:.25;}}
 
-  /* Each cell */
-  .cell{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;border-radius:4px;transition:top 0.15s,left 0.15s;box-sizing:border-box;cursor:pointer;touch-action:none;}
-  .cell.wall{background:rgba(74,69,58,0.55);border:1.5px solid rgba(90,85,74,0.8);color:rgba(200,194,181,0.4);font-size:12px;letter-spacing:1px;}
-  .cell.empty-hole{background:rgba(200,194,181,0.03);border:1px dashed rgba(200,194,181,0.08);}
-  .cell.target-cell{border:1.5px dashed rgba(200,194,181,0.3);}
-  /* The "core" block — needs to reach exit */
-  .cell.core{background:rgba(200,194,181,0.12);border:2px solid var(--sand);color:var(--sand);}
-  .cell.core.active{box-shadow:0 0 20px rgba(200,194,181,0.4);}
+/* BOARD */
+#boardwrap{display:flex;align-items:center;justify-content:center;width:100%;flex:1;padding-top:50px;padding-bottom:55px;}
+#board{position:relative;}
+.cell{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;border-radius:4px;transition:top 0.15s,left 0.15s;box-sizing:border-box;cursor:pointer;touch-action:none;}
+.cell.wall{background:rgba(200,194,181,0.08);border:1.5px solid rgba(200,194,181,0.2);color:rgba(200,194,181,0.3);font-size:11px;}
+.cell.empty-hole{background:rgba(200,194,181,0.02);border:1px dashed rgba(200,194,181,0.06);}
+.cell.core{background:rgba(200,194,181,0.1);border:2px solid var(--accent);color:var(--accent);box-shadow:0 0 10px rgba(200,194,181,0.1);}
+.cell.core.active{box-shadow:0 0 20px rgba(200,194,181,0.25);}
+#exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:2px;color:rgba(200,194,181,0.4);pointer-events:none;}
 
-  /* Exit marker */
-  #exit-marker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:2px;color:rgba(200,194,181,0.5);pointer-events:none;}
+/* Puzzle dots */
+#pzdots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
+.pzdot{width:7px;height:7px;border:1px solid rgba(200,194,181,0.25);}
+.pzdot.done{background:var(--accent);}
+.pzdot.active{background:var(--accent);animation:pulse 0.8s infinite;}
+#statusmsg{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:var(--mid);white-space:nowrap;z-index:50;pointer-events:none;}
 
-  /* Puzzle dots */
-  #pzdots{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
-  .pzdot{width:7px;height:7px;border:1px solid rgba(200,194,181,0.3);}
-  .pzdot.done{background:var(--sand);}
-  .pzdot.active{background:var(--sand);animation:pulse 0.8s infinite;}
-
-  #statusmsg{position:fixed;bottom:38px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:3px;color:var(--tan);white-space:nowrap;z-index:50;pointer-events:none;}
-
-  #go-screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,4,3,0.93);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:17px;}
-  .go-title{font-family:'Rajdhani',sans-serif;font-size:40px;letter-spacing:6px;color:var(--red);}
-  .go-sub{font-size:11px;letter-spacing:3px;color:var(--tan);line-height:2.5;text-align:center;}
-  #restart-btn{padding:11px 32px;background:none;color:var(--sand);border:2px solid rgba(200,194,181,0.33);font-size:15px;cursor:pointer;font-family:inherit;letter-spacing:3px;opacity:0;animation:fi 0.5s 0.4s forwards;}
-  #win-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(200,194,181,0.93);z-index:400;display:none;align-items:center;justify-content:center;}
-  .win-box{border:2px solid #4a453a;background:#dad4c8;padding:38px;width:min(370px,87vw);text-align:center;box-shadow:10px 10px 0 #4a453a;animation:su 0.4s ease-out;font-family:'Share Tech Mono',monospace;}
-  .win-hdr{background:#4a453a;color:#dad4c8;margin:-38px -38px 22px;padding:11px;font-size:11px;letter-spacing:4px;}
-  .win-code{font-size:44px;margin:8px 0 20px;padding:14px;border:2px dashed #4a453a;color:#4a453a;font-weight:bold;letter-spacing:10px;}
-  .win-desc{font-size:11px;color:#7a7468;letter-spacing:2px;line-height:2;margin-bottom:22px;}
-  #cont-btn{background:none;border:2px solid #4a453a;color:#4a453a;padding:10px 28px;cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:3px;}
-  #cont-btn:hover{background:#4a453a;color:#dad4c8;}
-  @keyframes fi{to{opacity:1;}}
-  @keyframes su{from{transform:translateY(28px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-  .blink{animation:blink 1s step-end infinite;}
-  @keyframes blink{50%{opacity:0;}}
+/* Game over / win */
+#goscreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,4,3,0.94);z-index:300;backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.go-title{font-family:'Rajdhani',sans-serif;font-size:min(40px,10vw);letter-spacing:6px;color:var(--red);}
+.go-sub{font-size:11px;letter-spacing:3px;color:var(--mid);line-height:2.5;text-align:center;}
+#rbtn{padding:12px 34px;background:none;color:var(--text);border:1px solid rgba(200,194,181,0.25);font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;opacity:0;animation:fi 0.5s 0.4s forwards;}
+@keyframes fi{to{opacity:1;}}
+#winscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(200,194,181,0.94);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.winbox{border:2px solid #4a453a;background:#dad4c8;padding:min(38px,8vw);width:min(370px,88vw);text-align:center;box-shadow:8px 8px 0 #4a453a;animation:su 0.4s ease-out;font-family:'Share Tech Mono',monospace;position:relative;}
+.winbox::before,.winbox::after{content:'';position:absolute;width:14px;height:14px;border-color:#4a453a;border-style:solid;}
+.winbox::before{top:0;left:0;border-width:2px 0 0 2px;}
+.winbox::after{bottom:0;right:0;border-width:0 2px 2px 0;}
+.winhdr{background:#4a453a;color:#dad4c8;margin:calc(min(38px,8vw)*-1) calc(min(38px,8vw)*-1) 20px;padding:11px;font-size:10px;letter-spacing:5px;}
+.wincodelbl{font-size:9px;letter-spacing:5px;color:#7a7468;margin-bottom:5px;}
+.wincode{font-size:min(46px,12vw);margin:6px 0 20px;padding:13px;border:2px dashed #4a453a;color:#4a453a;font-weight:bold;letter-spacing:10px;background:rgba(255,255,255,0.2);}
+.windesc{font-size:10px;color:#7a7468;letter-spacing:2px;line-height:2.2;margin-bottom:20px;}
+#cbtn{background:none;border:2px solid #4a453a;color:#4a453a;padding:10px 28px;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:4px;transition:all 0.2s;}
+#cbtn:hover{background:#4a453a;color:#dad4c8;}
+@keyframes su{from{transform:translateY(28px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 </style>
 </head>
 <body>
 
-<div id="start-screen">
-  <div class="ss-id" id="ss-id">TERMINAL — ---</div>
-  <div class="ss-line"></div>
-  <div class="ss-title">BLOCK INFILTRATION</div>
-  <div class="ss-desc">
+<div id="startscreen">
+  <div class="ss-eye" id="ss-id">TERMINAL — ---</div>
+  <div class="ss-div"></div>
+  <div class="ss-logo" id="ss-title" data-text="BLOCK INFILTRATION">BLOCK INFILTRATION</div>
+  <div class="ss-brief">
     SLIDE BLOCKS TO CLEAR A PATH<br>
     GUIDE THE CORE BLOCK ▣ TO THE EXIT →<br>
-    SWIPE BLOCKS TO MOVE THEM<br>
-    <span style="color:var(--red)">⚠ BLOCKS ONLY SLIDE IN ONE AXIS</span>
+    SWIPE BLOCKS LEFT / RIGHT / UP / DOWN<br>
+    <span style="color:var(--red)">⚠ BLOCKS SLIDE ONE AXIS ONLY</span>
   </div>
-  <button id="start-btn">BREACH CORE</button>
-  <div class="ss-id blink">[ TACTICAL BLOCKS ENGAGED ]</div>
+  <button id="startbtn">BREACH CORE</button>
+  <div class="ss-foot">[ HIGH THREAT ENVIRONMENT <span>■</span> ]</div>
 </div>
 
 <div id="hud">
-  <div class="hud-s"><span id="hud-title">---</span><br>PUZZLE <span class="hud-v" id="pz-num">1</span>/<span class="hud-v" id="pz-total">3</span></div>
-  <div class="hud-timer" id="timer">--</div>
-  <div class="hud-s" style="text-align:right;">MOVES <span class="hud-v" id="moves">0</span><br>DIFF <span class="hud-v" id="diff-label">--</span></div>
+  <div class="huds"><span id="hudtitle">---</span><br>PUZZLE <span class="hudv" id="pznum">1</span>/<span class="hudv" id="pztotal">3</span></div>
+  <div class="hudtimer" id="timer">--</div>
+  <div class="huds" style="text-align:right;">MOVES <span class="hudv" id="moves">0</span><br>DIFF <span class="hudv" id="difflbl">--</span></div>
 </div>
 
-<div id="board-wrap"><div id="board"></div></div>
-
+<div id="boardwrap"><div id="board"></div></div>
 <div id="statusmsg">SLIDE BLOCKS TO FREE THE CORE</div>
 <div id="pzdots"></div>
 
-<div id="go-screen">
+<div id="goscreen">
   <div class="go-title">CORE BLOCKED</div>
   <div class="go-sub">INFILTRATION FAILED<br>PATH TO EXIT LOCKED</div>
-  <button id="restart-btn">RETRY INFILTRATION</button>
+  <button id="rbtn">RETRY INFILTRATION</button>
 </div>
 
-<div id="win-screen">
-  <div class="win-box">
-    <div class="win-hdr">SYSTEM STATUS: CORE EXTRACTED</div>
-    <div style="font-size:10px;letter-spacing:4px;color:#7a7468;margin-bottom:4px;">UNLOCK CODE</div>
-    <div class="win-code" id="win-code">----</div>
-    <div class="win-desc">BLOCK MATRIX BREACHED<br>ACCESS GRANTED TO PHYSICAL STORAGE</div>
-    <button id="cont-btn" onclick="history.back()">RETURN TO NETWORK</button>
+<div id="winscreen">
+  <div class="winbox">
+    <div class="winhdr">SYSTEM STATUS: CORE EXTRACTED</div>
+    <div class="wincodelbl">UNLOCK CODE</div>
+    <div class="wincode" id="wincode">----</div>
+    <div class="windesc">BLOCK MATRIX BREACHED<br>ACCESS GRANTED TO PHYSICAL STORAGE</div>
+    <button id="cbtn" onclick="history.back()">RETURN TO NETWORK</button>
   </div>
 </div>
 
 <script>
+
 const urlCfg = JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('cfg') || '{}'));
 const C = {
   code:      urlCfg.code      || '0000',
@@ -123,9 +158,9 @@ const C = {
   puzzleSet: urlCfg.puzzleSet || 'easy',  // easy|medium|hard
 };
 document.getElementById('ss-id').textContent     = `TERMINAL — ${C.title}`;
-document.getElementById('hud-title').textContent  = C.title;
-document.getElementById('pz-total').textContent   = C.puzzles;
-document.getElementById('diff-label').textContent = ['EASY','MEDIUM','HARD'][C.diff-1] || 'MEDIUM';
+document.getElementById('hudtitle').textContent  = C.title;
+document.getElementById('pztotal').textContent   = C.puzzles;
+document.getElementById('difflbl').textContent = ['EASY','MEDIUM','HARD'][C.diff-1] || 'MEDIUM';
 
 // ─── PUZZLE SETS ─────────────────────────────────────────────────
 // Each puzzle: {grid, blocks:[{id,row,col,len,horiz}]}
@@ -199,7 +234,7 @@ function buildDots() {
 }
 
 function calcCell() {
-  const wrap = document.getElementById('board-wrap');
+  const wrap = document.getElementById('boardwrap');
   const avail = Math.min(wrap.clientWidth*0.9, wrap.clientHeight*0.9);
   CELL = Math.floor(avail / GRID_SIZE);
   boardEl.style.width  = (CELL * GRID_SIZE) + 'px';
@@ -215,7 +250,7 @@ function initPuzzle() {
   blocks = pzData.blocks.map(b => ({...b}));
   moves = 0;
   document.getElementById('moves').textContent = moves;
-  document.getElementById('pz-num').textContent = curPz+1;
+  document.getElementById('pznum').textContent = curPz+1;
   calcCell();
   renderBoard();
   buildDots();
@@ -237,7 +272,7 @@ function renderBoard() {
 
   // Exit arrow on right of row 2
   const exitEl = document.createElement('div');
-  exitEl.id = 'exit-marker';
+  exitEl.id = 'exitmarker';
   exitEl.textContent = '▶ EXIT';
   exitEl.style.cssText = `right:-52px;top:${2*CELL + CELL/2 - 10}px;height:20px;`;
   boardEl.appendChild(exitEl);
@@ -414,13 +449,13 @@ function updateTimerEl() {
 function triggerFail() {
   if (isOver) return; stopBGM();
   isOver = true; sfx('wrong');
-  setTimeout(() => document.getElementById('go-screen').style.display='flex', 400);
+  setTimeout(() => document.getElementById('goscreen').style.display='flex', 400);
 }
 function triggerFinalWin() {
   if (isOver) return; stopBGM();
   isOver = true;
-  document.getElementById('win-code').textContent = C.code;
-  setTimeout(() => document.getElementById('win-screen').style.display='flex', 400);
+  document.getElementById('wincode').textContent = C.code;
+  setTimeout(() => document.getElementById('winscreen').style.display='flex', 400);
 }
 
 // Global pointer events (so drag works outside element)
@@ -430,14 +465,15 @@ window.addEventListener('mousemove', e => { if(dragging) onMove(e); });
 window.addEventListener('mouseup',   e => { if(dragging) onEnd(e); });
 window.addEventListener('resize',    ()=> { if(!isOver){ calcCell(); renderBoard(); }});
 
-document.getElementById('start-btn').addEventListener('click', () => {
+document.getElementById('startbtn').addEventListener('click', () => {
   if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
-  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('startscreen').style.display = 'none';
   activePuzzles = getPuzzles();
   initPuzzle();
   startTimer();
 });
-document.getElementById('restart-btn').addEventListener('click', () => location.reload());
+document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
 </script>
 </body>
 </html>
