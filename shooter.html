@@ -355,6 +355,7 @@ body::after{
 
 
 
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -471,8 +472,7 @@ const FIRE_LABELS={aimed:'STANDARD PROTOCOL',spiral:'SPIRAL FIRE PROTOCOL',burst
 const WALL_LABELS={orbit:'ORBITAL DEFENSE',static:'STATIC DEFENSE',expand:'PULSE DEFENSE',zigzag:'ZIGZAG DEFENSE'};
 
 document.getElementById('ss-id').textContent=`TERMINAL — ${C.title}`;
-document.// title is always HACK THE BOX
-document.const _sm=document.getElementById('ss-mode'); if(_sm) _sm.textContent='SHOOTER PROTOCOL';
+const _sm=document.getElementById('ss-mode'); if(_sm) _sm.textContent='SHOOTER PROTOCOL';
 document.getElementById('hudtitle').textContent=C.title;
 
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -482,11 +482,6 @@ const timerEl=document.getElementById('timer'),hpctEl=document.getElementById('h
 
 // ── BGM ─────────────────────────────────────────────────────
 // שים 10 קבצי mp3 בתיקייה music/ בשמות: music/01.mp3 ... music/10.mp3
-const BGM_FILES = Array.from({length:10}, (_,i) => `music/${String(i+1).padStart(2,'0')}.mp3`);
-const bgmEl = document.createElement('audio');
-bgmEl.loop = true; bgmEl.volume = 0.6;
-bgmEl.src = BGM_FILES[Math.floor(Math.random() * BGM_FILES.length)];
-document.body.appendChild(bgmEl);
 function startBGM() { if (bgmEl.paused) bgmEl.play().catch(()=>{}); }
 function stopBGM()  { bgmEl.pause(); bgmEl.currentTime = 0; }
 // ────────────────────────────────────────────────────────────
@@ -708,6 +703,7 @@ function loop(time){
   if(!blink){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle+Math.PI/2);ctx.fillStyle='#111';ctx.strokeStyle='#d4cfc6';ctx.lineWidth=1.5;if(player.hp>=1){ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-5,6);ctx.lineTo(5,6);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=2){ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(11,8);ctx.lineTo(5,5);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=3){ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-11,8);ctx.lineTo(-5,5);ctx.closePath();ctx.fill();ctx.stroke();}ctx.restore();}
   requestAnimationFrame(loop);
 }
+
 
 
 
