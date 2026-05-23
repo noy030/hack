@@ -356,6 +356,8 @@ body::after{
 
 
 
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -374,43 +376,26 @@ const VIB = {
 //  ✏️  טקסטים — ערוך כאן בלבד
 // ════════════════════════════════════════════════════════════
 const TEXT = {
-  // מסך פתיחה
-  startEyebrow:  'TERMINAL // ',        // + שם התיבה
+  startEyebrow:  'TERMINAL // ',
   startSubtitle: 'HACK THE BOX',
-  instructions:  'ג'ויסטיק שמאל — תנועה
-ג'ויסטיק ימין — כיוון וירי
-השמד את הגרעין לחשיפת הקוד',
+  instructions:  "ג'ויסטיק שמאל — תנועה\nג'ויסטיק ימין — כיוון וירי\nהשמד את הגרעין לחשיפת הקוד",
   startBtn:      'ACCESS CORE',
   startFooter:   'INITIATING LINK',
-
-  // HUD
   hudHackLabel:  'HACK',
   hudSecLabel:   'SEC',
   hudCoreLabel:  'CORE INTEGRITY',
-
-  // ניצחון
   winHeader:     'SYSTEM STATUS: BREACH COMPLETE',
   winCodeLabel:  'UNLOCK CODE',
-  winDesc:       'DATA DECRYPTION COMPLETE
-ACCESS GRANTED TO PHYSICAL STORAGE',
+  winDesc:       'DATA DECRYPTION COMPLETE<br>ACCESS GRANTED TO PHYSICAL STORAGE',
   winBtn:        'RETURN',
-
-  // הפסד
   loseTitle:     'ACCESS DENIED',
-  loseSub:       'המערכת נפרצה
-הסוכן הושבת',
+  loseSub:       'המערכת נפרצה<br>הסוכן הושבת',
   loseBtn:       'RETRY',
-
-  // כיוון מסך
   orientTitle:   'ROTATE TO LANDSCAPE',
   orientSub:     '[ LANDSCAPE MODE REQUIRED ]',
-
-  // פופאפים — פגיעה
   warningHeader: 'WARNING',
   warningMsgs:   ['DAMAGE DETECTED', 'CRITICAL HIT', 'SYSTEM INTEGRITY COMPROMISED'],
   warningHpPre:  'HP: ',
-
-  // פופאפים — הפסד
   errorLines: [
     ['CRITICAL ERROR',  'הסוכן הושבת'],
     ['SYSTEM FAILURE',  'איבדת נקודת פגיעה'],
@@ -703,6 +688,8 @@ function loop(time){
   if(!blink){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle+Math.PI/2);ctx.fillStyle='#111';ctx.strokeStyle='#d4cfc6';ctx.lineWidth=1.5;if(player.hp>=1){ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-5,6);ctx.lineTo(5,6);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=2){ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(11,8);ctx.lineTo(5,5);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=3){ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-11,8);ctx.lineTo(-5,5);ctx.closePath();ctx.fill();ctx.stroke();}ctx.restore();}
   requestAnimationFrame(loop);
 }
+
+
 
 
 
