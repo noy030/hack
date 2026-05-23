@@ -267,6 +267,28 @@ body::after{
 .jlabel{position:absolute;bottom:-18px;width:100%;text-align:center;font-size:9px;color:var(--mid);letter-spacing:3px;}
 @media screen and (orientation:portrait){#orient-warn{display:flex;}}
 
+
+/* ── Show code again button ── */
+#show-code-btn {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px) + 12px);
+  right: 16px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding: 8px 14px;
+  cursor: pointer;
+  z-index: 100;
+  display: none;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  opacity: 0.85;
+  transition: opacity .2s;
+}
+#show-code-btn:hover { opacity: 1; }
+
 </style>
 </head>
 <body>
@@ -329,7 +351,23 @@ body::after{
 
 <canvas id="game"></canvas>
 <script>
+
+
 // ════════════════════════════════════════════════════════════
+
+// ── Vibration ─────────────────────────────────────────────
+function vibe(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+// Patterns
+const VIB = {
+  hit:     [60],           // פגיעה קצרה
+  hurt:    [80, 40, 80],   // קיבלת פגיעה
+  warning: [30, 20, 30, 20, 30], // 10 שניות אחרונות
+  win:     [50, 30, 50, 30, 100, 30, 200], // ניצחון
+  lose:    [200, 50, 200], // הפסד
+};
+// ──────────────────────────────────────────────────────────
 //  ✏️  טקסטים — ערוך כאן בלבד
 // ════════════════════════════════════════════════════════════
 const TEXT = {
@@ -588,7 +626,7 @@ function updateWalls(time){
 }
 
 function triggerLoss(){if(isOver)return;isOver=true; stopBGM();let c=0;const iv=setInterval(()=>{sfx('glitch');if(++c>=6){clearInterval(iv);setTimeout(()=>document.getElementById('goscreen').style.display='flex',400);}},180);}
-function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win');document.getElementById('wincode').textContent=C.code; const _ws=document.getElementById('winscreen'); _ws.querySelector('.winhdr').textContent=TEXT.winHeader; _ws.querySelector('.wincodelbl').textContent=TEXT.winCodeLabel; _ws.querySelector('.windesc').innerHTML=TEXT.winDesc.replace('\\n','<br>'); _ws.querySelector('#cbtn').textContent=TEXT.winBtn;setTimeout(()=>document.getElementById('winscreen').style.display='flex',400);}
+function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win);document.getElementById('wincode').textContent=C.code; const _ws=document.getElementById('winscreen'); _ws.querySelector('.winhdr').textContent=TEXT.winHeader; _ws.querySelector('.wincodelbl').textContent=TEXT.winCodeLabel; _ws.querySelector('.windesc').innerHTML=TEXT.winDesc.replace('\\n','<br>'); _ws.querySelector('#cbtn').textContent=TEXT.winBtn;setTimeout(()=>document.getElementById('winscreen').style.display='flex'; const scb=document.getElementById('show-code-btn'); if(scb){scb.style.display='block'; scb.onclick=()=>document.getElementById('winscreen').style.display='flex';},400);}
 
 function loop(time){
   if(!isActive||isOver)return;
@@ -600,6 +638,7 @@ function loop(time){
   if(tl<=0){triggerLoss();return;}
   timerEl.textContent=tl;
   timerEl.className='ht'+(tl<=10?' danger':'');
+  if(tl===10) vibe(VIB.warning);
 
   if(keys['ArrowLeft']||keys['a'])tMove.x=-1;else if(keys['ArrowRight']||keys['d'])tMove.x=1;else if(!tMove.x)tMove.x=0;
   if(keys['ArrowUp']||keys['w'])tMove.y=-1;else if(keys['ArrowDown']||keys['s'])tMove.y=1;else if(!tMove.y)tMove.y=0;
@@ -626,7 +665,7 @@ function loop(time){
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,1.5,0,Math.PI*2);ctx.fill();
     let hit=false;
     for(let wi=walls.length-1;wi>=0;wi--){const w=walls[wi];if(Math.hypot(b.x-w.x,b.y-w.y)<w.size/2+3){w.hp--;spawnP(b.x,b.y,'#5a554a',4);sfx('hit');if(w.hp<=0){spawnP(w.x,w.y,'#4a453a',8);walls.splice(wi,1);}hit=true;break;}}
-    if(!hit&&Math.hypot(b.x-core.x,b.y-core.y)<core.size){core.hp-=.22;sfx('hit');const pct=Math.min(100,Math.floor((1-core.hp/core.maxHp)*100));hpctEl.textContent=pct;pbf.style.width=pct+'%';spawnP(b.x,b.y,'#2a2520',6);if(core.hp<=0){triggerWin();return;}hit=true;}
+    if(!hit&&Math.hypot(b.x-core.x,b.y-core.y)<core.size){core.hp-=.22;sfx('hit');vibe(VIB.hit);const pct=Math.min(100,Math.floor((1-core.hp/core.maxHp)*100));hpctEl.textContent=pct;pbf.style.width=pct+'%';spawnP(b.x,b.y,'#2a2520',6);if(core.hp<=0){triggerWin();return;}hit=true;}
     if(hit||b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height)bullets.splice(bi,1);
   }
 
@@ -638,7 +677,7 @@ function loop(time){
     eb.x+=eb.vx;eb.y+=eb.vy;
     ctx.fillStyle='#cc3300';ctx.beginPath();ctx.arc(eb.x,eb.y,eb.tracking?5:4,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=eb.tracking?'rgba(255,80,40,.35)':'rgba(255,80,40,.2)';ctx.beginPath();ctx.arc(eb.x,eb.y,eb.tracking?9:7,0,Math.PI*2);ctx.fill();
-    if(hasMoved&&time>player.invUntil&&Math.hypot(eb.x-player.x,eb.y-player.y)<player.size+3){player.hp--;player.invUntil=time+1600;sfx('hurt');updateHp();spawnP(player.x,player.y,'#c43000',8);if(player.hp<=0){triggerLoss();return;}showWarning(player.hp);eBullets.splice(ei,1);continue;}
+    if(hasMoved&&time>player.invUntil&&Math.hypot(eb.x-player.x,eb.y-player.y)<player.size+3){player.hp--;player.invUntil=time+1600;sfx('hurt');vibe(VIB.hurt);updateHp();spawnP(player.x,player.y,'#c43000',8);if(player.hp<=0){triggerLoss();return;}showWarning(player.hp);eBullets.splice(ei,1);continue;}
     if(eb.x<0||eb.x>canvas.width||eb.y<0||eb.y>canvas.height)eBullets.splice(ei,1);
   }
 
@@ -660,6 +699,8 @@ function loop(time){
   if(!blink){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle+Math.PI/2);ctx.fillStyle='#111';ctx.strokeStyle='#d4cfc6';ctx.lineWidth=1.5;if(player.hp>=1){ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-5,6);ctx.lineTo(5,6);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=2){ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(11,8);ctx.lineTo(5,5);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=3){ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-11,8);ctx.lineTo(-5,5);ctx.closePath();ctx.fill();ctx.stroke();}ctx.restore();}
   requestAnimationFrame(loop);
 }
+
+
 </script>
 </body>
 </html>
