@@ -465,10 +465,9 @@ function updateTimerEl() {
   el.className = 'hud-timer' + (tl <= 10 ? ' danger' : '');
 }
 function triggerFail() {
-  if (isOver) return; showErrorPopups(() => document.getElementById('goscreen').style.display='flex'); isOver=true; stopBGM(); return;
-  if(false){ stopBGM();
-  isOver = true; sfx('wrong');
-  setTimeout(() => document.getElementById('goscreen').style.display='flex', 400);
+  if (isOver) return;
+  isOver=true; stopBGM(); sfx('wrong');
+  showErrorPopups(() => document.getElementById('goscreen').style.display='flex');
 }
 function triggerFinalWin() {
   if (isOver) return; stopBGM();
