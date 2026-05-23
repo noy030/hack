@@ -131,94 +131,22 @@ document.getElementById('diff-label').textContent = ['EASY','MEDIUM','HARD'][C.d
 // Each puzzle: {grid, blocks:[{id,row,col,len,horiz}]}
 // Core block always id:'core', row:2(grid6) or row:2(grid5), horiz:true → needs col+len >= grid to exit
 
+// All puzzles BFS-verified solvable
 const PUZZLE_SETS = {
   easy: [
-    { grid:5, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:0,col:2,len:2,horiz:false},
-      {id:'b',row:3,col:2,len:2,horiz:false},
-      {id:'c',row:2,col:3,len:2,horiz:true},
-    ]},
-    { grid:5, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:1,col:2,len:3,horiz:false},
-      {id:'b',row:0,col:3,len:2,horiz:true},
-      {id:'c',row:4,col:1,len:3,horiz:true},
-    ]},
-    { grid:6, blocks:[
-      {id:'core',row:2,col:1,len:2,horiz:true},
-      {id:'a',row:0,col:3,len:3,horiz:false},
-      {id:'b',row:2,col:3,len:2,horiz:true},
-      {id:'c',row:4,col:0,len:3,horiz:true},
-      {id:'d',row:1,col:0,len:2,horiz:false},
-    ]},
+    { grid:5, blocks:[{id:'core',row:2,col:2,len:2,horiz:true},{id:'a',row:3,col:1,len:2,horiz:false},{id:'b',row:2,col:4,len:2,horiz:false},{id:'c',row:1,col:2,len:3,horiz:true}]},
+    { grid:5, blocks:[{id:'core',row:2,col:1,len:2,horiz:true},{id:'a',row:0,col:1,len:3,horiz:true},{id:'b',row:1,col:0,len:3,horiz:false},{id:'c',row:3,col:1,len:3,horiz:true},{id:'d',row:1,col:4,len:2,horiz:false}]},
+    { grid:6, blocks:[{id:'core',row:2,col:2,len:2,horiz:true},{id:'a',row:5,col:3,len:3,horiz:true},{id:'b',row:0,col:2,len:2,horiz:true},{id:'c',row:1,col:5,len:3,horiz:false},{id:'d',row:0,col:4,len:2,horiz:true}]},
   ],
   medium: [
-    { grid:6, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:0,col:2,len:3,horiz:false},
-      {id:'b',row:2,col:2,len:2,horiz:true},
-      {id:'c',row:0,col:4,len:2,horiz:false},
-      {id:'d',row:3,col:4,len:3,horiz:false},
-      {id:'e',row:4,col:1,len:3,horiz:true},
-      {id:'f',row:1,col:0,len:2,horiz:false},
-    ]},
-    { grid:6, blocks:[
-      {id:'core',row:2,col:1,len:2,horiz:true},
-      {id:'a',row:0,col:3,len:3,horiz:false},
-      {id:'b',row:2,col:3,len:2,horiz:true},
-      {id:'c',row:0,col:5,len:2,horiz:false},
-      {id:'d',row:3,col:0,len:2,horiz:true},
-      {id:'e',row:4,col:3,len:2,horiz:false},
-      {id:'f',row:1,col:0,len:2,horiz:false},
-      {id:'g',row:3,col:4,len:2,horiz:true},
-    ]},
-    { grid:6, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:0,col:2,len:2,horiz:false},
-      {id:'b',row:2,col:2,len:3,horiz:true},
-      {id:'c',row:0,col:5,len:3,horiz:false},
-      {id:'d',row:4,col:2,len:2,horiz:true},
-      {id:'e',row:3,col:0,len:2,horiz:false},
-      {id:'f',row:1,col:3,len:2,horiz:true},
-    ]},
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:3,col:1,len:3,horiz:false},{id:'b',row:0,col:3,len:2,horiz:false},{id:'c',row:5,col:2,len:2,horiz:true},{id:'d',row:2,col:3,len:3,horiz:false},{id:'e',row:0,col:2,len:3,horiz:false}]},
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:4,col:0,len:2,horiz:true},{id:'b',row:1,col:1,len:3,horiz:true},{id:'c',row:2,col:3,len:2,horiz:false},{id:'d',row:4,col:3,len:3,horiz:true},{id:'e',row:2,col:2,len:3,horiz:false},{id:'f',row:5,col:2,len:2,horiz:true}]},
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:5,col:2,len:2,horiz:true},{id:'b',row:4,col:1,len:2,horiz:false},{id:'c',row:0,col:3,len:3,horiz:true},{id:'d',row:4,col:5,len:2,horiz:false},{id:'e',row:1,col:5,len:2,horiz:false},{id:'f',row:1,col:3,len:3,horiz:false}]},
   ],
   hard: [
-    { grid:6, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:0,col:2,len:3,horiz:false},
-      {id:'b',row:2,col:2,len:2,horiz:true},
-      {id:'c',row:0,col:4,len:2,horiz:false},
-      {id:'d',row:3,col:4,len:3,horiz:false},
-      {id:'e',row:4,col:2,len:2,horiz:true},
-      {id:'f',row:1,col:0,len:3,horiz:true},
-      {id:'g',row:3,col:0,len:2,horiz:false},
-      {id:'h',row:5,col:1,len:3,horiz:true},
-      {id:'i',row:0,col:5,len:3,horiz:false},
-    ]},
-    { grid:6, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:0,col:2,len:2,horiz:false},
-      {id:'b',row:0,col:3,len:3,horiz:true},
-      {id:'c',row:2,col:2,len:3,horiz:true},
-      {id:'d',row:3,col:5,len:3,horiz:false},
-      {id:'e',row:4,col:2,len:3,horiz:true},
-      {id:'f',row:1,col:0,len:2,horiz:false},
-      {id:'g',row:3,col:0,len:3,horiz:true},
-      {id:'h',row:0,col:5,len:2,horiz:false},
-    ]},
-    { grid:6, blocks:[
-      {id:'core',row:2,col:0,len:2,horiz:true},
-      {id:'a',row:0,col:2,len:4,horiz:false},
-      {id:'b',row:2,col:2,len:2,horiz:true},
-      {id:'c',row:1,col:4,len:3,horiz:false},
-      {id:'d',row:4,col:4,len:2,horiz:false},
-      {id:'e',row:4,col:0,len:3,horiz:true},
-      {id:'f',row:0,col:0,len:2,horiz:true},
-      {id:'g',row:1,col:0,len:3,horiz:false},
-      {id:'h',row:3,col:2,len:3,horiz:true},
-      {id:'i',row:5,col:2,len:4,horiz:true},
-    ]},
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:3,col:2,len:3,horiz:true},{id:'b',row:1,col:3,len:2,horiz:false},{id:'c',row:0,col:3,len:3,horiz:true},{id:'d',row:3,col:0,len:2,horiz:true},{id:'e',row:0,col:2,len:3,horiz:false},{id:'f',row:4,col:5,len:2,horiz:false},{id:'g',row:0,col:0,len:2,horiz:false}]},
+    { grid:6, blocks:[{id:'core',row:2,col:1,len:2,horiz:true},{id:'a',row:3,col:1,len:3,horiz:false},{id:'b',row:2,col:4,len:3,horiz:false},{id:'c',row:5,col:4,len:2,horiz:true},{id:'d',row:4,col:0,len:2,horiz:false},{id:'e',row:0,col:3,len:2,horiz:false},{id:'f',row:3,col:2,len:2,horiz:false},{id:'g',row:5,col:2,len:2,horiz:true}]},
+    { grid:6, blocks:[{id:'core',row:2,col:1,len:2,horiz:true},{id:'a',row:2,col:4,len:2,horiz:false},{id:'b',row:2,col:3,len:3,horiz:false},{id:'c',row:4,col:1,len:2,horiz:false},{id:'d',row:4,col:4,len:2,horiz:true},{id:'e',row:1,col:0,len:3,horiz:false},{id:'f',row:5,col:3,len:3,horiz:true},{id:'g',row:0,col:4,len:2,horiz:true},{id:'h',row:4,col:0,len:2,horiz:false}]},
   ],
 };
 
@@ -232,6 +160,18 @@ function getPuzzles() {
 let activePuzzles = [];
 
 const AC = window.AudioContext || window.webkitAudioContext;
+
+// ── BGM ─────────────────────────────────────────────────────
+// שים 10 קבצי mp3 בתיקייה music/ בשמות: music/01.mp3 ... music/10.mp3
+const BGM_FILES = Array.from({length:10}, (_,i) => `music/${String(i+1).padStart(2,'0')}.mp3`);
+const bgmEl = document.createElement('audio');
+bgmEl.loop = true; bgmEl.volume = 0.6;
+bgmEl.src = BGM_FILES[Math.floor(Math.random() * BGM_FILES.length)];
+document.body.appendChild(bgmEl);
+function startBGM() { if (bgmEl.paused) bgmEl.play().catch(()=>{}); }
+function stopBGM()  { bgmEl.pause(); bgmEl.currentTime = 0; }
+// ────────────────────────────────────────────────────────────
+
 const audioCtx = new AC();
 function sfx(t) {
   if (audioCtx.state === 'suspended') return;
@@ -472,12 +412,12 @@ function updateTimerEl() {
   el.className = 'hud-timer' + (tl <= 10 ? ' danger' : '');
 }
 function triggerFail() {
-  if (isOver) return;
+  if (isOver) return; stopBGM();
   isOver = true; sfx('wrong');
   setTimeout(() => document.getElementById('go-screen').style.display='flex', 400);
 }
 function triggerFinalWin() {
-  if (isOver) return;
+  if (isOver) return; stopBGM();
   isOver = true;
   document.getElementById('win-code').textContent = C.code;
   setTimeout(() => document.getElementById('win-screen').style.display='flex', 400);
@@ -491,7 +431,7 @@ window.addEventListener('mouseup',   e => { if(dragging) onEnd(e); });
 window.addEventListener('resize',    ()=> { if(!isOver){ calcCell(); renderBoard(); }});
 
 document.getElementById('start-btn').addEventListener('click', () => {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
   document.getElementById('start-screen').style.display = 'none';
   activePuzzles = getPuzzles();
   initPuzzle();
