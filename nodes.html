@@ -4,149 +4,295 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>YoRHa — Block Infiltration</title>
+<title>HACK THE BOX — Block Infiltration</title>
 <style>
+
+:root{
+  --bg:#1e1c18; --bg2:#2a2822; --text:#e8e3da; --mid:#9a9088;
+  --accent:#e8e3da; --border:rgba(232,227,218,0.2);
+  --panel:rgba(232,227,218,0.07); --red:#c43000;
+  --cream:#d4cfc6; --warm:#b8b2a8; --darker:#0e0d0b;
+}
+body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+@media screen and (orientation:landscape){#orient-warn{display:flex;}}
+
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
 
-:root {
-  --bg:     #080806;
-  --bg2:    #111110;
-  --text:   #c8c2b5;
-  --mid:    #6a6458;
-  --accent: #c8c2b5;
-  --border: rgba(200,194,181,0.15);
-  --panel:  rgba(200,194,181,0.04);
-  --red:    #cc3300;
-}
+/* ══════════════════════════════════════════════
+   HACK THE BOX — Shared Design System
+   NieR Automata aesthetic, cream/warm palette
+   ══════════════════════════════════════════════ */
+
 *{margin:0;padding:0;box-sizing:border-box;}
+
 body{
   background:var(--bg);color:var(--text);
   font-family:'Share Tech Mono',monospace;
-  width:100vw;height:100vh;overflow:hidden;
-  user-select:none;-webkit-user-select:none;touch-action:none;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  user-select:none;-webkit-user-select:none;
+  overflow:hidden;
 }
+
+/* Scanlines */
 body::after{
   content:'';position:fixed;top:0;left:0;width:100%;height:100%;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);
-  pointer-events:none;z-index:200;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:999;
 }
 
-/* START */
-#startscreen{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:var(--bg);z-index:100;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;padding:24px;
-}
-#startscreen::before,#startscreen::after{
-  content:'';position:absolute;width:44px;height:44px;
-  border-color:rgba(200,194,181,0.25);border-style:solid;
-}
-#startscreen::before{top:18px;left:18px;border-width:1px 0 0 1px;}
-#startscreen::after{bottom:18px;right:18px;border-width:0 1px 1px 0;}
-.ss-eye{font-size:10px;letter-spacing:6px;color:var(--mid);}
-.ss-div{width:150px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
-.ss-logo{font-family:'Rajdhani',sans-serif;font-size:clamp(22px,8vw,50px);font-weight:700;letter-spacing:9px;color:var(--text);position:relative;}
-.ss-logo::after{content:attr(data-text);position:absolute;top:0;left:0;color:var(--red);clip-path:polygon(0 38%,100% 38%,100% 56%,0 56%);transform:translate(3px,0);opacity:0.5;}
-.ss-brief{font-size:11px;color:var(--mid);letter-spacing:2px;text-align:center;line-height:2.4;border:1px solid var(--border);padding:14px 24px;background:var(--panel);position:relative;}
-.ss-brief::before{content:'[ TACTICAL BRIEFING ]';position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:3px;color:var(--mid);background:var(--bg);padding:0 8px;}
-#startbtn{padding:15px 50px;background:none;color:var(--red);border:1px solid var(--red);font-size:15px;font-family:inherit;cursor:pointer;letter-spacing:5px;transition:all 0.2s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
-#startbtn:hover{background:var(--red);color:var(--bg);}
-#startbtn:active{transform:scale(0.96);}
-.ss-foot{font-size:9px;letter-spacing:4px;color:var(--mid);}
-.ss-foot span{animation:blink 1.2s step-end infinite;}
-@keyframes blink{50%{opacity:0;}}
-
-/* HUD */
-#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:9px 14px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(200,194,181,0.06);background:rgba(8,8,6,0.7);}
-.huds{font-size:clamp(9px,2.2vw,11px);color:var(--mid);letter-spacing:2px;line-height:1.8;}
-.hudv{color:var(--text);}
-.hudtimer{font-size:clamp(20px,5vw,28px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
-.hudtimer.danger{color:var(--red);animation:pulse 0.5s infinite;}
-@keyframes pulse{50%{opacity:.25;}}
-
-/* BOARD */
-#boardwrap{display:flex;align-items:center;justify-content:center;width:100%;flex:1;padding-top:50px;padding-bottom:55px;}
-#board{position:relative;}
-.cell{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;border-radius:4px;transition:top 0.15s,left 0.15s;box-sizing:border-box;cursor:pointer;touch-action:none;}
-.cell.wall{background:rgba(200,194,181,0.18);border:2px solid rgba(200,194,181,0.65);color:rgba(200,194,181,0.8);font-size:11px;box-shadow:inset 0 0 0 1px rgba(200,194,181,0.1);}
-.cell.empty-hole{background:rgba(200,194,181,0.04);border:1px solid rgba(200,194,181,0.12);}
-.cell.core{background:rgba(200,194,181,0.22);border:2.5px solid #e8e2d4;color:#e8e2d4;box-shadow:0 0 14px rgba(200,194,181,0.3),inset 0 0 8px rgba(200,194,181,0.1);font-size:120%;}
-.cell.core.active{box-shadow:0 0 24px rgba(200,194,181,0.5),inset 0 0 12px rgba(200,194,181,0.2);}
-#exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,2vw,11px);letter-spacing:2px;color:rgba(200,194,181,0.75);pointer-events:none;text-shadow:0 0 8px rgba(200,194,181,0.4);}
-
-/* Puzzle dots */
-#pzdots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
-.pzdot{width:7px;height:7px;border:1px solid rgba(200,194,181,0.25);}
-.pzdot.done{background:var(--accent);}
-.pzdot.active{background:var(--accent);animation:pulse 0.8s infinite;}
-#statusmsg{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:var(--mid);white-space:nowrap;z-index:50;pointer-events:none;}
-
-/* Game over / win */
-#goscreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,4,3,0.94);z-index:300;backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:center;gap:16px;}
-.go-title{font-family:'Rajdhani',sans-serif;font-size:min(40px,10vw);letter-spacing:6px;color:var(--red);}
-.go-sub{font-size:11px;letter-spacing:3px;color:var(--mid);line-height:2.5;text-align:center;}
-#rbtn{padding:12px 34px;background:none;color:var(--text);border:1px solid rgba(200,194,181,0.25);font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;opacity:0;animation:fi 0.5s 0.4s forwards;}
-@keyframes fi{to{opacity:1;}}
-#winscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(200,194,181,0.94);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
-.winbox{border:2px solid #4a453a;background:#dad4c8;padding:min(38px,8vw);width:min(370px,88vw);text-align:center;box-shadow:8px 8px 0 #4a453a;animation:su 0.4s ease-out;font-family:'Share Tech Mono',monospace;position:relative;}
-.winbox::before,.winbox::after{content:'';position:absolute;width:14px;height:14px;border-color:#4a453a;border-style:solid;}
-.winbox::before{top:0;left:0;border-width:2px 0 0 2px;}
-.winbox::after{bottom:0;right:0;border-width:0 2px 2px 0;}
-.winhdr{background:#4a453a;color:#dad4c8;margin:calc(min(38px,8vw)*-1) calc(min(38px,8vw)*-1) 20px;padding:11px;font-size:10px;letter-spacing:5px;}
-.wincodelbl{font-size:9px;letter-spacing:5px;color:#7a7468;margin-bottom:5px;}
-.wincode{font-size:min(46px,12vw);margin:6px 0 20px;padding:13px;border:2px dashed #4a453a;color:#4a453a;font-weight:bold;letter-spacing:10px;background:rgba(255,255,255,0.2);}
-.windesc{font-size:10px;color:#7a7468;letter-spacing:2px;line-height:2.2;margin-bottom:20px;}
-#cbtn{background:none;border:2px solid #4a453a;color:#4a453a;padding:10px 28px;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:4px;transition:all 0.2s;}
-#cbtn:hover{background:#4a453a;color:#dad4c8;}
-@keyframes su{from{transform:translateY(28px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-
-/* Orientation warning */
-#orient-warn {
+/* ── ORIENTATION WARNING ── */
+#orient-warn{
   display:none;position:fixed;top:0;left:0;width:100%;height:100%;
   background:var(--bg);z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
   gap:16px;text-align:center;padding:30px;
 }
-@media screen and (orientation:landscape) {
-  #orient-warn { display:flex; }
+.ow-phone{font-size:52px;}
+.ow-anim-land{animation:spin-land 2s ease-in-out infinite;}
+.ow-anim-port{animation:spin-port 2s ease-in-out infinite;}
+@keyframes spin-land{0%,100%{transform:rotate(0deg);}50%{transform:rotate(90deg);}}
+@keyframes spin-port{0%,100%{transform:rotate(90deg);}50%{transform:rotate(0deg);}}
+.ow-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(18px,5vw,26px);letter-spacing:5px;
+  color:var(--text);
 }
-.ow-icon { font-size:48px; animation: rotate-hint 2s ease-in-out infinite; }
-@keyframes rotate-hint {
-  0%,100% { transform: rotate(0deg); }
-  50%      { transform: rotate(90deg); }
+.ow-sub{font-size:10px;letter-spacing:4px;color:var(--mid);}
+
+/* ── START SCREEN ── */
+#startscreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--bg);z-index:2000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:clamp(14px,3.5vh,22px);
+  padding:clamp(20px,5vw,32px);
 }
-.ow-title { font-family:'Rajdhani',sans-serif; font-size:clamp(18px,5vw,28px); letter-spacing:5px; color:var(--text); }
-.ow-sub   { font-size:11px; letter-spacing:3px; color:var(--mid); }
-.ow-line  { width:100px; height:1px; background:linear-gradient(90deg,transparent,var(--mid),transparent); }
+
+/* Subtle bg texture */
+#startscreen::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:100%;
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(74,69,58,0.06) 49.5%,rgba(74,69,58,0.06) 50.5%,transparent 50.5%),
+    linear-gradient(0deg,transparent 49.5%,rgba(74,69,58,0.04) 49.5%,rgba(74,69,58,0.04) 50.5%,transparent 50.5%);
+  pointer-events:none;
+}
+
+/* Corner decorations */
+#startscreen::after{content:none;}
+.ss-corner{
+  position:absolute;width:26px;height:26px;
+  border-color:var(--accent);border-style:solid;opacity:0.4;
+}
+.ss-corner.tl{top:18px;left:18px;border-width:2px 0 0 2px;}
+.ss-corner.tr{top:18px;right:18px;border-width:2px 2px 0 0;}
+.ss-corner.bl{bottom:18px;left:18px;border-width:0 0 2px 2px;}
+.ss-corner.br{bottom:18px;right:18px;border-width:0 2px 2px 0;}
+
+/* Terminal ID */
+.ss-eyebrow{
+  font-size:10px;letter-spacing:6px;color:var(--mid);
+  text-transform:uppercase;
+}
+
+/* Main title */
+.ss-title-main{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(38px,13vw,68px);
+  font-weight:700;
+  letter-spacing:clamp(4px,2.5vw,12px);
+  color:var(--accent);
+  line-height:1;position:relative;text-align:center;
+}
+.ss-title-main::after{
+  content:attr(data-text);
+  position:absolute;top:0;left:0;width:100%;
+  color:var(--red);
+  clip-path:polygon(0 40%,100% 40%,100% 57%,0 57%);
+  transform:translate(3px,0);opacity:0.42;
+  pointer-events:none;
+}
+
+/* Divider with diamond */
+.ss-divider{
+  display:flex;align-items:center;gap:10px;
+  width:clamp(160px,50%,260px);
+}
+.ss-div-line{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent));
+  opacity:0.3;
+}
+.ss-div-line.r{background:linear-gradient(90deg,var(--accent),transparent);}
+.ss-div-diamond{
+  width:6px;height:6px;
+  border:1.5px solid var(--accent);
+  transform:rotate(45deg);opacity:0.5;
+}
+
+/* Game subtitle */
+.ss-subtitle{
+  font-size:clamp(10px,2.5vw,12px);
+  letter-spacing:5px;color:var(--mid);
+  text-transform:uppercase;
+}
+
+/* Instructions box */
+.ss-brief{
+  font-size:clamp(11px,2.8vw,13px);
+  color:var(--mid);letter-spacing:2px;
+  text-align:center;line-height:2.3;
+  border:1px solid var(--border);
+  padding:clamp(12px,3vw,18px) clamp(16px,4vw,28px);
+  background:var(--panel);
+  position:relative;
+  width:min(340px,88%);
+}
+.ss-brief::before{
+  content:'[ הוראות ]';
+  position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+  font-size:9px;letter-spacing:3px;color:var(--mid);
+  background:var(--bg);padding:0 8px;
+}
+
+/* Start button */
+.ss-btn{
+  padding:clamp(13px,3vh,17px) clamp(42px,11vw,58px);
+  background:var(--accent);color:var(--bg);
+  border:none;
+  font-size:clamp(13px,3.5vw,16px);
+  font-family:inherit;cursor:pointer;letter-spacing:4px;
+  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+  transition:transform .1s,filter .15s;
+}
+.ss-btn:active{transform:scale(0.96);}
+.ss-btn.outline{
+  background:none;color:var(--accent);
+  border:1.5px solid var(--accent);
+}
+.ss-btn.outline:active{background:var(--accent);color:var(--bg);}
+
+/* Footer blink */
+.ss-foot{font-size:9px;letter-spacing:4px;color:var(--mid);}
+.ss-foot span{animation:blink 1.2s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* ── WIN SCREEN ── */
+#winscreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(212,207,198,0.96);z-index:4000;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+}
+.winbox{
+  border:2px solid #4a453a;background:#e8e3da;
+  padding:clamp(28px,7vw,42px);width:min(360px,88vw);
+  text-align:center;
+  box-shadow:8px 8px 0 #4a453a,0 0 40px rgba(74,69,58,0.1);
+  animation:su .4s ease-out;
+  font-family:'Share Tech Mono',monospace;position:relative;
+}
+.winbox::before,.winbox::after{
+  content:'';position:absolute;width:18px;height:18px;
+  border-color:#4a453a;border-style:solid;
+}
+.winbox::before{top:-1px;left:-1px;border-width:3px 0 0 3px;}
+.winbox::after{bottom:-1px;right:-1px;border-width:0 3px 3px 0;}
+.winhdr{
+  background:#4a453a;color:#e8e3da;
+  margin:calc(clamp(28px,7vw,42px)*-1) calc(clamp(28px,7vw,42px)*-1) 22px;
+  padding:12px;font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;
+}
+.wincodelbl{font-size:10px;letter-spacing:5px;color:#7a7468;margin-bottom:6px;}
+.wincode{
+  font-size:clamp(36px,10vw,52px);margin:6px 0 20px;padding:14px;
+  border:2px dashed #4a453a;color:#4a453a;font-weight:bold;
+  letter-spacing:10px;background:rgba(255,255,255,0.25);
+}
+.windesc{font-size:11px;color:#6a6458;letter-spacing:2px;line-height:2.2;margin-bottom:22px;}
+#cbtn{
+  background:none;border:2px solid #4a453a;color:#4a453a;
+  padding:11px 30px;cursor:pointer;font-family:inherit;
+  font-size:13px;letter-spacing:3px;transition:all .2s;
+}
+#cbtn:hover,#cbtn:active{background:#4a453a;color:#e8e3da;}
+
+/* ── GAME OVER ── */
+#goscreen{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(20,18,14,0.92);z-index:3000;
+  backdrop-filter:blur(5px);
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.go-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(30px,9vw,46px);letter-spacing:6px;color:var(--red);
+}
+.go-sub{font-size:12px;letter-spacing:3px;color:var(--mid);line-height:2.5;text-align:center;}
+#rbtn{
+  padding:13px 36px;background:none;color:var(--text);
+  border:1px solid rgba(212,207,198,0.3);
+  font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;
+  opacity:0;animation:fi .5s .4s forwards;transition:all .2s;
+}
+#rbtn:hover{background:rgba(212,207,198,0.08);}
+
+@keyframes fi{to{opacity:1;}}
+@keyframes pulse{50%{opacity:.25;}}
+@keyframes su{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+
+body{touch-action:none;}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(232,227,218,0.07);background:rgba(20,18,14,0.8);}
+.huds{font-size:clamp(9px,2.2vw,11px);color:var(--mid);letter-spacing:2px;line-height:1.8;}
+.hudv{color:var(--text);}
+.hudtimer{font-size:clamp(20px,5vw,26px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
+.hudtimer.danger{color:var(--red);animation:pulse .5s infinite;}
+#boardwrap{display:flex;align-items:center;justify-content:center;flex:1;width:100%;padding-top:48px;padding-bottom:52px;}
+#board{position:relative;}
+.cell{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;border-radius:4px;transition:top .15s,left .15s;cursor:pointer;touch-action:none;}
+.cell.wall{background:rgba(232,227,218,0.14);border:2px solid rgba(232,227,218,0.5);color:rgba(232,227,218,0.75);font-size:11px;}
+.cell.empty-hole{background:rgba(232,227,218,0.03);border:1px solid rgba(232,227,218,0.1);}
+.cell.core{background:rgba(232,227,218,0.18);border:2.5px solid var(--text);color:var(--text);box-shadow:0 0 14px rgba(232,227,218,0.25),inset 0 0 6px rgba(232,227,218,0.08);}
+.cell.core.active{box-shadow:0 0 24px rgba(232,227,218,0.45),inset 0 0 12px rgba(232,227,218,0.15);}
+#exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:2px;color:rgba(232,227,218,0.7);pointer-events:none;text-shadow:0 0 8px rgba(232,227,218,0.35);}
+#pzdots{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
+.pzdot{width:7px;height:7px;border:1px solid rgba(232,227,218,0.25);}
+.pzdot.done{background:var(--accent);}
+.pzdot.active{background:var(--accent);animation:pulse .8s infinite;}
+#statusmsg{position:fixed;bottom:34px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:var(--mid);white-space:nowrap;z-index:50;pointer-events:none;}
 
 </style>
 </head>
 <body>
 
-
 <div id="orient-warn">
-  <div class="ow-line"></div>
-  <div class="ow-icon">📱</div>
-  <div class="ow-title">HOLD DEVICE UPRIGHT</div>
+  <span class="ow-phone ow-anim-port">📱</span>
+  <div class="ow-title">ROTATE TO PORTRAIT</div>
   <div class="ow-sub">[ PORTRAIT MODE REQUIRED ]</div>
-  <div class="ow-sub">ROTATE YOUR DEVICE TO CONTINUE</div>
-  <div class="ow-line"></div>
 </div>
 
 <div id="startscreen">
-  <div class="ss-eye" id="ss-id">TERMINAL — ---</div>
-  <div class="ss-div"></div>
-  <div class="ss-logo" id="ss-title" data-text="BLOCK INFILTRATION">BLOCK INFILTRATION</div>
-  <div class="ss-brief">
-    SLIDE BLOCKS TO CLEAR A PATH<br>
-    GUIDE THE CORE BLOCK ▣ TO THE EXIT →<br>
-    SWIPE BLOCKS LEFT / RIGHT / UP / DOWN<br>
-    <span style="color:var(--red)">⚠ BLOCKS SLIDE ONE AXIS ONLY</span>
+  <div class="ss-corner tl"></div><div class="ss-corner tr"></div>
+  <div class="ss-corner bl"></div><div class="ss-corner br"></div>
+
+  <div class="ss-eyebrow" id="ss-id">TERMINAL // ---</div>
+
+  <div class="ss-title-main" id="ss-title" data-text="HACK THE BOX">HACK THE BOX</div>
+
+  <div class="ss-divider">
+    <div class="ss-div-line"></div>
+    <div class="ss-div-diamond"></div>
+    <div class="ss-div-line r"></div>
   </div>
-  <button id="startbtn">BREACH CORE</button>
+
+  <div class="ss-subtitle">BLOCK INFILTRATION</div>
+
+  <div class="ss-brief">
+    הזז בלוקים כדי לפנות מסלול<br>הובל את הגרעין ▣ ליציאה ←<br><span style="color:var(--red)">⚠ בלוקים זזים בציר אחד בלבד</span>
+  </div>
+
+  <button class="ss-btn outline" id="startbtn">BREACH CORE</button>
+
   <div class="ss-foot">[ HIGH THREAT ENVIRONMENT <span>■</span> ]</div>
 </div>
 
@@ -157,27 +303,76 @@ body::after{
 </div>
 
 <div id="boardwrap"><div id="board"></div></div>
-<div id="statusmsg">SLIDE BLOCKS TO FREE THE CORE</div>
+<div id="statusmsg">SLIDE TO FREE THE CORE</div>
 <div id="pzdots"></div>
 
 <div id="goscreen">
   <div class="go-title">CORE BLOCKED</div>
-  <div class="go-sub">INFILTRATION FAILED<br>PATH TO EXIT LOCKED</div>
-  <button id="rbtn">RETRY INFILTRATION</button>
+  <div class="go-sub">החדירה נכשלה<br>המסלול ליציאה חסום</div>
+  <button id="rbtn">RETRY</button>
 </div>
-
 <div id="winscreen">
   <div class="winbox">
-    <div class="winhdr">SYSTEM STATUS: CORE EXTRACTED</div>
+    <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
     <div class="wincodelbl">UNLOCK CODE</div>
     <div class="wincode" id="wincode">----</div>
-    <div class="windesc">BLOCK MATRIX BREACHED<br>ACCESS GRANTED TO PHYSICAL STORAGE</div>
-    <button id="cbtn" onclick="history.back()">RETURN TO NETWORK</button>
+    <div class="windesc">מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה</div>
+    <button id="cbtn" onclick="history.back()">RETURN</button>
   </div>
 </div>
 
 <script>
+// ════════════════════════════════════════════════════════════
+//  ✏️  טקסטים — ערוך כאן בלבד
+// ════════════════════════════════════════════════════════════
+const TEXT = {
+  // מסך פתיחה
+  startEyebrow:   'TERMINAL // ',
+  instructions:   'הזז בלוקים כדי לפנות מסלול
+הובל את בלוק הגרעין ▣ ליציאה ←
+החלק בלוקים ימינה / שמאלה / מעלה / מטה',
+  warning:        '⚠ בלוקים זזים בציר אחד בלבד',
+  startBtn:       'BREACH CORE',
+  startFooter:    'HIGH THREAT ENVIRONMENT',
 
+  // HUD
+  hudPuzzleLabel: 'PUZZLE',
+  hudMovesLabel:  'MOVES',
+  hudDiffLabel:   'DIFF',
+  diffNames:      ['EASY', 'MEDIUM', 'HARD'],
+
+  // Status messages
+  statusIdle:     'SLIDE TO FREE THE CORE',
+  statusNext:     'CORE OUT — NEXT PUZZLE',
+  exitLabel:      '▶ EXIT',
+
+  // ניצחון
+  winHeader:     'SYSTEM STATUS: CORE EXTRACTED',
+  winCodeLabel:  'UNLOCK CODE',
+  winDesc:       'מטריצת הבלוקים נפרצה
+גישה לאחסון הפיזי אושרה',
+  winBtn:        'RETURN',
+
+  // הפסד
+  loseTitle:     'CORE BLOCKED',
+  loseSub:       'החדירה נכשלה
+המסלול ליציאה חסום',
+  loseBtn:       'RETRY',
+
+  // כיוון מסך
+  orientTitle:   'ROTATE TO PORTRAIT',
+  orientSub:     '[ PORTRAIT MODE REQUIRED ]',
+
+  // פופאפים
+  errorLines: [
+    ['CORE BLOCKED',   'המסלול חסום'],
+    ['TIME OUT',       'הזמן אזל'],
+    ['MISSION FAILED', 'החדירה נכשלה'],
+    ['SYSTEM FAILURE', 'ניסיון שנכשל'],
+    ['ACCESS DENIED',  'הגרעין לא חולץ'],
+  ],
+};
+// ════════════════════════════════════════════════════════════
 function spawnNierPopup(header, body, sub, color, duration) {
   const div = document.createElement('div');
   div.style.cssText = `position:fixed;left:${8+Math.random()*45}%;top:${15+Math.random()*45}%;background:#dad4c8;border:2px solid ${color};font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);padding:10px 14px;box-shadow:4px 4px 0 rgba(0,0,0,0.15);z-index:2500;pointer-events:none;animation:nie-pop 0.15s ease-out;max-width:min(260px,60vw);`;
@@ -208,7 +403,7 @@ const C = {
 document.getElementById('ss-id').textContent     = `TERMINAL — ${C.title}`;
 document.getElementById('hudtitle').textContent  = C.title;
 document.getElementById('pztotal').textContent   = C.puzzles;
-document.getElementById('difflbl').textContent = ['EASY','MEDIUM','HARD'][C.diff-1] || 'MEDIUM';
+document.getElementById('difflbl').textContent = [...TEXT.diffNames][C.diff-1] || 'MEDIUM';
 
 // ─── PUZZLE SETS ─────────────────────────────────────────────────
 // Each puzzle: {grid, blocks:[{id,row,col,len,horiz}]}
@@ -288,7 +483,7 @@ function calcCell() {
   boardEl.style.width  = (CELL * GRID_SIZE) + 'px';
   boardEl.style.height = (CELL * GRID_SIZE) + 'px';
   boardEl.style.position = 'relative';
-  boardEl.style.border = '1px solid rgba(200,194,181,0.2)'; boardEl.style.background = 'rgba(200,194,181,0.03)';
+  boardEl.style.border = '1px solid rgba(212,207,198,0.2)'; boardEl.style.background = 'rgba(212,207,198,0.03)';
 }
 
 function initPuzzle() {
@@ -321,7 +516,7 @@ function renderBoard() {
   // Exit arrow on right of row 2
   const exitEl = document.createElement('div');
   exitEl.id = 'exitmarker';
-  exitEl.textContent = '▶ EXIT';
+  exitEl.textContent = TEXT.exitLabel;
   exitEl.style.cssText = `right:-52px;top:${2*CELL + CELL/2 - 10}px;height:20px;`;
   boardEl.appendChild(exitEl);
 
@@ -468,13 +663,13 @@ function triggerPuzzleWin() {
   if (pzDone >= C.puzzles) {
     triggerFinalWin();
   } else {
-    document.getElementById('statusmsg').textContent = 'CORE EXTRACTED — NEXT PUZZLE';
+    document.getElementById('statusmsg').textContent = TEXT.statusNext;
     setTimeout(() => {
       curPz++;
       tl = C.time;
       initPuzzle();
       startTimer();
-      document.getElementById('statusmsg').textContent = 'SLIDE BLOCKS TO FREE THE CORE';
+      document.getElementById('statusmsg').textContent = TEXT.statusIdle;
     }, 1200);
   }
 }
@@ -516,9 +711,7 @@ window.addEventListener('resize',    ()=> { if(!isOver){ calcCell(); renderBoard
 document.getElementById('startbtn').addEventListener('click', () => {
   if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
   document.getElementById('startscreen').style.display = 'none';
-  activePuzzles = getPuzzles();
-  initPuzzle();
-  startTimer();
+  activePuzzles = getPuzzles(); initPuzzle(); startTimer(); document.getElementById('statusmsg').textContent=TEXT.statusIdle;
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
 </script>
