@@ -61,9 +61,9 @@ body::after{
 
 /* HUD */
 #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:9px 14px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(200,194,181,0.06);background:rgba(8,8,6,0.7);}
-.huds{font-size:10px;color:var(--mid);letter-spacing:2px;line-height:1.8;}
+.huds{font-size:clamp(9px,2.2vw,11px);color:var(--mid);letter-spacing:2px;line-height:1.8;}
 .hudv{color:var(--text);}
-.hudtimer{font-size:24px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
+.hudtimer{font-size:clamp(20px,5vw,28px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
 .hudtimer.danger{color:var(--red);animation:pulse 0.5s infinite;}
 @keyframes pulse{50%{opacity:.25;}}
 
@@ -75,7 +75,7 @@ body::after{
 .cell.empty-hole{background:rgba(200,194,181,0.02);border:1px dashed rgba(200,194,181,0.06);}
 .cell.core{background:rgba(200,194,181,0.1);border:2px solid var(--accent);color:var(--accent);box-shadow:0 0 10px rgba(200,194,181,0.1);}
 .cell.core.active{box-shadow:0 0 20px rgba(200,194,181,0.25);}
-#exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:2px;color:rgba(200,194,181,0.4);pointer-events:none;}
+#exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,2vw,11px);letter-spacing:2px;color:rgba(200,194,181,0.4);pointer-events:none;}
 
 /* Puzzle dots */
 #pzdots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
@@ -148,6 +148,24 @@ body::after{
 
 <script>
 
+function spawnNierPopup(header, body, sub, color, duration) {
+  const div = document.createElement('div');
+  div.style.cssText = `position:fixed;left:${8+Math.random()*45}%;top:${15+Math.random()*45}%;background:#dad4c8;border:2px solid ${color};font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);padding:10px 14px;box-shadow:4px 4px 0 rgba(0,0,0,0.15);z-index:2500;pointer-events:none;animation:nie-pop 0.15s ease-out;max-width:min(260px,60vw);`;
+  div.innerHTML = `<div style="background:${color};color:#fff;margin:-10px -14px 8px;padding:3px 8px;font-size:clamp(9px,2vw,10px);letter-spacing:3px;">${header}</div><div style="color:#2a2520;letter-spacing:1px;line-height:1.6;">${body}</div>${sub?`<div style="color:#5a554a;font-size:clamp(9px,2vw,10px);margin-top:4px;">${sub}</div>`:''}`;
+  if(!document.getElementById('nie-pop-style')){const s=document.createElement('style');s.id='nie-pop-style';s.textContent='@keyframes nie-pop{from{transform:scale(0.7);opacity:0;}to{transform:scale(1);opacity:1;}}';document.head.appendChild(s);}
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(), duration);
+}
+function showErrorPopups(cb) {
+  const lines=[['CRITICAL ERROR','OPERATIVE TERMINATED'],['SYSTEM FAILURE','YOU LOST A LIFE POINT'],['BREACH FAILED','MISSION UNSUCCESSFUL'],['MEMORY CORRUPT','TACTICAL LINK SEVERED'],['SIGNAL LOST','RECONNECTING...'],['CORE INTACT','ENEMY DEFENSE HELD'],['ACCESS DENIED','CLEARANCE REVOKED']];
+  let i=0;
+  const iv=setInterval(()=>{
+    const[hdr,msg]=lines[i%lines.length];
+    spawnNierPopup(hdr,msg,'','#cc3300',900);
+    i++;
+    if(i>=7){clearInterval(iv);setTimeout(cb,500);}
+  },160);
+}
 const urlCfg = JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('cfg') || '{}'));
 const C = {
   code:      urlCfg.code      || '0000',
@@ -447,7 +465,8 @@ function updateTimerEl() {
   el.className = 'hud-timer' + (tl <= 10 ? ' danger' : '');
 }
 function triggerFail() {
-  if (isOver) return; stopBGM();
+  if (isOver) return; showErrorPopups(() => document.getElementById('goscreen').style.display='flex'); isOver=true; stopBGM(); return;
+  if(false){ stopBGM();
   isOver = true; sfx('wrong');
   setTimeout(() => document.getElementById('goscreen').style.display='flex', 400);
 }
@@ -473,7 +492,6 @@ document.getElementById('startbtn').addEventListener('click', () => {
   startTimer();
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
-
 </script>
 </body>
 </html>
