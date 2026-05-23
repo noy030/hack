@@ -353,6 +353,8 @@ body::after{
 <script>
 
 
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -470,7 +472,7 @@ const WALL_LABELS={orbit:'ORBITAL DEFENSE',static:'STATIC DEFENSE',expand:'PULSE
 
 document.getElementById('ss-id').textContent=`TERMINAL — ${C.title}`;
 document.// title is always HACK THE BOX
-document.getElementById('ss-mode').textContent='SHOOTER PROTOCOL';
+document.const _sm=document.getElementById('ss-mode'); if(_sm) _sm.textContent='SHOOTER PROTOCOL';
 document.getElementById('hudtitle').textContent=C.title;
 
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -536,7 +538,7 @@ function initGame(){
 }
 
 window.addEventListener('resize',resize);
-document.getElementById('sb').addEventListener('click',()=>{initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('ss').style.display='none'; document.getElementById('pblabel').textContent=TEXT.hudCoreLabel; isActive=true;requestAnimationFrame(loop);});
+document.getElementById('sb').addEventListener('click',()=>{initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('startscreen').style.display='none'; document.getElementById('pblabel').textContent=TEXT.hudCoreLabel; isActive=true;requestAnimationFrame(loop);});
 document.getElementById('rbtn').addEventListener('click',()=>location.reload());
 
 function handleT(e){let lA=false,rA=false;for(const t of e.touches){const iL=t.clientX<window.innerWidth/2;if(iL){lA=true;const dx=t.clientX-75,dy=t.clientY-(window.innerHeight-72);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);lk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;tMove=dist>6?{x:Math.cos(angle)*Math.min(dist/MJ,1),y:Math.sin(angle)*Math.min(dist/MJ,1)}:{x:0,y:0};}else{rA=true;const dx=t.clientX-(window.innerWidth-75),dy=t.clientY-(window.innerHeight-72);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);rk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;if(dist>8){tAim={x:Math.cos(angle),y:Math.sin(angle)};lastDir=tAim;player.angle=angle;}else tAim={x:0,y:0};}}if(!lA){tMove={x:0,y:0};lk.style.transform='translate(0,0)';}if(!rA){tAim={x:0,y:0};rk.style.transform='translate(0,0)';}e.preventDefault();}
@@ -626,7 +628,14 @@ function updateWalls(time){
 }
 
 function triggerLoss(){if(isOver)return;isOver=true; stopBGM();let c=0;const iv=setInterval(()=>{sfx('glitch');if(++c>=6){clearInterval(iv);setTimeout(()=>document.getElementById('goscreen').style.display='flex',400);}},180);}
-function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win);document.getElementById('wincode').textContent=C.code; const _ws=document.getElementById('winscreen'); _ws.querySelector('.winhdr').textContent=TEXT.winHeader; _ws.querySelector('.wincodelbl').textContent=TEXT.winCodeLabel; _ws.querySelector('.windesc').innerHTML=TEXT.winDesc.replace('\\n','<br>'); _ws.querySelector('#cbtn').textContent=TEXT.winBtn;setTimeout(()=>document.getElementById('winscreen').style.display='flex'; const scb=document.getElementById('show-code-btn'); if(scb){scb.style.display='block'; scb.onclick=()=>document.getElementById('winscreen').style.display='flex';},400);}
+function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win);
+  document.getElementById('wincode').textContent=C.code;
+  setTimeout(()=>{
+    document.getElementById('winscreen').style.display='flex';
+    const scb=document.getElementById('show-code-btn');
+    if(scb){scb.style.display='block';scb.onclick=()=>document.getElementById('winscreen').style.display='flex';}
+  },400);
+}
 
 function loop(time){
   if(!isActive||isOver)return;
@@ -699,6 +708,8 @@ function loop(time){
   if(!blink){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle+Math.PI/2);ctx.fillStyle='#111';ctx.strokeStyle='#d4cfc6';ctx.lineWidth=1.5;if(player.hp>=1){ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-5,6);ctx.lineTo(5,6);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=2){ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(11,8);ctx.lineTo(5,5);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=3){ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-11,8);ctx.lineTo(-5,5);ctx.closePath();ctx.fill();ctx.stroke();}ctx.restore();}
   requestAnimationFrame(loop);
 }
+
+
 
 
 </script>
