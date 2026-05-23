@@ -378,6 +378,9 @@ body::after{
 
 <script>
 
+
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -794,9 +797,13 @@ function triggerFail() {
 function triggerWin() {
   if (isOver) return; stopBGM();
   isOver = true;
-  sfx('win');
+  sfx('win'); vibe(VIB.win);
   document.getElementById('wincode').textContent = C.code;
-  setTimeout(() => document.getElementById('winscreen').style.display = 'flex', 500);
+  setTimeout(() => {
+    document.getElementById('winscreen').style.display = 'flex';
+    const _scb = document.getElementById('show-code-btn');
+    if (_scb) { _scb.style.display='block'; _scb.onclick=()=>document.getElementById('winscreen').style.display='flex'; }
+  }, 500);
 }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -814,6 +821,9 @@ document.getElementById('startbtn').addEventListener('click', async () => {
   nextSeq();
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
+
+
 
 </script>
 </body>
