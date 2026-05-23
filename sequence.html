@@ -381,6 +381,8 @@ body::after{
 
 
 
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -399,48 +401,29 @@ const VIB = {
 //  ✏️  טקסטים — ערוך כאן בלבד
 // ════════════════════════════════════════════════════════════
 const TEXT = {
-  // מסך פתיחה
   startEyebrow:   'TERMINAL // ',
-  instructions:   'צפה ברצף הצמתים בתשומת לב
-הרצף ייעלם — ואז חזור עליו
-פרוץ את כל הרצפים לפתיחת הקוד',
+  instructions:   'צפה ברצף הצמתים בתשומת לב<br>הרצף ייעלם — ואז חזור עליו<br>פרוץ את כל הרצפים לפתיחת הקוד',
   startBtn:       'START BREACH',
   startFooter:    'MEMORY ENCRYPTION DETECTED',
   statSeqLabel:   'SEQUENCES',
   statTimeLabel:  'TIME / SEQ',
-
-  // שלבים
   phaseWatch:     '— WATCH —',
   phaseRepeat:    '— REPEAT —',
   phaseInit:      'INITIALIZING',
   countdownLabel: 'MEMORIZE — NOW REPEAT',
-
-  // HUD
   hudSeqLabel:    'SEQ',
   hudScoreLabel:  'SCORE',
   hudProgLabel:   'SEQUENCES BREACHED',
-
-  // ניצחון
   winHeader:     'SYSTEM STATUS: BREACH COMPLETE',
   winCodeLabel:  'UNLOCK CODE',
-  winDesc:       'כל הרצפים פוענחו
-גישה לאחסון הפיזי אושרה',
+  winDesc:       'כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה',
   winBtn:        'RETURN',
-
-  // הפסד
   loseTitle:     'BREACH FAILED',
-  loseSub:       'אי-התאמה ברצף
-שחיתות קריטית בזיכרון',
+  loseSub:       'אי-התאמה ברצף<br>שחיתות קריטית בזיכרון',
   loseBtn:       'RETRY',
-
-  // הודעות
   msgBreachPlus: 'BREACH +1',
-
-  // כיוון מסך
   orientTitle:   'ROTATE TO PORTRAIT',
   orientSub:     '[ PORTRAIT MODE REQUIRED ]',
-
-  // פופאפים
   errorLines: [
     ['BREACH FAILED',   'אי-התאמה ברצף'],
     ['MEMORY ERROR',    'זיכרון שגוי'],
@@ -821,6 +804,8 @@ document.getElementById('startbtn').addEventListener('click', async () => {
   nextSeq();
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
+
 
 
 
