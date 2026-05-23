@@ -8,9 +8,9 @@
 <style>
 
 :root{
-  --bg:#1e1c18; --bg2:#2a2822; --text:#e8e3da; --mid:#9a9088;
-  --accent:#e8e3da; --border:rgba(232,227,218,0.2);
-  --panel:rgba(232,227,218,0.07); --red:#c43000;
+  --bg:#252219; --bg2:#2a2822; --text:#f0ebe0; --mid:#b8b2a8;
+  --accent:#f0ebe0; --border:rgba(240,235,224,0.35);
+  --panel:rgba(240,235,224,0.1); --red:#c43000;
   --cream:#d4cfc6; --warm:#b8b2a8; --darker:#0e0d0b;
 }
 body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -184,7 +184,7 @@ body::after{
   backdrop-filter:blur(8px);
 }
 .winbox{
-  border:2px solid #4a453a;background:#e8e3da;
+  border:2px solid #4a453a;background:#f0ebe0;
   padding:clamp(28px,7vw,42px);width:min(360px,88vw);
   text-align:center;
   box-shadow:8px 8px 0 #4a453a,0 0 40px rgba(74,69,58,0.1);
@@ -209,12 +209,8 @@ body::after{
   letter-spacing:10px;background:rgba(255,255,255,0.25);
 }
 .windesc{font-size:11px;color:#6a6458;letter-spacing:2px;line-height:2.2;margin-bottom:22px;}
-#cbtn{
-  background:none;border:2px solid #4a453a;color:#4a453a;
-  padding:11px 30px;cursor:pointer;font-family:inherit;
-  font-size:13px;letter-spacing:3px;transition:all .2s;
-}
-#cbtn:hover,#cbtn:active{background:#4a453a;color:#e8e3da;}
+
+
 
 /* ── GAME OVER ── */
 #goscreen{
@@ -242,7 +238,7 @@ body::after{
 
 
 body{touch-action:none;}
-#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(232,227,218,0.07);background:rgba(20,18,14,0.8);}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(232,227,218,0.07);background:rgba(20,18,14,0.92);}
 .huds{font-size:clamp(9px,2.2vw,11px);color:var(--mid);letter-spacing:2px;line-height:1.8;}
 .hudv{color:var(--text);}
 .hudtimer{font-size:clamp(20px,5vw,26px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
@@ -250,9 +246,9 @@ body{touch-action:none;}
 #boardwrap{display:flex;align-items:center;justify-content:center;flex:1;width:100%;padding-top:48px;padding-bottom:52px;}
 #board{position:relative;}
 .cell{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;border-radius:4px;transition:top .15s,left .15s;cursor:pointer;touch-action:none;}
-.cell.wall{background:rgba(232,227,218,0.14);border:2px solid rgba(232,227,218,0.5);color:rgba(232,227,218,0.75);font-size:11px;}
-.cell.empty-hole{background:rgba(232,227,218,0.03);border:1px solid rgba(232,227,218,0.1);}
-.cell.core{background:rgba(232,227,218,0.18);border:2.5px solid var(--text);color:var(--text);box-shadow:0 0 14px rgba(232,227,218,0.25),inset 0 0 6px rgba(232,227,218,0.08);}
+.cell.wall{background:rgba(240,235,224,0.22);border:2px solid rgba(240,235,224,0.75);color:rgba(240,235,224,0.95);font-size:11px;}
+.cell.empty-hole{background:rgba(240,235,224,0.05);border:1px solid rgba(240,235,224,0.18);}
+.cell.core{background:rgba(240,235,224,0.28);border:3px solid var(--text);color:var(--text);box-shadow:0 0 14px rgba(232,227,218,0.25),inset 0 0 6px rgba(232,227,218,0.08);}
 .cell.core.active{box-shadow:0 0 24px rgba(232,227,218,0.45),inset 0 0 12px rgba(232,227,218,0.15);}
 #exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:2px;color:rgba(232,227,218,0.7);pointer-events:none;text-shadow:0 0 8px rgba(232,227,218,0.35);}
 #pzdots{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
@@ -330,16 +326,16 @@ body{touch-action:none;}
 
 <div id="goscreen">
   <div class="go-title">CORE BLOCKED</div>
-  <div class="go-sub">החדירה נכשלה<br>המסלול ליציאה חסום</div>
-  <button id="rbtn">RETRY</button>
+  
+  <button id="rbtn">נסה שנית</button>
 </div>
 <div id="winscreen">
   <div class="winbox">
     <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
-    <div class="wincodelbl">UNLOCK CODE</div>
+    <div class="wincodelbl">קוד פתיחה</div>
     <div class="wincode" id="wincode">----</div>
     <div class="windesc">מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה</div>
-    <button id="cbtn" onclick="history.back()">RETURN</button>
+    
   </div>
 </div>
 
@@ -349,19 +345,21 @@ body{touch-action:none;}
 
 
 
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
 function vibe(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
 }
 // Patterns
 const VIB = {
-  hit:     [60],           // פגיעה קצרה
-  hurt:    [80, 40, 80],   // קיבלת פגיעה
-  warning: [30, 20, 30, 20, 30], // 10 שניות אחרונות
-  win:     [50, 30, 50, 30, 100, 30, 200], // ניצחון
-  lose:    [200, 50, 200], // הפסד
+  hit:     [100],
+  hurt:    [150, 50, 150],
+  warning: [80, 40, 80, 40, 80],
+  win:     [80, 40, 80, 40, 200, 40, 300],
+  lose:    [300, 80, 300],
 };
 // ──────────────────────────────────────────────────────────
 //  ✏️  טקסטים — ערוך כאן בלבד
@@ -380,12 +378,12 @@ const TEXT = {
   statusNext:     'CORE OUT — NEXT PUZZLE',
   exitLabel:      '▶ EXIT',
   winHeader:     'SYSTEM STATUS: CORE EXTRACTED',
-  winCodeLabel:  'UNLOCK CODE',
+  winCodeLabel:  'קוד פתיחה',
   winDesc:       'מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה',
   winBtn:        'RETURN',
   loseTitle:     'CORE BLOCKED',
-  loseSub:       'החדירה נכשלה<br>המסלול ליציאה חסום',
-  loseBtn:       'RETRY',
+  loseSub:       '',
+  loseBtn:       'נסה שנית',
   orientTitle:   'ROTATE TO PORTRAIT',
   orientSub:     '[ PORTRAIT MODE REQUIRED ]',
   errorLines: [
@@ -740,6 +738,8 @@ document.getElementById('startbtn').addEventListener('click', () => {
   activePuzzles = getPuzzles(); initPuzzle(); startTimer(); document.getElementById('statusmsg').textContent=TEXT.statusIdle;
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
+
 
 
 
