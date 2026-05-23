@@ -636,12 +636,11 @@ function showMsg(text, dur) {
 }
 
 function triggerFail() {
-  if (isOver) return; stopBGM();
-  showErrorPopups(() => document.getElementById('goscreen').style.display = 'flex'); return;
+  if (isOver) return;
   isOver = true; canInput = false;
   clearInterval(timerInterval);
-  sfx('wrong');
-  setTimeout(() => document.getElementById('goscreen').style.display = 'flex', 500);
+  stopBGM(); sfx('wrong');
+  showErrorPopups(() => document.getElementById('goscreen').style.display = 'flex');
 }
 function triggerWin() {
   if (isOver) return; stopBGM();
