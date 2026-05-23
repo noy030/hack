@@ -4,273 +4,308 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>YoRHa — Memory Breach</title>
+<title>HACK THE BOX — Memory Breach</title>
 <style>
+
+:root{
+  --bg:#1e1c18; --bg2:#2a2822; --text:#e8e3da; --mid:#9a9088;
+  --accent:#e8e3da; --border:rgba(232,227,218,0.2);
+  --panel:rgba(232,227,218,0.07); --red:#c43000;
+  --cream:#d4cfc6; --warm:#b8b2a8; --darker:#0e0d0b;
+}
+body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+@media screen and (orientation:landscape){#orient-warn{display:flex;}}
+
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
 
-/* ── DARK THEME ── */
-:root {
-  --bg:     #080806;
-  --bg2:    #111110;
-  --text:   #c8c2b5;
-  --mid:    #6a6458;
-  --accent: #c8c2b5;
-  --border: rgba(200,194,181,0.18);
-  --panel:  rgba(200,194,181,0.05);
-  --red:    #cc3300;
-}
+/* ══════════════════════════════════════════════
+   HACK THE BOX — Shared Design System
+   NieR Automata aesthetic, cream/warm palette
+   ══════════════════════════════════════════════ */
 
 *{margin:0;padding:0;box-sizing:border-box;}
-body {
+
+body{
   background:var(--bg);color:var(--text);
   font-family:'Share Tech Mono',monospace;
-  min-height:100vh;overflow:hidden;
   user-select:none;-webkit-user-select:none;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
 }
 
 /* Scanlines */
 body::after{
   content:'';position:fixed;top:0;left:0;width:100%;height:100%;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);
-  pointer-events:none;z-index:200;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:999;
 }
 
-/* ── START SCREEN ── */
-#startscreen {
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:var(--bg);z-index:100;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;padding:24px;
-}
-#startscreen::before,#startscreen::after{
-  content:'';position:absolute;width:44px;height:44px;
-  border-color:rgba(200,194,181,0.3);border-style:solid;
-}
-#startscreen::before{top:18px;left:18px;border-width:1px 0 0 1px;}
-#startscreen::after{bottom:18px;right:18px;border-width:0 1px 1px 0;}
-
-.ss-eye{font-size:10px;letter-spacing:6px;color:var(--mid);}
-.ss-div{width:150px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
-.ss-logo{
-  font-family:'Rajdhani',sans-serif;
-  font-size:clamp(26px,9vw,52px);
-  font-weight:700;letter-spacing:10px;color:var(--text);
-  position:relative;
-}
-.ss-logo::after{
-  content:attr(data-text);position:absolute;top:0;left:0;
-  color:var(--red);
-  clip-path:polygon(0 35%,100% 35%,100% 55%,0 55%);
-  transform:translate(3px,0);opacity:0.55;
-}
-.ss-brief{
-  font-size:11px;color:var(--mid);letter-spacing:2px;
-  text-align:center;line-height:2.4;
-  border:1px solid var(--border);padding:14px 24px;
-  background:var(--panel);position:relative;
-}
-.ss-brief::before{
-  content:'[ PROTOCOL BRIEFING ]';
-  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
-  font-size:9px;letter-spacing:3px;color:var(--mid);
-  background:var(--bg);padding:0 8px;
-}
-#startbtn {
-  padding:15px 50px;background:none;color:var(--text);
-  border:1px solid var(--border);
-  font-size:15px;font-family:inherit;cursor:pointer;letter-spacing:5px;
-  transition:all 0.2s;
-  clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
-}
-#startbtn:hover{background:var(--accent);color:var(--bg);}
-#startbtn:active{transform:scale(0.96);}
-.ss-foot{font-size:9px;letter-spacing:4px;color:var(--mid);}
-.ss-foot span{animation:blink 1.2s step-end infinite;}
-@keyframes blink{50%{opacity:0;}}
-
-/* ── GAME WRAP ── */
-#gamewrap {
-  width:100%;max-width:min(460px,95vw);
-  padding:clamp(10px,3vw,16px);display:none;
-  flex-direction:column;align-items:center;gap:14px;
-  position:relative;z-index:1;
-}
-
-/* HUD bar */
-.hudbar {
-  width:100%;display:flex;justify-content:space-between;align-items:center;
-  font-size:10px;color:var(--mid);letter-spacing:2px;
-  border-bottom:1px solid var(--border);padding-bottom:10px;
-}
-.hudval{color:var(--text);}
-
-/* Phase + timer row */
-.phase-row{
-  width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
-}
-.phase-col{flex:1;display:flex;flex-direction:column;gap:8px;}
-.phase-label{
-  font-size:10px;letter-spacing:4px;color:var(--mid);
-  text-align:center;height:16px;
-}
-
-/* Sequence dots (watch) */
-.seq-display{
-  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
-  min-height:34px;align-items:center;
-}
-.seq-node{
-  width:28px;height:28px;border-radius:50%;
-  border:2px solid transparent;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:bold;color:#fff;
-  transition:all 0.18s;
-}
-.seq-node.active{transform:scale(1.4);box-shadow:0 0 18px currentColor;}
-
-/* Hidden slots (input) */
-.seq-hidden{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:34px;align-items:center;}
-.seq-slot{
-  width:28px;height:28px;border-radius:50%;
-  border:1px solid rgba(200,194,181,0.2);
-  background:rgba(200,194,181,0.04);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:bold;transition:all 0.15s;
-}
-.seq-slot.correct{border-color:#5a8a4a;background:rgba(90,138,74,0.25);}
-.seq-slot.wrong-flash{border-color:var(--red);background:rgba(204,51,0,0.3);}
-
-/* Timer ring */
-.timerring{position:relative;width:72px;height:72px;flex-shrink:0;}
-.timerring svg{transform:rotate(-90deg);}
-.ring-bg{fill:none;stroke:rgba(200,194,181,0.08);stroke-width:4;}
-.ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke 0.3s;}
-.ring-fg.danger{stroke:var(--red);}
-.ring-txt{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-size:clamp(16px,5vw,22px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);
-}
-
-/* Node grid */
-.nodegrid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:clamp(5px,1.5vw,10px);width:100%;max-width:min(380px,92vw);
-}
-.nodebtn{
-  aspect-ratio:1;border-radius:6px;
-  border:1px solid rgba(200,194,181,0.1);
-  background:rgba(200,194,181,0.03);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;
-  color:rgba(200,194,181,0.25);
-  transition:all 0.12s;touch-action:manipulation;
-  min-height:clamp(44px,11vw,64px);
-}
-.nodebtn:active{transform:scale(0.9);}
-.nodebtn.disabled{pointer-events:none;opacity:0.25;}
-
-/* Progress */
-.progbar{width:100%;}
-.proglbl{font-size:9px;letter-spacing:3px;color:var(--mid);margin-bottom:4px;display:flex;justify-content:space-between;}
-.progtrack{height:4px;background:rgba(200,194,181,0.06);border:1px solid rgba(200,194,181,0.08);}
-.progfill{height:100%;background:var(--accent);transition:width 0.4s;}
-
-/* Countdown overlay */
-#cdoverlay{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(8,8,6,0.93);z-index:150;
-  display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
-}
-#cdnum{
-  font-family:'Rajdhani',sans-serif;font-size:min(110px,25vw);color:var(--text);
-  animation:cdpop 0.35s ease-out;
-}
-#cdlbl{font-size:11px;letter-spacing:6px;color:var(--mid);}
-@keyframes cdpop{from{transform:scale(1.8);opacity:0;}to{transform:scale(1);opacity:1;}}
-
-/* Message flash */
-#msg{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  background:rgba(8,8,6,0.96);border:1px solid var(--accent);
-  padding:16px 30px;text-align:center;font-size:16px;letter-spacing:4px;
-  color:var(--text);z-index:160;pointer-events:none;display:none;
-}
-
-/* Game over */
-#goscreen{
-  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(4,4,3,0.94);z-index:300;backdrop-filter:blur(4px);
-  flex-direction:column;align-items:center;justify-content:center;gap:16px;
-}
-.go-title{font-family:'Rajdhani',sans-serif;font-size:min(40px,10vw);letter-spacing:6px;color:var(--red);}
-.go-sub{font-size:11px;letter-spacing:3px;color:var(--mid);line-height:2.5;text-align:center;}
-#rbtn{padding:12px 34px;background:none;color:var(--text);border:1px solid rgba(200,194,181,0.25);font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;opacity:0;animation:fi 0.5s 0.4s forwards;}
-@keyframes fi{to{opacity:1;}}
-
-/* Win */
-#winscreen{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(200,194,181,0.94);z-index:400;
-  display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);
-}
-.winbox{border:2px solid #4a453a;background:#dad4c8;padding:min(38px,8vw);width:min(370px,88vw);text-align:center;box-shadow:8px 8px 0 #4a453a;animation:su 0.4s ease-out;font-family:'Share Tech Mono',monospace;position:relative;}
-.winbox::before,.winbox::after{content:'';position:absolute;width:14px;height:14px;border-color:#4a453a;border-style:solid;}
-.winbox::before{top:0;left:0;border-width:2px 0 0 2px;}
-.winbox::after{bottom:0;right:0;border-width:0 2px 2px 0;}
-.winhdr{background:#4a453a;color:#dad4c8;margin:calc(min(38px,8vw)*-1) calc(min(38px,8vw)*-1) 20px;padding:11px;font-size:10px;letter-spacing:5px;}
-.wincodelbl{font-size:9px;letter-spacing:5px;color:#7a7468;margin-bottom:5px;}
-.wincode{font-size:min(46px,12vw);margin:6px 0 20px;padding:13px;border:2px dashed #4a453a;color:#4a453a;font-weight:bold;letter-spacing:10px;background:rgba(255,255,255,0.2);}
-.windesc{font-size:10px;color:#7a7468;letter-spacing:2px;line-height:2.2;margin-bottom:20px;}
-#cbtn{background:none;border:2px solid #4a453a;color:#4a453a;padding:10px 28px;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:4px;transition:all 0.2s;}
-#cbtn:hover{background:#4a453a;color:#dad4c8;}
-@keyframes su{from{transform:translateY(28px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-
-/* Orientation warning */
-#orient-warn {
+/* ── ORIENTATION WARNING ── */
+#orient-warn{
   display:none;position:fixed;top:0;left:0;width:100%;height:100%;
   background:var(--bg);z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
   gap:16px;text-align:center;padding:30px;
 }
-@media screen and (orientation:landscape) {
-  #orient-warn { display:flex; }
+.ow-phone{font-size:52px;}
+.ow-anim-land{animation:spin-land 2s ease-in-out infinite;}
+.ow-anim-port{animation:spin-port 2s ease-in-out infinite;}
+@keyframes spin-land{0%,100%{transform:rotate(0deg);}50%{transform:rotate(90deg);}}
+@keyframes spin-port{0%,100%{transform:rotate(90deg);}50%{transform:rotate(0deg);}}
+.ow-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(18px,5vw,26px);letter-spacing:5px;
+  color:var(--text);
 }
-.ow-icon { font-size:48px; animation: rotate-hint 2s ease-in-out infinite; }
-@keyframes rotate-hint {
-  0%,100% { transform: rotate(0deg); }
-  50%      { transform: rotate(90deg); }
+.ow-sub{font-size:10px;letter-spacing:4px;color:var(--mid);}
+
+/* ── START SCREEN ── */
+#startscreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--bg);z-index:2000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:clamp(14px,3.5vh,22px);
+  padding:clamp(20px,5vw,32px);
 }
-.ow-title { font-family:'Rajdhani',sans-serif; font-size:clamp(18px,5vw,28px); letter-spacing:5px; color:var(--text); }
-.ow-sub   { font-size:11px; letter-spacing:3px; color:var(--mid); }
-.ow-line  { width:100px; height:1px; background:linear-gradient(90deg,transparent,var(--mid),transparent); }
+
+/* Subtle bg texture */
+#startscreen::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:100%;
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(74,69,58,0.06) 49.5%,rgba(74,69,58,0.06) 50.5%,transparent 50.5%),
+    linear-gradient(0deg,transparent 49.5%,rgba(74,69,58,0.04) 49.5%,rgba(74,69,58,0.04) 50.5%,transparent 50.5%);
+  pointer-events:none;
+}
+
+/* Corner decorations */
+#startscreen::after{content:none;}
+.ss-corner{
+  position:absolute;width:26px;height:26px;
+  border-color:var(--accent);border-style:solid;opacity:0.4;
+}
+.ss-corner.tl{top:18px;left:18px;border-width:2px 0 0 2px;}
+.ss-corner.tr{top:18px;right:18px;border-width:2px 2px 0 0;}
+.ss-corner.bl{bottom:18px;left:18px;border-width:0 0 2px 2px;}
+.ss-corner.br{bottom:18px;right:18px;border-width:0 2px 2px 0;}
+
+/* Terminal ID */
+.ss-eyebrow{
+  font-size:10px;letter-spacing:6px;color:var(--mid);
+  text-transform:uppercase;
+}
+
+/* Main title */
+.ss-title-main{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(38px,13vw,68px);
+  font-weight:700;
+  letter-spacing:clamp(4px,2.5vw,12px);
+  color:var(--accent);
+  line-height:1;position:relative;text-align:center;
+}
+.ss-title-main::after{
+  content:attr(data-text);
+  position:absolute;top:0;left:0;width:100%;
+  color:var(--red);
+  clip-path:polygon(0 40%,100% 40%,100% 57%,0 57%);
+  transform:translate(3px,0);opacity:0.42;
+  pointer-events:none;
+}
+
+/* Divider with diamond */
+.ss-divider{
+  display:flex;align-items:center;gap:10px;
+  width:clamp(160px,50%,260px);
+}
+.ss-div-line{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent));
+  opacity:0.3;
+}
+.ss-div-line.r{background:linear-gradient(90deg,var(--accent),transparent);}
+.ss-div-diamond{
+  width:6px;height:6px;
+  border:1.5px solid var(--accent);
+  transform:rotate(45deg);opacity:0.5;
+}
+
+/* Game subtitle */
+.ss-subtitle{
+  font-size:clamp(10px,2.5vw,12px);
+  letter-spacing:5px;color:var(--mid);
+  text-transform:uppercase;
+}
+
+/* Instructions box */
+.ss-brief{
+  font-size:clamp(11px,2.8vw,13px);
+  color:var(--mid);letter-spacing:2px;
+  text-align:center;line-height:2.3;
+  border:1px solid var(--border);
+  padding:clamp(12px,3vw,18px) clamp(16px,4vw,28px);
+  background:var(--panel);
+  position:relative;
+  width:min(340px,88%);
+}
+.ss-brief::before{
+  content:'[ הוראות ]';
+  position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+  font-size:9px;letter-spacing:3px;color:var(--mid);
+  background:var(--bg);padding:0 8px;
+}
+
+/* Start button */
+.ss-btn{
+  padding:clamp(13px,3vh,17px) clamp(42px,11vw,58px);
+  background:var(--accent);color:var(--bg);
+  border:none;
+  font-size:clamp(13px,3.5vw,16px);
+  font-family:inherit;cursor:pointer;letter-spacing:4px;
+  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+  transition:transform .1s,filter .15s;
+}
+.ss-btn:active{transform:scale(0.96);}
+.ss-btn.outline{
+  background:none;color:var(--accent);
+  border:1.5px solid var(--accent);
+}
+.ss-btn.outline:active{background:var(--accent);color:var(--bg);}
+
+/* Footer blink */
+.ss-foot{font-size:9px;letter-spacing:4px;color:var(--mid);}
+.ss-foot span{animation:blink 1.2s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* ── WIN SCREEN ── */
+#winscreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(212,207,198,0.96);z-index:4000;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+}
+.winbox{
+  border:2px solid #4a453a;background:#e8e3da;
+  padding:clamp(28px,7vw,42px);width:min(360px,88vw);
+  text-align:center;
+  box-shadow:8px 8px 0 #4a453a,0 0 40px rgba(74,69,58,0.1);
+  animation:su .4s ease-out;
+  font-family:'Share Tech Mono',monospace;position:relative;
+}
+.winbox::before,.winbox::after{
+  content:'';position:absolute;width:18px;height:18px;
+  border-color:#4a453a;border-style:solid;
+}
+.winbox::before{top:-1px;left:-1px;border-width:3px 0 0 3px;}
+.winbox::after{bottom:-1px;right:-1px;border-width:0 3px 3px 0;}
+.winhdr{
+  background:#4a453a;color:#e8e3da;
+  margin:calc(clamp(28px,7vw,42px)*-1) calc(clamp(28px,7vw,42px)*-1) 22px;
+  padding:12px;font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;
+}
+.wincodelbl{font-size:10px;letter-spacing:5px;color:#7a7468;margin-bottom:6px;}
+.wincode{
+  font-size:clamp(36px,10vw,52px);margin:6px 0 20px;padding:14px;
+  border:2px dashed #4a453a;color:#4a453a;font-weight:bold;
+  letter-spacing:10px;background:rgba(255,255,255,0.25);
+}
+.windesc{font-size:11px;color:#6a6458;letter-spacing:2px;line-height:2.2;margin-bottom:22px;}
+#cbtn{
+  background:none;border:2px solid #4a453a;color:#4a453a;
+  padding:11px 30px;cursor:pointer;font-family:inherit;
+  font-size:13px;letter-spacing:3px;transition:all .2s;
+}
+#cbtn:hover,#cbtn:active{background:#4a453a;color:#e8e3da;}
+
+/* ── GAME OVER ── */
+#goscreen{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(20,18,14,0.92);z-index:3000;
+  backdrop-filter:blur(5px);
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.go-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(30px,9vw,46px);letter-spacing:6px;color:var(--red);
+}
+.go-sub{font-size:12px;letter-spacing:3px;color:var(--mid);line-height:2.5;text-align:center;}
+#rbtn{
+  padding:13px 36px;background:none;color:var(--text);
+  border:1px solid rgba(212,207,198,0.3);
+  font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;
+  opacity:0;animation:fi .5s .4s forwards;transition:all .2s;
+}
+#rbtn:hover{background:rgba(212,207,198,0.08);}
+
+@keyframes fi{to{opacity:1;}}
+@keyframes pulse{50%{opacity:.25;}}
+@keyframes su{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+
+#gamewrap{width:100%;max-width:min(420px,96vw);padding:clamp(10px,3vw,16px);display:none;flex-direction:column;align-items:center;gap:clamp(10px,2.5vh,16px);position:relative;z-index:1;}
+.hudbar{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:clamp(9px,2.5vw,11px);color:var(--mid);letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:8px;}
+.hudval{color:var(--text);}
+.phase-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.phase-col{flex:1;display:flex;flex-direction:column;gap:8px;}
+.phase-label{font-size:clamp(9px,2.5vw,11px);letter-spacing:4px;color:var(--mid);text-align:center;height:16px;}
+.seq-display{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:32px;align-items:center;}
+.seq-node{width:clamp(24px,7vw,30px);height:clamp(24px,7vw,30px);border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2.5vw,12px);font-weight:bold;color:#fff;transition:all .18s;}
+.seq-node.active{transform:scale(1.35);box-shadow:0 0 16px currentColor;}
+.seq-hidden{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:32px;align-items:center;}
+.seq-slot{width:clamp(24px,7vw,30px);height:clamp(24px,7vw,30px);border-radius:50%;border:1px solid rgba(232,227,218,0.2);background:rgba(232,227,218,0.05);display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2.5vw,12px);font-weight:bold;transition:all .15s;}
+.seq-slot.correct{border-color:#5a8a4a;background:rgba(90,138,74,0.25);}
+.seq-slot.wrong-flash{border-color:var(--red);background:rgba(196,48,0,0.3);}
+.timerring{position:relative;width:clamp(58px,15vw,74px);height:clamp(58px,15vw,74px);flex-shrink:0;}
+.timerring svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(232,227,218,0.1);stroke-width:4;}
+.ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .3s;}
+.ring-fg.danger{stroke:var(--red);}
+.ring-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(15px,4.5vw,20px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
+.nodegrid{display:grid;gap:clamp(5px,1.5vw,9px);width:100%;max-width:min(360px,92vw);}
+.nodebtn{aspect-ratio:1;border-radius:5px;border:1px solid rgba(232,227,218,0.12);background:rgba(232,227,218,0.05);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;color:rgba(232,227,218,0.28);transition:all .12s;touch-action:manipulation;min-height:clamp(44px,12vw,60px);}
+.nodebtn:active{transform:scale(0.9);}
+.nodebtn.disabled{pointer-events:none;opacity:0.2;}
+.progbar{width:100%;}
+.proglbl{font-size:9px;letter-spacing:3px;color:var(--mid);margin-bottom:4px;display:flex;justify-content:space-between;}
+.progtrack{height:4px;background:rgba(232,227,218,0.07);border:1px solid rgba(232,227,218,0.1);}
+.progfill{height:100%;background:var(--accent);transition:width .4s;}
+#cdoverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(20,18,14,0.94);z-index:150;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+#cdnum{font-family:'Rajdhani',sans-serif;font-size:clamp(80px,22vw,110px);color:var(--text);animation:cdpop .35s ease-out;}
+#cdlbl{font-size:11px;letter-spacing:6px;color:var(--mid);}
+@keyframes cdpop{from{transform:scale(1.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+#msg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(20,18,14,0.97);border:1px solid var(--accent);padding:16px 28px;text-align:center;font-size:15px;letter-spacing:4px;color:var(--text);z-index:160;pointer-events:none;display:none;}
 
 </style>
 </head>
 <body>
 
-
 <div id="orient-warn">
-  <div class="ow-line"></div>
-  <div class="ow-icon">📱</div>
-  <div class="ow-title">HOLD DEVICE UPRIGHT</div>
+  <span class="ow-phone ow-anim-port">📱</span>
+  <div class="ow-title">ROTATE TO PORTRAIT</div>
   <div class="ow-sub">[ PORTRAIT MODE REQUIRED ]</div>
-  <div class="ow-sub">ROTATE YOUR DEVICE TO CONTINUE</div>
-  <div class="ow-line"></div>
 </div>
 
 <div id="startscreen">
-  <div class="ss-eye" id="ss-id">TERMINAL — ---</div>
-  <div class="ss-div"></div>
-  <div class="ss-logo" id="ss-title" data-text="MEMORY BREACH">MEMORY BREACH</div>
-  <div class="ss-brief">
-    WATCH THE NODE SEQUENCE<br>
-    IT DISAPPEARS — THEN YOU REPEAT IT<br>
-    BREACH ALL SEQUENCES TO UNLOCK
+  <div class="ss-corner tl"></div><div class="ss-corner tr"></div>
+  <div class="ss-corner bl"></div><div class="ss-corner br"></div>
+
+  <div class="ss-eyebrow" id="ss-id">TERMINAL // ---</div>
+
+  <div class="ss-title-main" id="ss-title" data-text="HACK THE BOX">HACK THE BOX</div>
+
+  <div class="ss-divider">
+    <div class="ss-div-line"></div>
+    <div class="ss-div-diamond"></div>
+    <div class="ss-div-line r"></div>
   </div>
-  <button id="startbtn">INITIATE BREACH</button>
+
+  <div class="ss-subtitle">MEMORY BREACH</div>
+
+  <div class="ss-brief">
+    צפה ברצף הצמתים בתשומת לב<br>הרצף ייעלם — ואז חזור עליו<br>פרוץ את כל הרצפים לפתיחת הקוד
+  </div>
+
+  <button class="ss-btn outline" id="startbtn">START BREACH</button>
+
   <div class="ss-foot">[ MEMORY ENCRYPTION DETECTED <span>■</span> ]</div>
 </div>
 
@@ -280,7 +315,6 @@ body::after{
     <span>SEQ <span class="hudval" id="seqnum">1</span>/<span class="hudval" id="seqtotal">3</span></span>
     <span>SCORE <span class="hudval" id="score">0</span></span>
   </div>
-
   <div class="phase-row">
     <div class="phase-col">
       <div class="phase-label" id="phaselabel">INITIALIZING</div>
@@ -288,47 +322,94 @@ body::after{
       <div class="seq-hidden" id="seqhidden" style="display:none;"></div>
     </div>
     <div class="timerring">
-      <svg width="72" height="72" viewBox="0 0 72 72">
-        <circle class="ring-bg" cx="36" cy="36" r="30"/>
-        <circle class="ring-fg" id="ringfg" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="0"/>
+      <svg width="70" height="70" viewBox="0 0 70 70">
+        <circle class="ring-bg" cx="35" cy="35" r="29"/>
+        <circle class="ring-fg" id="ringfg" cx="35" cy="35" r="29" stroke-dasharray="182.2" stroke-dashoffset="0"/>
       </svg>
       <div class="ring-txt" id="timertxt">--</div>
     </div>
   </div>
-
   <div class="nodegrid" id="nodegrid"></div>
-
   <div class="progbar">
     <div class="proglbl"><span>SEQUENCES BREACHED</span><span id="proglbl">0 / 3</span></div>
     <div class="progtrack"><div class="progfill" id="progfill" style="width:0%"></div></div>
   </div>
 </div>
 
-<div id="cdoverlay">
-  <div id="cdnum">3</div>
-  <div id="cdlbl">MEMORIZE — NOW REPEAT</div>
-</div>
-
+<div id="cdoverlay"><div id="cdnum">3</div><div id="cdlbl">MEMORIZE — NOW REPEAT</div></div>
 <div id="msg"></div>
 
 <div id="goscreen">
   <div class="go-title">BREACH FAILED</div>
-  <div class="go-sub">SEQUENCE MISMATCH<br>MEMORY CORRUPTION CRITICAL</div>
-  <button id="rbtn">RETRY INFILTRATION</button>
+  <div class="go-sub">אי-התאמה ברצף<br>שחיתות קריטית בזיכרון</div>
+  <button id="rbtn">RETRY</button>
 </div>
-
 <div id="winscreen">
   <div class="winbox">
     <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
     <div class="wincodelbl">UNLOCK CODE</div>
     <div class="wincode" id="wincode">----</div>
-    <div class="windesc">ALL SEQUENCES DECRYPTED<br>ACCESS GRANTED TO PHYSICAL STORAGE</div>
-    <button id="cbtn" onclick="history.back()">RETURN TO NETWORK</button>
+    <div class="windesc">כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה</div>
+    <button id="cbtn" onclick="history.back()">RETURN</button>
   </div>
 </div>
 
 <script>
+// ════════════════════════════════════════════════════════════
+//  ✏️  טקסטים — ערוך כאן בלבד
+// ════════════════════════════════════════════════════════════
+const TEXT = {
+  // מסך פתיחה
+  startEyebrow:   'TERMINAL // ',
+  instructions:   'צפה ברצף הצמתים בתשומת לב
+הרצף ייעלם — ואז חזור עליו
+פרוץ את כל הרצפים לפתיחת הקוד',
+  startBtn:       'START BREACH',
+  startFooter:    'MEMORY ENCRYPTION DETECTED',
+  statSeqLabel:   'SEQUENCES',
+  statTimeLabel:  'TIME / SEQ',
 
+  // שלבים
+  phaseWatch:     '— WATCH —',
+  phaseRepeat:    '— REPEAT —',
+  phaseInit:      'INITIALIZING',
+  countdownLabel: 'MEMORIZE — NOW REPEAT',
+
+  // HUD
+  hudSeqLabel:    'SEQ',
+  hudScoreLabel:  'SCORE',
+  hudProgLabel:   'SEQUENCES BREACHED',
+
+  // ניצחון
+  winHeader:     'SYSTEM STATUS: BREACH COMPLETE',
+  winCodeLabel:  'UNLOCK CODE',
+  winDesc:       'כל הרצפים פוענחו
+גישה לאחסון הפיזי אושרה',
+  winBtn:        'RETURN',
+
+  // הפסד
+  loseTitle:     'BREACH FAILED',
+  loseSub:       'אי-התאמה ברצף
+שחיתות קריטית בזיכרון',
+  loseBtn:       'RETRY',
+
+  // הודעות
+  msgBreachPlus: 'BREACH +1',
+
+  // כיוון מסך
+  orientTitle:   'ROTATE TO PORTRAIT',
+  orientSub:     '[ PORTRAIT MODE REQUIRED ]',
+
+  // פופאפים
+  errorLines: [
+    ['BREACH FAILED',   'אי-התאמה ברצף'],
+    ['MEMORY ERROR',    'זיכרון שגוי'],
+    ['SYSTEM FAILURE',  'הרצף נכשל'],
+    ['SIGNAL LOST',     'מתחבר מחדש...'],
+    ['ACCESS DENIED',   'הניסיון נכשל'],
+  ],
+};
+// ════════════════════════════════════════════════════════════
 function spawnNierPopup(header, body, sub, color, duration) {
   const div = document.createElement('div');
   div.style.cssText = `position:fixed;left:${8+Math.random()*45}%;top:${15+Math.random()*45}%;background:#dad4c8;border:2px solid ${color};font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);padding:10px 14px;box-shadow:4px 4px 0 rgba(0,0,0,0.15);z-index:2500;pointer-events:none;animation:nie-pop 0.15s ease-out;max-width:min(260px,60vw);`;
@@ -338,7 +419,7 @@ function spawnNierPopup(header, body, sub, color, duration) {
   setTimeout(()=>div.remove(), duration);
 }
 function showErrorPopups(cb) {
-  const lines=[['CRITICAL ERROR','OPERATIVE TERMINATED'],['SYSTEM FAILURE','YOU LOST A LIFE POINT'],['BREACH FAILED','MISSION UNSUCCESSFUL'],['MEMORY CORRUPT','TACTICAL LINK SEVERED'],['SIGNAL LOST','RECONNECTING...'],['CORE INTACT','ENEMY DEFENSE HELD'],['ACCESS DENIED','CLEARANCE REVOKED']];
+  const lines=[...TEXT.errorLines,['CRITICAL ERROR','OPERATIVE TERMINATED'],['SYSTEM FAILURE','YOU LOST A LIFE POINT'],['BREACH FAILED','MISSION UNSUCCESSFUL'],['MEMORY CORRUPT','TACTICAL LINK SEVERED'],['SIGNAL LOST','RECONNECTING...'],['CORE INTACT','ENEMY DEFENSE HELD'],['ACCESS DENIED','CLEARANCE REVOKED']];
   let i=0;
   const iv=setInterval(()=>{
     const[hdr,msg]=lines[i%lines.length];
@@ -421,7 +502,7 @@ const scoreEl   = document.getElementById('score');
 const msgEl     = document.getElementById('msg');
 const cdOverlay = document.getElementById('cdoverlay');
 const cdNum     = document.getElementById('cdnum');
-const CIRC      = 188.5;
+const CIRC      = 182.2;
 
 let curSeq=[], playerInput=[], seqIdx=0;
 let canInput=false, isOver=false, seqsDone=0, timerInterval, tl=C.timePerSeq;
@@ -647,7 +728,7 @@ function onTap(id) {
       triggerWin();
       return;
     }
-    showMsg('BREACH +1', 700);
+    showMsg(TEXT.msgBreachPlus, 700);
     setTimeout(nextSeq, 1400);
   }
 }
@@ -681,6 +762,11 @@ function triggerWin() {
 }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Update stats on start screen
+const statSeqs = document.getElementById('stat-seqs');
+const statTime = document.getElementById('stat-time');
+if(statSeqs) statSeqs.textContent = C.sequences;
+if(statTime) statTime.textContent = C.timePerSeq + 's';
 document.getElementById('startbtn').addEventListener('click', async () => {
   if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
   document.getElementById('startscreen').style.display = 'none';
