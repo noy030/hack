@@ -6,383 +6,414 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>YoRHa — Shooter Protocol</title>
+<title>HACK THE BOX — Shooter</title>
 <style>
+
+:root{
+  --bg:#d4cfc6; --bg2:#e8e3da; --text:#2a2520; --mid:#6e6860;
+  --accent:#4a453a; --border:rgba(74,69,58,0.28);
+  --panel:rgba(212,207,198,0.75); --red:#c43000;
+  --cream:#d4cfc6; --warm:#b8b2a8; --darker:#0e0d0b;
+}
+body{touch-action:none;cursor:crosshair;}
+canvas{display:block;position:fixed;top:0;left:0;}
+
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
 
-/* ── LIGHT THEME (NieR beige) ── */
-:root {
-  --bg:     #c8c2b5;
-  --bg2:    #dad4c8;
-  --text:   #2a2520;
-  --mid:    #5a554a;
-  --accent: #4a453a;
-  --border: rgba(74,69,58,0.3);
-  --panel:  rgba(200,194,181,0.8);
-  --red:    #cc3300;
-  --bg2:    #dad4c8;
-  --text:   #2a2520;
-  --white:  #f0ebe0;
-}
+/* ══════════════════════════════════════════════
+   HACK THE BOX — Shared Design System
+   NieR Automata aesthetic, cream/warm palette
+   ══════════════════════════════════════════════ */
 
 *{margin:0;padding:0;box-sizing:border-box;}
 
-body {
-  background: var(--bg);
-  overflow: hidden;
-  touch-action: none;
-  font-family: 'Share Tech Mono', monospace;
-  cursor: crosshair;
-  user-select: none;
-  -webkit-user-select: none;
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  user-select:none;-webkit-user-select:none;
+  overflow:hidden;
 }
 
-/* Scanlines overlay */
-body::after {
-  content:'';
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background: repeating-linear-gradient(
-    0deg, transparent, transparent 3px,
-    rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px
-  );
+/* Scanlines */
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px);
   pointer-events:none;z-index:999;
 }
 
-canvas{display:block;position:fixed;top:0;left:0;}
-
 /* ── ORIENTATION WARNING ── */
-#ow {
+#orient-warn{
   display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-  background:var(--bg);color:var(--accent);z-index:9999;
+  background:var(--bg);z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;gap:14px;padding:30px;font-family:'Share Tech Mono',monospace;
+  gap:16px;text-align:center;padding:30px;
 }
-@media screen and (orientation:portrait){#ow{display:flex;}}
-.ow-icon2 { font-size:48px; animation: rot2 2s ease-in-out infinite; }
-@keyframes rot2 { 0%,100%{transform:rotate(90deg);} 50%{transform:rotate(0deg);} }
-.ow-title{font-family:'Rajdhani',sans-serif;font-size:28px;letter-spacing:6px;color:#c8c2b5;}
-.ow-sub{font-size:12px;letter-spacing:4px;color:#5a554a;}
-.ow-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,#5a554a,transparent);}
+.ow-phone{font-size:52px;}
+.ow-anim-land{animation:spin-land 2s ease-in-out infinite;}
+.ow-anim-port{animation:spin-port 2s ease-in-out infinite;}
+@keyframes spin-land{0%,100%{transform:rotate(0deg);}50%{transform:rotate(90deg);}}
+@keyframes spin-port{0%,100%{transform:rotate(90deg);}50%{transform:rotate(0deg);}}
+.ow-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(18px,5vw,26px);letter-spacing:5px;
+  color:var(--text);
+}
+.ow-sub{font-size:10px;letter-spacing:4px;color:var(--mid);}
 
 /* ── START SCREEN ── */
-#ss {
+#startscreen{
   position:fixed;top:0;left:0;width:100%;height:100%;
   background:var(--bg);z-index:2000;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  padding:20px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:clamp(14px,3.5vh,22px);
+  padding:clamp(20px,5vw,32px);
+}
+
+/* Subtle bg texture */
+#startscreen::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:100%;
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(74,69,58,0.06) 49.5%,rgba(74,69,58,0.06) 50.5%,transparent 50.5%),
+    linear-gradient(0deg,transparent 49.5%,rgba(74,69,58,0.04) 49.5%,rgba(74,69,58,0.04) 50.5%,transparent 50.5%);
+  pointer-events:none;
 }
 
 /* Corner decorations */
-#ss::before, #ss::after {
-  content:'';position:absolute;width:40px;height:40px;
+#startscreen::after{content:none;}
+.ss-corner{
+  position:absolute;width:26px;height:26px;
   border-color:var(--accent);border-style:solid;opacity:0.4;
 }
-#ss::before{top:20px;left:20px;border-width:2px 0 0 2px;}
-#ss::after{bottom:20px;right:20px;border-width:0 2px 2px 0;}
+.ss-corner.tl{top:18px;left:18px;border-width:2px 0 0 2px;}
+.ss-corner.tr{top:18px;right:18px;border-width:2px 2px 0 0;}
+.ss-corner.bl{bottom:18px;left:18px;border-width:0 0 2px 2px;}
+.ss-corner.br{bottom:18px;right:18px;border-width:0 2px 2px 0;}
 
-.ss-eyebrow {
+/* Terminal ID */
+.ss-eyebrow{
   font-size:10px;letter-spacing:6px;color:var(--mid);
   text-transform:uppercase;
 }
-.ss-divider {
-  width:160px;height:1px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-}
-.ss-logo {
+
+/* Main title */
+.ss-title-main{
   font-family:'Rajdhani',sans-serif;
-  font-size:clamp(22px,8vw,52px);
-  font-weight:700;letter-spacing:10px;
-  color:var(--accent);text-transform:uppercase;
-  position:relative;
+  font-size:clamp(38px,13vw,68px);
+  font-weight:700;
+  letter-spacing:clamp(4px,2.5vw,12px);
+  color:var(--accent);
+  line-height:1;position:relative;text-align:center;
 }
-.ss-logo::after {
+.ss-title-main::after{
   content:attr(data-text);
-  position:absolute;top:0;left:0;
+  position:absolute;top:0;left:0;width:100%;
   color:var(--red);
-  clip-path:polygon(0 40%,100% 40%,100% 55%,0 55%);
-  transform:translate(3px,0);opacity:0.5;
+  clip-path:polygon(0 40%,100% 40%,100% 57%,0 57%);
+  transform:translate(3px,0);opacity:0.42;
+  pointer-events:none;
 }
-.ss-mode-badge {
-  font-size:10px;letter-spacing:4px;color:var(--mid);
-  border:1px solid var(--border);
-  padding:5px 16px;background:rgba(74,69,58,0.06);
+
+/* Divider with diamond */
+.ss-divider{
+  display:flex;align-items:center;gap:10px;
+  width:clamp(160px,50%,260px);
 }
-.ss-instructions {
-  font-size:11px;color:var(--mid);letter-spacing:2px;
-  text-align:center;line-height:2.4;
+.ss-div-line{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent));
+  opacity:0.3;
+}
+.ss-div-line.r{background:linear-gradient(90deg,var(--accent),transparent);}
+.ss-div-diamond{
+  width:6px;height:6px;
+  border:1.5px solid var(--accent);
+  transform:rotate(45deg);opacity:0.5;
+}
+
+/* Game subtitle */
+.ss-subtitle{
+  font-size:clamp(10px,2.5vw,12px);
+  letter-spacing:5px;color:var(--mid);
+  text-transform:uppercase;
+}
+
+/* Instructions box */
+.ss-brief{
+  font-size:clamp(11px,2.8vw,13px);
+  color:var(--mid);letter-spacing:2px;
+  text-align:center;line-height:2.3;
   border:1px solid var(--border);
-  padding:14px 24px;
-  background:rgba(74,69,58,0.04);
+  padding:clamp(12px,3vw,18px) clamp(16px,4vw,28px);
+  background:var(--panel);
   position:relative;
+  width:min(340px,88%);
 }
-.ss-instructions::before {
-  content:'[ TACTICAL BRIEFING ]';
-  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+.ss-brief::before{
+  content:'[ הוראות ]';
+  position:absolute;top:-9px;left:50%;transform:translateX(-50%);
   font-size:9px;letter-spacing:3px;color:var(--mid);
   background:var(--bg);padding:0 8px;
 }
 
-#sb {
-  padding:16px 52px;
+/* Start button */
+.ss-btn{
+  padding:clamp(13px,3vh,17px) clamp(42px,11vw,58px);
   background:var(--accent);color:var(--bg);
   border:none;
-  font-size:16px;font-family:inherit;
-  cursor:pointer;letter-spacing:4px;
+  font-size:clamp(13px,3.5vw,16px);
+  font-family:inherit;cursor:pointer;letter-spacing:4px;
   clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
-  transition:transform 0.1s,filter 0.2s;
-  position:relative;
+  transition:transform .1s,filter .15s;
 }
-#sb:active{transform:scale(0.96);}
-#sb::after{
-  content:'';position:absolute;bottom:0;left:10px;right:10px;height:2px;
-  background:rgba(200,194,181,0.3);
+.ss-btn:active{transform:scale(0.96);}
+.ss-btn.outline{
+  background:none;color:var(--accent);
+  border:1.5px solid var(--accent);
 }
-.ss-footer{font-size:9px;letter-spacing:4px;color:var(--mid);opacity:0.7;}
-.ss-footer span{animation:blink 1.2s step-end infinite;}
+.ss-btn.outline:active{background:var(--accent);color:var(--bg);}
+
+/* Footer blink */
+.ss-foot{font-size:9px;letter-spacing:4px;color:var(--mid);}
+.ss-foot span{animation:blink 1.2s step-end infinite;}
 @keyframes blink{50%{opacity:0;}}
 
-/* ── HUD ── */
-#hud {
-  position:fixed;top:0;left:0;right:0;
-  display:flex;justify-content:space-between;align-items:flex-start;
-  padding:10px 14px;pointer-events:none;z-index:50;
-}
-.hpanel {
-  font-size:10px;color:var(--accent);line-height:1.9;
-  background:var(--panel);
-  padding:6px 10px;border-left:3px solid var(--accent);
-  backdrop-filter:blur(2px);
-}
-.hpanel.right{border-left:none;border-right:3px solid var(--accent);text-align:right;}
-.htimer{font-size:26px;font-family:'Rajdhani',sans-serif;font-weight:700;line-height:1;}
-.htimer.danger{color:var(--red);animation:pulse .5s infinite;}
-@keyframes pulse{50%{opacity:.25;}}
-.hdots{display:flex;gap:5px;margin-top:3px;}
-.hdot{width:10px;height:10px;border-radius:50%;background:var(--accent);transition:all 0.3s;}
-.hdot.e{background:transparent;border:1px solid var(--accent);}
-
-/* ── PROGRESS BAR ── */
-#pbwrap {
-  position:fixed;bottom:160px;left:50%;transform:translateX(-50%);
-  width:clamp(140px,35vw,200px);pointer-events:none;z-index:50;text-align:center;
-}
-#pblabel{font-size:9px;letter-spacing:3px;color:var(--accent);margin-bottom:4px;}
-#pbtrack{height:6px;background:rgba(74,69,58,0.12);border:1px solid rgba(74,69,58,0.25);}
-#pbfill{height:100%;background:var(--accent);width:0%;transition:width .2s;}
-
-/* ── JOYSTICK AREAS ── */
-.jarea {
-  position:fixed;bottom:0;width:50%;height:52%;
-  display:flex;align-items:flex-end;z-index:40;
-  padding-bottom:max(24px,env(safe-area-inset-bottom,0px)+8px);
-}
-#jleft{left:0;justify-content:flex-start;padding-left:max(32px,5vw);}
-#jright{right:0;justify-content:flex-end;padding-right:max(32px,5vw);}
-
-.jbase {
-  width:clamp(90px,22vw,130px);height:clamp(90px,22vw,130px);
-  border:1.5px solid rgba(74,69,58,0.25);
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;
-  background:rgba(74,69,58,0.04);
-}
-/* outer glow ring */
-.jbase::before{
-  content:'';position:absolute;inset:-6px;border-radius:50%;
-  border:1px solid rgba(74,69,58,0.1);
-}
-.jknob {
-  width:clamp(40px,10vw,58px);height:clamp(40px,10vw,58px);
-  background:rgba(74,69,58,0.75);
-  border-radius:50%;position:absolute;will-change:transform;
-  border:2px solid rgba(74,69,58,0.9);
-  box-shadow:0 2px 8px rgba(0,0,0,0.2);
-}
-.jlabel {
-  position:absolute;bottom:-20px;width:100%;
-  text-align:center;font-size:9px;color:var(--mid);letter-spacing:3px;
-}
-
-/* ── GAME OVER ── */
-#goscreen {
-  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(5,5,4,0.9);z-index:3000;backdrop-filter:blur(4px);
-  flex-direction:column;align-items:center;justify-content:center;gap:16px;
-}
-.go-title{font-family:'Rajdhani',sans-serif;font-size:min(42px,10vw);letter-spacing:8px;color:var(--red);}
-.go-sub{font-size:11px;letter-spacing:3px;color:#5a5048;line-height:2.5;text-align:center;}
-#rbtn {
-  padding:13px 36px;background:none;color:#c8c2b5;
-  border:1px solid rgba(200,194,181,0.3);
-  font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;
-  opacity:0;animation:fadein 0.5s 0.4s forwards;
-}
-@keyframes fadein{to{opacity:1;}}
-
 /* ── WIN SCREEN ── */
-#winscreen {
+#winscreen{
   position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(200,194,181,0.95);z-index:4000;
+  background:rgba(212,207,198,0.96);z-index:4000;
   display:none;align-items:center;justify-content:center;
-  backdrop-filter:blur(6px);
+  backdrop-filter:blur(8px);
 }
-.winbox {
-  border:2px solid #4a453a;background:#dad4c8;
-  padding:min(40px,8vw);width:min(380px,88vw);
+.winbox{
+  border:2px solid #4a453a;background:#e8e3da;
+  padding:clamp(28px,7vw,42px);width:min(360px,88vw);
   text-align:center;
-  box-shadow:8px 8px 0 #4a453a,16px 16px 0 rgba(74,69,58,0.15);
-  animation:slideup 0.4s ease-out;
-  font-family:'Share Tech Mono',monospace;
-  position:relative;
+  box-shadow:8px 8px 0 #4a453a,0 0 40px rgba(74,69,58,0.1);
+  animation:su .4s ease-out;
+  font-family:'Share Tech Mono',monospace;position:relative;
 }
 .winbox::before,.winbox::after{
-  content:'';position:absolute;width:16px;height:16px;
+  content:'';position:absolute;width:18px;height:18px;
   border-color:#4a453a;border-style:solid;
 }
 .winbox::before{top:-1px;left:-1px;border-width:3px 0 0 3px;}
 .winbox::after{bottom:-1px;right:-1px;border-width:0 3px 3px 0;}
-.winhdr{background:#4a453a;color:#dad4c8;margin:calc(min(40px,8vw)*-1) calc(min(40px,8vw)*-1) 22px;padding:12px;font-size:11px;letter-spacing:5px;}
-.wincodelbl{font-size:9px;letter-spacing:5px;color:#7a7468;margin-bottom:6px;}
-.wincode{font-size:min(48px,12vw);margin:8px 0 22px;padding:14px;border:2px dashed #4a453a;color:#4a453a;font-weight:bold;letter-spacing:10px;background:rgba(255,255,255,0.2);}
-.windesc{font-size:10px;color:#7a7468;letter-spacing:2px;line-height:2.2;margin-bottom:22px;}
-#cbtn{background:none;border:2px solid #4a453a;color:#4a453a;padding:11px 30px;cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:4px;transition:all 0.2s;}
-#cbtn:hover{background:#4a453a;color:#dad4c8;}
+.winhdr{
+  background:#4a453a;color:#e8e3da;
+  margin:calc(clamp(28px,7vw,42px)*-1) calc(clamp(28px,7vw,42px)*-1) 22px;
+  padding:12px;font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;
+}
+.wincodelbl{font-size:10px;letter-spacing:5px;color:#7a7468;margin-bottom:6px;}
+.wincode{
+  font-size:clamp(36px,10vw,52px);margin:6px 0 20px;padding:14px;
+  border:2px dashed #4a453a;color:#4a453a;font-weight:bold;
+  letter-spacing:10px;background:rgba(255,255,255,0.25);
+}
+.windesc{font-size:11px;color:#6a6458;letter-spacing:2px;line-height:2.2;margin-bottom:22px;}
+#cbtn{
+  background:none;border:2px solid #4a453a;color:#4a453a;
+  padding:11px 30px;cursor:pointer;font-family:inherit;
+  font-size:13px;letter-spacing:3px;transition:all .2s;
+}
+#cbtn:hover,#cbtn:active{background:#4a453a;color:#e8e3da;}
 
-@keyframes slideup{from{transform:translateY(32px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+/* ── GAME OVER ── */
+#goscreen{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(20,18,14,0.92);z-index:3000;
+  backdrop-filter:blur(5px);
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.go-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(30px,9vw,46px);letter-spacing:6px;color:var(--red);
+}
+.go-sub{font-size:12px;letter-spacing:3px;color:var(--mid);line-height:2.5;text-align:center;}
+#rbtn{
+  padding:13px 36px;background:none;color:var(--text);
+  border:1px solid rgba(212,207,198,0.3);
+  font-size:14px;cursor:pointer;font-family:inherit;letter-spacing:4px;
+  opacity:0;animation:fi .5s .4s forwards;transition:all .2s;
+}
+#rbtn:hover{background:rgba(212,207,198,0.08);}
+
+@keyframes fi{to{opacity:1;}}
+@keyframes pulse{50%{opacity:.25;}}
+@keyframes su{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;pointer-events:none;z-index:50;}
+.hpanel{font-size:clamp(9px,2.2vw,11px);color:var(--accent);line-height:1.8;background:var(--panel);padding:5px 9px;border-left:3px solid var(--accent);backdrop-filter:blur(2px);}
+.hpanel.right{border-left:none;border-right:3px solid var(--accent);text-align:right;}
+.htimer{font-size:clamp(20px,5vw,28px);font-family:'Rajdhani',sans-serif;font-weight:700;line-height:1;}
+.htimer.danger{color:var(--red);animation:pulse .5s infinite;}
+.hdots{display:flex;gap:4px;margin-top:3px;}
+.hdot{width:9px;height:9px;border-radius:50%;background:var(--accent);transition:all .3s;}
+.hdot.e{background:transparent;border:1.5px solid var(--warm);}
+/* Progress */
+#pbwrap{position:fixed;bottom:clamp(145px,30vw,175px);left:50%;transform:translateX(-50%);width:clamp(140px,35vw,200px);pointer-events:none;z-index:50;text-align:center;}
+#pblabel{font-size:9px;letter-spacing:3px;color:var(--accent);margin-bottom:3px;}
+#pbtrack{height:5px;background:rgba(74,69,58,0.12);border:1px solid rgba(74,69,58,0.25);}
+#pbfill{height:100%;background:var(--accent);width:0%;transition:width .2s;}
+/* Joystick */
+.jarea{position:fixed;bottom:0;width:50%;height:50%;display:flex;align-items:flex-end;z-index:40;padding-bottom:max(22px,env(safe-area-inset-bottom,0px)+8px);}
+#jleft{left:0;justify-content:flex-start;padding-left:max(28px,5vw);}
+#jright{right:0;justify-content:flex-end;padding-right:max(28px,5vw);}
+.jbase{width:clamp(88px,20vw,120px);height:clamp(88px,20vw,120px);border:1.5px solid rgba(74,69,58,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;background:rgba(74,69,58,0.05);}
+.jbase::before{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(74,69,58,0.08);}
+.jknob{width:clamp(38px,9vw,52px);height:clamp(38px,9vw,52px);background:rgba(74,69,58,0.7);border-radius:50%;position:absolute;will-change:transform;border:2px solid rgba(74,69,58,0.85);box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.jlabel{position:absolute;bottom:-18px;width:100%;text-align:center;font-size:9px;color:var(--mid);letter-spacing:3px;}
+@media screen and (orientation:portrait){#orient-warn{display:flex;}}
+
 </style>
 </head>
 <body>
 
-<!-- Orientation warning -->
-<div id="ow">
-  <div class="ow-line"></div>
-  <div class="ow-title">SYSTEM ERROR</div>
-  <div class="ow-sub">ROTATE DEVICE TO LANDSCAPE</div>
-  <div class="ow-sub">[ TACTICAL VIEW REQUIRED ]</div>
-  <div class="ow-line"></div>
+<div id="orient-warn">
+  <span class="ow-phone ow-anim-land">📱</span>
+  <div class="ow-title">ROTATE TO LANDSCAPE</div>
+  <div class="ow-sub">[ LANDSCAPE MODE REQUIRED ]</div>
 </div>
 
-<!-- Start screen -->
-<div id="ss">
-  <div class="ss-eyebrow" id="ss-id">TERMINAL — ---</div>
-  <div class="ss-divider"></div>
-  <div class="ss-logo" id="ss-title" data-text="SHOOTER">SHOOTER</div>
-  <div class="ss-mode-badge" id="ss-mode">STANDARD PROTOCOL</div>
-  <div class="ss-instructions">
-    ◀ LEFT STICK — MOVE ▶<br>
-    ◀ RIGHT STICK — AIM &amp; FIRE ▶<br>
-    DESTROY THE CORE TO EXTRACT CODE
+<div id="startscreen">
+  <div class="ss-corner tl"></div><div class="ss-corner tr"></div>
+  <div class="ss-corner bl"></div><div class="ss-corner br"></div>
+
+  <div class="ss-eyebrow" id="ss-id">TERMINAL // ---</div>
+
+  <div class="ss-title-main" id="ss-title" data-text="HACK THE BOX">HACK THE BOX</div>
+
+  <div class="ss-divider">
+    <div class="ss-div-line"></div>
+    <div class="ss-div-diamond"></div>
+    <div class="ss-div-line r"></div>
   </div>
-  <button id="sb">ACCESS CORE</button>
-  <div class="ss-footer">[ INITIATING TACTICAL LINK <span>■</span> ]</div>
+
+  <div class="ss-subtitle" id="ss-game-name">SHOOTER PROTOCOL</div>
+
+  <div class="ss-brief">
+    ג'ויסטיק שמאל — תנועה<br>
+    ג'ויסטיק ימין — כיוון וירי<br>
+    השמד את הגרעין לחשיפת הקוד
+  </div>
+
+  <button class="ss-btn" id="sb">ACCESS CORE</button>
+
+  <div class="ss-foot">[ INITIATING LINK <span>■</span> ]</div>
 </div>
 
-<!-- HUD -->
 <div id="hud">
-  <div class="hpanel">
-    <span id="hudtitle">---</span><br>
-    HACK <span id="hpct">0</span>%
-    <div class="hdots" id="hdots"></div>
-  </div>
-  <div class="hpanel right">
-    <div class="htimer" id="timer">--</div>
-    SEC
-  </div>
+  <div class="hpanel"><span id="hudtitle">---</span><br>HACK <span id="hpct">0</span>%<div class="hdots" id="hdots"></div></div>
+  <div class="hpanel right"><div class="htimer" id="timer">--</div>SEC</div>
 </div>
+<div id="pbwrap"><div id="pblabel">CORE INTEGRITY</div><div id="pbtrack"><div id="pbfill"></div></div></div>
+<div id="jleft" class="jarea"><div class="jbase"><div class="jknob" id="lk"></div><span class="jlabel">MOVE</span></div></div>
+<div id="jright" class="jarea"><div class="jbase"><div class="jknob" id="rk"></div><span class="jlabel">AIM</span></div></div>
 
-<!-- Progress -->
-<div id="pbwrap">
-  <div id="pblabel">CORE INTEGRITY</div>
-  <div id="pbtrack"><div id="pbfill"></div></div>
-</div>
-
-<!-- Joysticks -->
-<div id="jleft" class="jarea">
-  <div class="jbase"><div class="jknob" id="lk"></div><span class="jlabel">MOVE</span></div>
-</div>
-<div id="jright" class="jarea">
-  <div class="jbase"><div class="jknob" id="rk"></div><span class="jlabel">AIM</span></div>
-</div>
-
-<!-- Game over -->
 <div id="goscreen">
   <div class="go-title">ACCESS DENIED</div>
-  <div class="go-sub">SYSTEM CORRUPTED<br>OPERATIVE TERMINATED</div>
-  <button id="rbtn">RETRY INFILTRATION</button>
+  <div class="go-sub">המערכת נפרצה<br>הסוכן הושבת</div>
+  <button id="rbtn">RETRY</button>
 </div>
-
-<!-- Win -->
 <div id="winscreen">
   <div class="winbox">
     <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
     <div class="wincodelbl">UNLOCK CODE</div>
     <div class="wincode" id="wincode">----</div>
     <div class="windesc">DATA DECRYPTION COMPLETE<br>ACCESS GRANTED TO PHYSICAL STORAGE</div>
-    <button id="cbtn" onclick="history.back()">RETURN TO NETWORK</button>
+    <button id="cbtn" onclick="history.back()">RETURN</button>
   </div>
 </div>
 
 <canvas id="game"></canvas>
-
 <script>
+// ════════════════════════════════════════════════════════════
+//  ✏️  טקסטים — ערוך כאן בלבד
+// ════════════════════════════════════════════════════════════
+const TEXT = {
+  // מסך פתיחה
+  startEyebrow:  'TERMINAL // ',        // + שם התיבה
+  startSubtitle: 'HACK THE BOX',
+  instructions:  'ג'ויסטיק שמאל — תנועה
+ג'ויסטיק ימין — כיוון וירי
+השמד את הגרעין לחשיפת הקוד',
+  startBtn:      'ACCESS CORE',
+  startFooter:   'INITIATING LINK',
 
-// ── NieR-style popup system ──────────────────────────────────
+  // HUD
+  hudHackLabel:  'HACK',
+  hudSecLabel:   'SEC',
+  hudCoreLabel:  'CORE INTEGRITY',
+
+  // ניצחון
+  winHeader:     'SYSTEM STATUS: BREACH COMPLETE',
+  winCodeLabel:  'UNLOCK CODE',
+  winDesc:       'DATA DECRYPTION COMPLETE
+ACCESS GRANTED TO PHYSICAL STORAGE',
+  winBtn:        'RETURN',
+
+  // הפסד
+  loseTitle:     'ACCESS DENIED',
+  loseSub:       'המערכת נפרצה
+הסוכן הושבת',
+  loseBtn:       'RETRY',
+
+  // כיוון מסך
+  orientTitle:   'ROTATE TO LANDSCAPE',
+  orientSub:     '[ LANDSCAPE MODE REQUIRED ]',
+
+  // פופאפים — פגיעה
+  warningHeader: 'WARNING',
+  warningMsgs:   ['DAMAGE DETECTED', 'CRITICAL HIT', 'SYSTEM INTEGRITY COMPROMISED'],
+  warningHpPre:  'HP: ',
+
+  // פופאפים — הפסד
+  errorLines: [
+    ['CRITICAL ERROR',  'הסוכן הושבת'],
+    ['SYSTEM FAILURE',  'איבדת נקודת פגיעה'],
+    ['BREACH FAILED',   'המשימה לא הצליחה'],
+    ['MEMORY CORRUPT',  'הקשר הטקטי נותק'],
+    ['SIGNAL LOST',     'מתחבר מחדש...'],
+  ],
+};
+// ════════════════════════════════════════════════════════════
+
+const AC=window.AudioContext||window.webkitAudioContext,ac=new AC();
+
+// ── BGM ─────────────────────────────────────────────────────
+const BGM_FILES = Array.from({length:10}, (_,i) => `music/${String(i+1).padStart(2,'0')}.mp3`);
+const bgmEl = document.createElement('audio');
+bgmEl.loop = true; bgmEl.volume = 0.6;
+bgmEl.src = BGM_FILES[Math.floor(Math.random() * BGM_FILES.length)];
+document.body.appendChild(bgmEl);
+function startBGM() { if (bgmEl.paused) bgmEl.play().catch(()=>{}); }
+function stopBGM()  { bgmEl.pause(); bgmEl.currentTime = 0; }
+
+// ── NieR Popups ──────────────────────────────────────────────
 function showWarning(hpLeft) {
-  const msgs = ['WARNING — DAMAGE DETECTED','CRITICAL HIT REGISTERED','SYSTEM INTEGRITY COMPROMISED'];
-  const sub  = `HP REMAINING: ${hpLeft} / 3`;
-  spawnNierPopup('WARNING', msgs[Math.floor(Math.random()*msgs.length)], sub, '#cc3300', 1200);
+  const msgs = ['אזהרה — נזק זוהה','פגיעה קריטית נרשמה','שלמות המערכת נפגעה'];
+  spawnNierPopup(TEXT.warningHeader, msgs[Math.floor(Math.random()*msgs.length)], TEXT.warningHpPre+hpLeft+' / 3', '#c43000', 1200);
 }
 function showErrorPopups(cb) {
-  const lines = [
-    ['CRITICAL ERROR','OPERATIVE TERMINATED — HP DEPLETED'],
-    ['SYSTEM FAILURE','YOU LOST A LIFE POINT'],
-    ['MEMORY CORRUPT','TACTICAL LINK SEVERED'],
-    ['BREACH FAILED', 'MISSION UNSUCCESSFUL'],
-    ['CORE INTACT',   'ENEMY DEFENSE HELD'],
-    ['SIGNAL LOST',   'RECONNECTING...'],
-  ];
-  let i = 0;
-  const iv = setInterval(() => {
-    sfx('glitch');
-    const [hdr, msg] = lines[i % lines.length];
-    spawnNierPopup(hdr, msg, '', '#cc3300', 900);
+  const lines=[...TEXT.errorLines,['CORE INTACT','ההגנה עמדה'],['ACCESS DENIED','אישור בוטל']];
+  let i=0;
+  const iv=setInterval(()=>{
+    const[hdr,msg]=lines[i%lines.length];
+    spawnNierPopup(hdr,msg,'','#c43000',900);
     i++;
-    if (i >= 7) { clearInterval(iv); setTimeout(cb, 500); }
-  }, 160);
+    if(i>=7){clearInterval(iv);setTimeout(cb,500);}
+  },160);
 }
 function spawnNierPopup(header, body, sub, color, duration) {
-  const div = document.createElement('div');
-  div.style.cssText = `
-    position:fixed;
-    left:${8 + Math.random()*45}%;
-    top:${10 + Math.random()*55}%;
-    background:var(--bg2,#dad4c8);
-    border:2px solid ${color};
-    font-family:'Share Tech Mono',monospace;
-    font-size:clamp(10px,2.5vw,13px);
-    padding:10px 14px;
-    box-shadow:4px 4px 0 rgba(0,0,0,0.2);
-    z-index:2500;
-    pointer-events:none;
-    animation:nie-pop 0.15s ease-out;
-    max-width:min(260px,60vw);
-  `;
-  div.innerHTML = `
-    <div style="background:${color};color:#fff;margin:-10px -14px 8px;padding:3px 8px;font-size:clamp(9px,2vw,11px);letter-spacing:3px;">${header}</div>
-    <div style="color:var(--text,#2a2520);letter-spacing:1px;line-height:1.6;">${body}</div>
-    ${sub ? `<div style="color:var(--mid,#5a554a);font-size:clamp(9px,2vw,10px);margin-top:4px;letter-spacing:2px;">${sub}</div>` : ''}
-  `;
-  if (!document.getElementById('nie-pop-style')) {
-    const s = document.createElement('style');
-    s.id = 'nie-pop-style';
-    s.textContent = '@keyframes nie-pop{from{transform:scale(0.7) translateY(-8px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}';
-    document.head.appendChild(s);
-  }
+  const div=document.createElement('div');
+  div.style.cssText=`position:fixed;left:${8+Math.random()*45}%;top:${10+Math.random()*55}%;background:#e8e3da;border:2px solid ${color};font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);padding:10px 14px;box-shadow:4px 4px 0 rgba(0,0,0,0.15);z-index:2500;pointer-events:none;animation:nie-pop .15s ease-out;max-width:min(260px,60vw);`;
+  div.innerHTML=`<div style="background:${color};color:#fff;margin:-10px -14px 8px;padding:3px 8px;font-size:clamp(9px,2vw,11px);letter-spacing:2px;">${header}</div><div style="color:#2a2520;letter-spacing:1px;line-height:1.6;">${body}</div>${sub?`<div style="color:#6e6860;font-size:clamp(9px,2vw,10px);margin-top:4px;">${sub}</div>`:''}`;
+  if(!document.getElementById('nie-pop-style')){const s=document.createElement('style');s.id='nie-pop-style';s.textContent='@keyframes nie-pop{from{transform:scale(0.7);opacity:0;}to{transform:scale(1);opacity:1;}}';document.head.appendChild(s);}
   document.body.appendChild(div);
-  setTimeout(() => div.remove(), duration);
+  setTimeout(()=>div.remove(),duration);
 }
-// ─────────────────────────────────────────────────────────────
 const urlCfg=JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('cfg')||'{}'));
 const C={
   code:     urlCfg.code    ||'0000',
@@ -400,14 +431,14 @@ const FIRE_LABELS={aimed:'STANDARD PROTOCOL',spiral:'SPIRAL FIRE PROTOCOL',burst
 const WALL_LABELS={orbit:'ORBITAL DEFENSE',static:'STATIC DEFENSE',expand:'PULSE DEFENSE',zigzag:'ZIGZAG DEFENSE'};
 
 document.getElementById('ss-id').textContent=`TERMINAL — ${C.title}`;
-document.getElementById('ss-title').textContent=C.title; document.getElementById('ss-title').dataset.text=C.title;
-document.getElementById('ss-mode').textContent=`${FIRE_LABELS[C.fireMode]||''} / ${WALL_LABELS[C.wallMode]||''}`;
+document.// title is always HACK THE BOX
+document.getElementById('ss-mode').textContent='SHOOTER PROTOCOL';
 document.getElementById('hudtitle').textContent=C.title;
 
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const lk=document.getElementById('lk'),rk=document.getElementById('rk');
 const timerEl=document.getElementById('timer'),hpctEl=document.getElementById('hpct'),pbf=document.getElementById('pbfill'),hpdots=document.getElementById('hdots');
-const AC=window.AudioContext||window.webkitAudioContext,ac=new AC();
+
 
 // ── BGM ─────────────────────────────────────────────────────
 // שים 10 קבצי mp3 בתיקייה music/ בשמות: music/01.mp3 ... music/10.mp3
@@ -467,10 +498,10 @@ function initGame(){
 }
 
 window.addEventListener('resize',resize);
-document.getElementById('sb').addEventListener('click',()=>{initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('ss').style.display='none';isActive=true;requestAnimationFrame(loop);});
+document.getElementById('sb').addEventListener('click',()=>{initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('ss').style.display='none'; document.getElementById('pblabel').textContent=TEXT.hudCoreLabel; isActive=true;requestAnimationFrame(loop);});
 document.getElementById('rbtn').addEventListener('click',()=>location.reload());
 
-function handleT(e){let lA=false,rA=false;for(const t of e.touches){const iL=t.clientX<window.innerWidth/2;if(iL){lA=true;const jR=Math.min(120,window.innerWidth*0.22)/2+10; const dx=t.clientX-jR-Math.max(32,window.innerWidth*0.05),dy=t.clientY-(window.innerHeight-Math.max(28,window.innerHeight*0.04)-Math.min(120,window.innerWidth*0.22)/2);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);lk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;tMove=dist>6?{x:Math.cos(angle)*Math.min(dist/MJ,1),y:Math.sin(angle)*Math.min(dist/MJ,1)}:{x:0,y:0};}else{rA=true;const jR2=Math.min(120,window.innerWidth*0.22)/2+10; const dx=t.clientX-(window.innerWidth-jR2-Math.max(32,window.innerWidth*0.05)),dy=t.clientY-(window.innerHeight-Math.max(28,window.innerHeight*0.04)-Math.min(120,window.innerWidth*0.22)/2);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);rk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;if(dist>8){tAim={x:Math.cos(angle),y:Math.sin(angle)};lastDir=tAim;player.angle=angle;}else tAim={x:0,y:0};}}if(!lA){tMove={x:0,y:0};lk.style.transform='translate(0,0)';}if(!rA){tAim={x:0,y:0};rk.style.transform='translate(0,0)';}e.preventDefault();}
+function handleT(e){let lA=false,rA=false;for(const t of e.touches){const iL=t.clientX<window.innerWidth/2;if(iL){lA=true;const dx=t.clientX-75,dy=t.clientY-(window.innerHeight-72);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);lk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;tMove=dist>6?{x:Math.cos(angle)*Math.min(dist/MJ,1),y:Math.sin(angle)*Math.min(dist/MJ,1)}:{x:0,y:0};}else{rA=true;const dx=t.clientX-(window.innerWidth-75),dy=t.clientY-(window.innerHeight-72);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);rk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;if(dist>8){tAim={x:Math.cos(angle),y:Math.sin(angle)};lastDir=tAim;player.angle=angle;}else tAim={x:0,y:0};}}if(!lA){tMove={x:0,y:0};lk.style.transform='translate(0,0)';}if(!rA){tAim={x:0,y:0};rk.style.transform='translate(0,0)';}e.preventDefault();}
 window.addEventListener('touchstart',e=>{if(isActive&&!isOver){if(!hasMoved){hasMoved=true;startTime=Date.now();}handleT(e);}},{passive:false});
 window.addEventListener('touchmove',e=>{if(isActive&&!isOver)handleT(e);},{passive:false});
 window.addEventListener('touchend',e=>{if(isActive&&!isOver)handleT(e);});
@@ -556,8 +587,8 @@ function updateWalls(time){
   });
 }
 
-function triggerLoss(){if(isOver)return;isOver=true; stopBGM(); showErrorPopups(()=>document.getElementById('goscreen').style.display='flex');}
-function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win');document.getElementById('wincode').textContent=C.code;setTimeout(()=>document.getElementById('winscreen').style.display='flex',400);}
+function triggerLoss(){if(isOver)return;isOver=true; stopBGM();let c=0;const iv=setInterval(()=>{sfx('glitch');if(++c>=6){clearInterval(iv);setTimeout(()=>document.getElementById('goscreen').style.display='flex',400);}},180);}
+function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win');document.getElementById('wincode').textContent=C.code; const _ws=document.getElementById('winscreen'); _ws.querySelector('.winhdr').textContent=TEXT.winHeader; _ws.querySelector('.wincodelbl').textContent=TEXT.winCodeLabel; _ws.querySelector('.windesc').innerHTML=TEXT.winDesc.replace('\\n','<br>'); _ws.querySelector('#cbtn').textContent=TEXT.winBtn;setTimeout(()=>document.getElementById('winscreen').style.display='flex',400);}
 
 function loop(time){
   if(!isActive||isOver)return;
@@ -607,7 +638,7 @@ function loop(time){
     eb.x+=eb.vx;eb.y+=eb.vy;
     ctx.fillStyle='#cc3300';ctx.beginPath();ctx.arc(eb.x,eb.y,eb.tracking?5:4,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=eb.tracking?'rgba(255,80,40,.35)':'rgba(255,80,40,.2)';ctx.beginPath();ctx.arc(eb.x,eb.y,eb.tracking?9:7,0,Math.PI*2);ctx.fill();
-    if(hasMoved&&time>player.invUntil&&Math.hypot(eb.x-player.x,eb.y-player.y)<player.size+3){player.hp--;player.invUntil=time+1600;sfx('hurt');updateHp();spawnP(player.x,player.y,'#cc3300',8);if(player.hp<=0){triggerLoss();return;}showWarning(player.hp);eBullets.splice(ei,1);continue;}
+    if(hasMoved&&time>player.invUntil&&Math.hypot(eb.x-player.x,eb.y-player.y)<player.size+3){player.hp--;player.invUntil=time+1600;sfx('hurt');updateHp();spawnP(player.x,player.y,'#c43000',8);if(player.hp<=0){triggerLoss();return;}showWarning(player.hp);eBullets.splice(ei,1);continue;}
     if(eb.x<0||eb.x>canvas.width||eb.y<0||eb.y>canvas.height)eBullets.splice(ei,1);
   }
 
@@ -619,14 +650,14 @@ function loop(time){
   const gr=ctx.createRadialGradient(core.x,core.y,0,core.x,core.y,core.size*2);gr.addColorStop(0,`rgba(74,69,58,${.3+cp*.4})`);gr.addColorStop(1,'transparent');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(core.x,core.y,core.size*2,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#1a1a14';ctx.beginPath();ctx.arc(core.x,core.y,core.size,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle=cp>.6?'#cc3300':'#5a554a';ctx.lineWidth=2.5;ctx.stroke();
-  ctx.beginPath();ctx.arc(core.x,core.y,core.size*.5,0,Math.PI*2);ctx.strokeStyle=`rgba(200,194,181,${.2+cp*.5})`;ctx.lineWidth=1.5;ctx.stroke();
-  ctx.strokeStyle=`rgba(200,194,181,${.1+cp*.25})`;ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(core.x,core.y,core.size*.5,0,Math.PI*2);ctx.strokeStyle=`rgba(212,207,198,${.2+cp*.5})`;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.strokeStyle=`rgba(212,207,198,${.1+cp*.25})`;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(core.x-core.size,core.y);ctx.lineTo(core.x+core.size,core.y);ctx.stroke();
   ctx.beginPath();ctx.moveTo(core.x,core.y-core.size);ctx.lineTo(core.x,core.y+core.size);ctx.stroke();
 
   // Player
   const blink=(!hasMoved&&Math.floor(time/350)%2===0)||(hasMoved&&time<player.invUntil&&Math.floor(time/120)%2===0);
-  if(!blink){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle+Math.PI/2);ctx.fillStyle='#111';ctx.strokeStyle='#c8c2b5';ctx.lineWidth=1.5;if(player.hp>=1){ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-5,6);ctx.lineTo(5,6);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=2){ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(11,8);ctx.lineTo(5,5);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=3){ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-11,8);ctx.lineTo(-5,5);ctx.closePath();ctx.fill();ctx.stroke();}ctx.restore();}
+  if(!blink){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle+Math.PI/2);ctx.fillStyle='#111';ctx.strokeStyle='#d4cfc6';ctx.lineWidth=1.5;if(player.hp>=1){ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-5,6);ctx.lineTo(5,6);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=2){ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(11,8);ctx.lineTo(5,5);ctx.closePath();ctx.fill();ctx.stroke();}if(player.hp>=3){ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-11,8);ctx.lineTo(-5,5);ctx.closePath();ctx.fill();ctx.stroke();}ctx.restore();}
   requestAnimationFrame(loop);
 }
 </script>
