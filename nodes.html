@@ -347,6 +347,8 @@ body{touch-action:none;}
 
 
 
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -365,44 +367,27 @@ const VIB = {
 //  ✏️  טקסטים — ערוך כאן בלבד
 // ════════════════════════════════════════════════════════════
 const TEXT = {
-  // מסך פתיחה
   startEyebrow:   'TERMINAL // ',
-  instructions:   'הזז בלוקים כדי לפנות מסלול
-הובל את בלוק הגרעין ▣ ליציאה ←
-החלק בלוקים ימינה / שמאלה / מעלה / מטה',
+  instructions:   'הזז בלוקים כדי לפנות מסלול<br>הובל את הגרעין ▣ ליציאה ←<br>החלק בלוקים ימינה / שמאלה / מעלה / מטה',
   warning:        '⚠ בלוקים זזים בציר אחד בלבד',
   startBtn:       'BREACH CORE',
   startFooter:    'HIGH THREAT ENVIRONMENT',
-
-  // HUD
   hudPuzzleLabel: 'PUZZLE',
   hudMovesLabel:  'MOVES',
   hudDiffLabel:   'DIFF',
   diffNames:      ['EASY', 'MEDIUM', 'HARD'],
-
-  // Status messages
   statusIdle:     'SLIDE TO FREE THE CORE',
   statusNext:     'CORE OUT — NEXT PUZZLE',
   exitLabel:      '▶ EXIT',
-
-  // ניצחון
   winHeader:     'SYSTEM STATUS: CORE EXTRACTED',
   winCodeLabel:  'UNLOCK CODE',
-  winDesc:       'מטריצת הבלוקים נפרצה
-גישה לאחסון הפיזי אושרה',
+  winDesc:       'מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה',
   winBtn:        'RETURN',
-
-  // הפסד
   loseTitle:     'CORE BLOCKED',
-  loseSub:       'החדירה נכשלה
-המסלול ליציאה חסום',
+  loseSub:       'החדירה נכשלה<br>המסלול ליציאה חסום',
   loseBtn:       'RETRY',
-
-  // כיוון מסך
   orientTitle:   'ROTATE TO PORTRAIT',
   orientSub:     '[ PORTRAIT MODE REQUIRED ]',
-
-  // פופאפים
   errorLines: [
     ['CORE BLOCKED',   'המסלול חסום'],
     ['TIME OUT',       'הזמן אזל'],
@@ -655,10 +640,7 @@ function clampBlock(block, newPos) {
         if (block.row >= otherRow && block.row <= otherEnd) {
           // other.col is the column to avoid
           if (newPos < dragBlockStartPos) {
-            // Moving left: don't go past other.col
-            if (other.col < dragBlockStartPos) newPos = Math.max(newPos, other.col + 1);
-          } else {
-            // Moving right: don't go past other.col - block.len
+            // Moving left: don't go past other.col\n            if (other.col < dragBlockStartPos) newPos = Math.max(newPos, other.col + 1);\n          } else {\n            // Moving right: don't go past other.col - block.len
             if (other.col > dragBlockStartPos) newPos = Math.min(newPos, other.col - block.len);
           }
         }
@@ -758,6 +740,8 @@ document.getElementById('startbtn').addEventListener('click', () => {
   activePuzzles = getPuzzles(); initPuzzle(); startTimer(); document.getElementById('statusmsg').textContent=TEXT.statusIdle;
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
+
 
 
 
