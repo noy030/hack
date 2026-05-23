@@ -156,7 +156,7 @@ const C = {
   code:       urlCfg.code       || '0000',
   title:      urlCfg.title      || 'UNKNOWN',
   diff:       urlCfg.diff       || 1,
-  sequences:  urlCfg.sequences  || 5,
+  sequences:  Math.min(3, urlCfg.sequences  || 3),
   baseLen:    urlCfg.baseLen    || 5,
   timePerSeq: urlCfg.timePerSeq || 45,
   showSpeed:  urlCfg.showSpeed  || 'normal',  // slow|normal|fast
@@ -185,6 +185,18 @@ const NODES = ALL_NODES.slice(0, C.nodeCount);
 const freqs = [220,277,330,415,523,622,740,880,1047,1175];
 
 const AC = window.AudioContext || window.webkitAudioContext;
+
+// ── BGM ─────────────────────────────────────────────────────
+// שים 10 קבצי mp3 בתיקייה music/ בשמות: music/01.mp3 ... music/10.mp3
+const BGM_FILES = Array.from({length:10}, (_,i) => `music/${String(i+1).padStart(2,'0')}.mp3`);
+const bgmEl = document.createElement('audio');
+bgmEl.loop = true; bgmEl.volume = 0.6;
+bgmEl.src = BGM_FILES[Math.floor(Math.random() * BGM_FILES.length)];
+document.body.appendChild(bgmEl);
+function startBGM() { if (bgmEl.paused) bgmEl.play().catch(()=>{}); }
+function stopBGM()  { bgmEl.pause(); bgmEl.currentTime = 0; }
+// ────────────────────────────────────────────────────────────
+
 const audioCtx = new AC();
 function sfx(t, f) {
   if (audioCtx.state === 'suspended') return;
@@ -458,14 +470,14 @@ function showMsg(text, dur) {
 }
 
 function triggerFail() {
-  if (isOver) return;
+  if (isOver) return; stopBGM();
   isOver = true; canInput = false;
   clearInterval(timerInterval);
   sfx('wrong');
   setTimeout(() => document.getElementById('go-screen').style.display = 'flex', 500);
 }
 function triggerWin() {
-  if (isOver) return;
+  if (isOver) return; stopBGM();
   isOver = true;
   sfx('win');
   document.getElementById('win-code').textContent = C.code;
@@ -474,7 +486,7 @@ function triggerWin() {
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 document.getElementById('start-btn').addEventListener('click', async () => {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('game-wrap').style.display    = 'flex';
   buildGrid();
