@@ -8,9 +8,9 @@
 <style>
 
 :root{
-  --bg:#1e1c18; --bg2:#2a2822; --text:#e8e3da; --mid:#9a9088;
-  --accent:#e8e3da; --border:rgba(232,227,218,0.2);
-  --panel:rgba(232,227,218,0.07); --red:#c43000;
+  --bg:#252219; --bg2:#2a2822; --text:#f0ebe0; --mid:#b8b2a8;
+  --accent:#f0ebe0; --border:rgba(240,235,224,0.35);
+  --panel:rgba(240,235,224,0.1); --red:#c43000;
   --cream:#d4cfc6; --warm:#b8b2a8; --darker:#0e0d0b;
 }
 body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -184,7 +184,7 @@ body::after{
   backdrop-filter:blur(8px);
 }
 .winbox{
-  border:2px solid #4a453a;background:#e8e3da;
+  border:2px solid #4a453a;background:#f0ebe0;
   padding:clamp(28px,7vw,42px);width:min(360px,88vw);
   text-align:center;
   box-shadow:8px 8px 0 #4a453a,0 0 40px rgba(74,69,58,0.1);
@@ -209,12 +209,8 @@ body::after{
   letter-spacing:10px;background:rgba(255,255,255,0.25);
 }
 .windesc{font-size:11px;color:#6a6458;letter-spacing:2px;line-height:2.2;margin-bottom:22px;}
-#cbtn{
-  background:none;border:2px solid #4a453a;color:#4a453a;
-  padding:11px 30px;cursor:pointer;font-family:inherit;
-  font-size:13px;letter-spacing:3px;transition:all .2s;
-}
-#cbtn:hover,#cbtn:active{background:#4a453a;color:#e8e3da;}
+
+
 
 /* ── GAME OVER ── */
 #goscreen{
@@ -256,12 +252,12 @@ body::after{
 .seq-slot.wrong-flash{border-color:var(--red);background:rgba(196,48,0,0.3);}
 .timerring{position:relative;width:clamp(58px,15vw,74px);height:clamp(58px,15vw,74px);flex-shrink:0;}
 .timerring svg{transform:rotate(-90deg);}
-.ring-bg{fill:none;stroke:rgba(232,227,218,0.1);stroke-width:4;}
+.ring-bg{fill:none;stroke:rgba(240,235,224,0.22);stroke-width:4;}
 .ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .3s;}
 .ring-fg.danger{stroke:var(--red);}
 .ring-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(15px,4.5vw,20px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
 .nodegrid{display:grid;gap:clamp(5px,1.5vw,9px);width:100%;max-width:min(360px,92vw);}
-.nodebtn{aspect-ratio:1;border-radius:5px;border:1px solid rgba(232,227,218,0.12);background:rgba(232,227,218,0.05);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;color:rgba(232,227,218,0.28);transition:all .12s;touch-action:manipulation;min-height:clamp(44px,12vw,60px);}
+.nodebtn{aspect-ratio:1;border-radius:5px;border:2px solid rgba(240,235,224,0.28);background:rgba(240,235,224,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;color:rgba(240,235,224,0.65);transition:all .12s;touch-action:manipulation;min-height:clamp(44px,12vw,60px);}
 .nodebtn:active{transform:scale(0.9);}
 .nodebtn.disabled{pointer-events:none;opacity:0.2;}
 .progbar{width:100%;}
@@ -363,16 +359,16 @@ body::after{
 
 <div id="goscreen">
   <div class="go-title">BREACH FAILED</div>
-  <div class="go-sub">אי-התאמה ברצף<br>שחיתות קריטית בזיכרון</div>
-  <button id="rbtn">RETRY</button>
+  
+  <button id="rbtn">נסה שנית</button>
 </div>
 <div id="winscreen">
   <div class="winbox">
     <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
-    <div class="wincodelbl">UNLOCK CODE</div>
+    <div class="wincodelbl">קוד פתיחה</div>
     <div class="wincode" id="wincode">----</div>
     <div class="windesc">כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה</div>
-    <button id="cbtn" onclick="history.back()">RETURN</button>
+    
   </div>
 </div>
 
@@ -383,19 +379,21 @@ body::after{
 
 
 
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
 function vibe(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
 }
 // Patterns
 const VIB = {
-  hit:     [60],           // פגיעה קצרה
-  hurt:    [80, 40, 80],   // קיבלת פגיעה
-  warning: [30, 20, 30, 20, 30], // 10 שניות אחרונות
-  win:     [50, 30, 50, 30, 100, 30, 200], // ניצחון
-  lose:    [200, 50, 200], // הפסד
+  hit:     [100],
+  hurt:    [150, 50, 150],
+  warning: [80, 40, 80, 40, 80],
+  win:     [80, 40, 80, 40, 200, 40, 300],
+  lose:    [300, 80, 300],
 };
 // ──────────────────────────────────────────────────────────
 //  ✏️  טקסטים — ערוך כאן בלבד
@@ -415,12 +413,12 @@ const TEXT = {
   hudScoreLabel:  'SCORE',
   hudProgLabel:   'SEQUENCES BREACHED',
   winHeader:     'SYSTEM STATUS: BREACH COMPLETE',
-  winCodeLabel:  'UNLOCK CODE',
+  winCodeLabel:  'קוד פתיחה',
   winDesc:       'כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה',
   winBtn:        'RETURN',
   loseTitle:     'BREACH FAILED',
-  loseSub:       'אי-התאמה ברצף<br>שחיתות קריטית בזיכרון',
-  loseBtn:       'RETRY',
+  loseSub:       '',
+  loseBtn:       'נסה שנית',
   msgBreachPlus: 'BREACH +1',
   orientTitle:   'ROTATE TO PORTRAIT',
   orientSub:     '[ PORTRAIT MODE REQUIRED ]',
@@ -804,6 +802,8 @@ document.getElementById('startbtn').addEventListener('click', async () => {
   nextSeq();
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
+
 
 
 
