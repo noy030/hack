@@ -261,6 +261,28 @@ body{touch-action:none;}
 .pzdot.active{background:var(--accent);animation:pulse .8s infinite;}
 #statusmsg{position:fixed;bottom:34px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:var(--mid);white-space:nowrap;z-index:50;pointer-events:none;}
 
+
+/* ── Show code again button ── */
+#show-code-btn {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px) + 12px);
+  right: 16px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding: 8px 14px;
+  cursor: pointer;
+  z-index: 100;
+  display: none;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  opacity: 0.85;
+  transition: opacity .2s;
+}
+#show-code-btn:hover { opacity: 1; }
+
 </style>
 </head>
 <body>
@@ -322,7 +344,22 @@ body{touch-action:none;}
 </div>
 
 <script>
+
 // ════════════════════════════════════════════════════════════
+
+// ── Vibration ─────────────────────────────────────────────
+function vibe(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+// Patterns
+const VIB = {
+  hit:     [60],           // פגיעה קצרה
+  hurt:    [80, 40, 80],   // קיבלת פגיעה
+  warning: [30, 20, 30, 20, 30], // 10 שניות אחרונות
+  win:     [50, 30, 50, 30, 100, 30, 200], // ניצחון
+  lose:    [200, 50, 200], // הפסד
+};
+// ──────────────────────────────────────────────────────────
 //  ✏️  טקסטים — ערוך כאן בלבד
 // ════════════════════════════════════════════════════════════
 const TEXT = {
@@ -682,6 +719,7 @@ function startTimer() {
     tl--;
     updateTimerEl();
     if (tl <= 0) { clearInterval(timerIv); triggerFail(); }
+    if (tl === 10) vibe(VIB.warning);
   }, 1000);
 }
 function updateTimerEl() {
@@ -691,7 +729,7 @@ function updateTimerEl() {
 }
 function triggerFail() {
   if (isOver) return;
-  isOver=true; stopBGM(); sfx('wrong');
+  isOver=true; stopBGM(); sfx('wrong'); vibe(VIB.lose);
   showErrorPopups(() => document.getElementById('goscreen').style.display='flex');
 }
 function triggerFinalWin() {
@@ -714,6 +752,7 @@ document.getElementById('startbtn').addEventListener('click', () => {
   activePuzzles = getPuzzles(); initPuzzle(); startTimer(); document.getElementById('statusmsg').textContent=TEXT.statusIdle;
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
 </script>
 </body>
 </html>
