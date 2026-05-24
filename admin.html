@@ -202,8 +202,8 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
       <div class="section-title">שחקנים ופעילות</div>
       <table class="data-table">
         <thead><tr>
-          <th>שם</th><th>תיבה</th><th>סטטוס</th>
-          <th>קודי עזרה</th><th>ניסיונות</th><th>זמן אחרון</th><th>פעולות</th>
+          <th>שם</th><th>תיבות שנפרצו</th><th>סטטוס</th>
+          <th>קודי עזרה</th><th>ניצחונות/ניסיונות</th><th>זמן אחרון</th><th>פעולות</th>
         </tr></thead>
         <tbody id="players-body"><tr><td colspan="7" class="empty">ממתין...</td></tr></tbody>
       </table>
@@ -307,10 +307,13 @@ function playWinSound() {
 }
 
 // ── WIN TOAST ─────────────────────────────
-function showWinToast(player) {
+function showWinToast(p, full) {
+  const player = full || p;
   document.getElementById('toast-name').textContent = player.name || '—';
-  document.getElementById('toast-box').textContent =
-    `${GAME_ICONS[player.game]||'📦'} תיבה ${player.boxId||'?'} — ${player.boxTitle||''}`;
+  const lastBox = player.boxes ? Object.values(player.boxes).sort((a,b)=>(b.winTime||0)-(a.winTime||0))[0] : null;
+  document.getElementById('toast-box').textContent = lastBox
+    ? `${GAME_ICONS[lastBox.game]||'📦'} תיבה ${lastBox.boxId} — ${lastBox.boxTitle||''}`
+    : `תיבה ${player.currentBox||'?'}`;
   const t = document.getElementById('win-toast');
   t.classList.add('show');
   playWinSound();
@@ -325,16 +328,13 @@ async function refreshData() {
   const newPlayers = players || {};
   codesData = codes || {};
 
-  // Detect new wins
-  const newWinKeys = new Set(
-    Object.entries(newPlayers).filter(([,p])=>p.won).map(([k])=>k)
-  );
-  for (const key of newWinKeys) {
-    if (!prevWinKeys.has(key) && newPlayers[key]) {
-      showWinToast(newPlayers[key]);
-    }
+  // Detect new wins (compare totalWins count)
+  for (const [key, p] of Object.entries(newPlayers)) {
+    const prev = playersData[key];
+    const prevWins = prev ? (prev.totalWins||0) : 0;
+    const newWins  = p.totalWins||0;
+    if (newWins > prevWins) showWinToast(p, newPlayers[key]);
   }
-  prevWinKeys = newWinKeys;
   playersData = newPlayers;
 
   renderAll();
@@ -377,35 +377,39 @@ function renderLeaderboard() {
   const players = Object.values(playersData);
   if (!players.length) { el.innerHTML='<div class="empty">ממתין לשחקנים...</div>'; return; }
 
-  // Sort: winners first (by winTime asc), then by attempts asc
+  // Sort: by totalWins desc, then by lastSeen desc
   const sorted = [...players].sort((a,b) => {
-    if (a.won && b.won) return (a.winTime||0)-(b.winTime||0);
-    if (a.won) return -1;
-    if (b.won) return 1;
-    return (a.attempts||0)-(b.attempts||0);
+    const wa = a.totalWins||0, wb = b.totalWins||0;
+    if (wa !== wb) return wb - wa;
+    return (b.lastSeen||0) - (a.lastSeen||0);
   });
 
   el.innerHTML = sorted.map((p, i) => {
     const rank = i+1;
     const medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
     const rowClass = rank===1?'winner':rank===2?'second':'';
-    const timeStr = p.won && p.winTime
-      ? formatDuration(p.winTime - (p.startTime||p.winTime))
-      : null;
+    const wins = p.totalWins || 0;
+    const boxes = p.boxes ? Object.values(p.boxes) : [];
 
-    return `<div class="lb-row ${rowClass}">
+    // List won boxes
+    const boxList = boxes.map(b =>
+      `<span class="box-badge">${GAME_ICONS[b.game]||'📦'} ${b.boxId}</span>`
+    ).join('') || '—';
+
+    return `<div class="lb-row ${rowClass}" style="grid-template-columns:40px 1fr auto auto">
       <div class="lb-rank">${medal||rank}</div>
       <div>
         <div class="lb-name">${p.name||'—'}</div>
-        <div class="lb-boxes">${GAME_ICONS[p.game]||'📦'} תיבה ${p.boxId||'?'} · ${p.boxTitle||''}</div>
+        <div class="lb-boxes" style="margin-top:4px">${boxList}</div>
       </div>
-      <div style="font-size:10px;letter-spacing:2px;color:var(--mid);text-align:center">
-        ${p.attempts||0}<br><span style="font-size:9px">ניסיון</span>
+      <div style="text-align:center;line-height:1.4">
+        <div class="lb-time" style="${wins>0?'':'color:var(--mid);font-size:16px'}">${wins}</div>
+        <div style="font-size:9px;letter-spacing:2px;color:var(--mid)">תיבות</div>
       </div>
-      <div class="${timeStr?'lb-time':'lb-time no-win'}">
-        ${timeStr || (p.won?'✓':'⏳')}
+      <div style="text-align:center;line-height:1.4">
+        <div style="font-family:Rajdhani,sans-serif;font-size:18px;color:var(--mid)">${p.attempts||0}</div>
+        <div style="font-size:9px;letter-spacing:2px;color:var(--mid)">ניסיון</div>
       </div>
-      <div class="lb-badge">${p.won?'✓':''}</div>
     </div>`;
   }).join('');
 }
@@ -430,11 +434,13 @@ function renderPlayers() {
       .filter(([,cd])=>cd.player===p.name)
       .map(([code])=>`<span class="code-badge code-${code[0]}">${EFFECT_NAMES[code[0]]||code[0]}</span>`)
       .join('')||'—';
+    const boxes = p.boxes ? Object.values(p.boxes) : [];
+    const boxList = boxes.map(b=>`<span class="box-badge">${GAME_ICONS[b.game]||'📦'} ${b.boxId}</span>`).join('')||'—';
     return `<tr>
       <td><div class="player-name">${p.name||'—'}</div></td>
-      <td><span class="box-badge">${GAME_ICONS[p.game]||'📦'} ${p.boxId||'?'}</span> <span style="font-size:10px;color:var(--mid)">${p.boxTitle||''}</span></td>
+      <td>${boxList}</td>
       <td>${status}</td><td>${codes}</td>
-      <td style="text-align:center;font-family:Rajdhani,sans-serif;font-size:18px">${p.attempts||0}</td>
+      <td style="text-align:center;font-family:Rajdhani,sans-serif;font-size:18px">${p.totalWins||0}/${p.attempts||0}</td>
       <td class="time-ago">${timeAgo(p.lastSeen)}</td>
       <td><button class="action-btn" onclick="removePlayer('${key}')">הסר</button></td>
     </tr>`;
