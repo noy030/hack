@@ -439,9 +439,85 @@ body::after{
   border: 1px solid #5a8a4a; padding: 4px 12px;
 }
 
+
+/* ── Name Screen ── */
+#name-screen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:var(--bg);z-index:3000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:clamp(12px,2.5vh,20px);
+  padding:clamp(20px,5vw,40px);
+}
+#name-screen::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:100%;
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(74,69,58,0.06) 49.5%,rgba(74,69,58,0.06) 50.5%,transparent 50.5%),
+    linear-gradient(0deg,transparent 49.5%,rgba(74,69,58,0.04) 49.5%,rgba(74,69,58,0.04) 50.5%,transparent 50.5%);
+  pointer-events:none;
+}
+.nc{position:absolute;width:22px;height:22px;border-color:var(--accent);border-style:solid;opacity:0.4;}
+.nc.tl{top:16px;left:16px;border-width:2px 0 0 2px;}
+.nc.tr{top:16px;right:16px;border-width:2px 2px 0 0;}
+.nc.bl{bottom:16px;left:16px;border-width:0 0 2px 2px;}
+.nc.br{bottom:16px;right:16px;border-width:0 2px 2px 0;}
+.ns-eye{font-size:10px;letter-spacing:5px;color:var(--mid);}
+.ns-title{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(28px,8vw,52px);
+  font-weight:700;letter-spacing:clamp(3px,2vw,10px);
+  color:var(--accent);text-align:center;
+}
+.ns-div{display:flex;align-items:center;gap:10px;width:clamp(120px,40%,200px);}
+.ns-div-line{flex:1;height:1px;opacity:0.3;}
+.ns-div-line.l{background:linear-gradient(90deg,transparent,var(--accent));}
+.ns-div-line.r{background:linear-gradient(90deg,var(--accent),transparent);}
+.ns-diamond{width:6px;height:6px;border:1.5px solid var(--accent);transform:rotate(45deg);opacity:0.5;}
+.ns-prompt{font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;color:var(--mid);}
+#player-name-input{
+  background:var(--panel,rgba(212,207,198,0.75));
+  border:1px solid var(--border);
+  border-bottom:2px solid var(--accent);
+  color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  font-size:clamp(16px,5vw,22px);
+  letter-spacing:4px;padding:10px 16px;
+  text-align:center;outline:none;
+  width:min(280px,85%);
+  transition:border-color .2s;
+}
+#player-name-input:focus{border-bottom-color:var(--red,#c43000);}
+#name-submit{
+  padding:clamp(10px,2.5vh,14px) clamp(36px,9vw,52px);
+  background:var(--accent);color:var(--bg);
+  border:none;font-size:clamp(12px,3vw,14px);
+  font-family:inherit;cursor:pointer;letter-spacing:4px;
+  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+  transition:transform .1s;
+}
+#name-submit:active{transform:scale(0.96);}
+.ns-hint{font-size:9px;letter-spacing:3px;color:var(--mid);opacity:0.7;}
+
 </style>
 </head>
 <body>
+
+<div id="name-screen">
+  <div class="nc tl"></div><div class="nc tr"></div>
+  <div class="nc bl"></div><div class="nc br"></div>
+  <div class="ns-eye">HACK THE BOX</div>
+  <div class="ns-title">זיהוי סוכן</div>
+  <div class="ns-div">
+    <div class="ns-div-line l"></div>
+    <div class="ns-diamond"></div>
+    <div class="ns-div-line r"></div>
+  </div>
+  <div class="ns-prompt">הכנס את שמך לפני הגישה</div>
+  <input id="player-name-input" type="text" placeholder="שם הסוכן"
+         maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"/>
+  <button id="name-submit">אשר זהות</button>
+  <div class="ns-hint">[ מאמת קישור טקטי ]</div>
+</div>
 
 <div id="orient-warn">
   <span class="ow-phone ow-anim-port">📱</span>
@@ -1027,71 +1103,6 @@ function initHelpSystem() {
 initHelpSystem();
 
 
-// ════════════════════════════════════════════════════════
-//  Firebase — דיווח לנאפס
-//  הדבק כאן את הפרטים מ-Firebase Console
-// ════════════════════════════════════════════════════════
-const FB_CONFIG = {
-  apiKey:      "AIzaSyBQylFseHge48iq3U5CqgJJZPdHM5QHbtA",
-  authDomain:  "hack-the-box-larp.firebaseapp.com",
-  databaseURL: "https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:   "hack-the-box-larp",
-};
-// ════════════════════════════════════════════════════════
-
-let fbDb = null, fbPlayerKey = null, fbPlayerName = '';
-
-async function initFirebase() {
-  try {
-    const { initializeApp }         = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    const { getDatabase, ref, set, push, remove } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
-    const app = initializeApp(FB_CONFIG, 'hackthebox');
-    fbDb = getDatabase(app);
-    window._fbRef = ref; window._fbSet = set; window._fbPush = push; window._fbRemove = remove;
-  } catch(e) { console.warn('Firebase not available:', e); }
-}
-
-function fbReport(data) {
-  if (!fbDb || !fbPlayerName) return;
-  try {
-    const { ref, set } = { ref: window._fbRef, set: window._fbSet };
-    if (!fbPlayerKey) {
-      const { push } = { push: window._fbPush };
-      const newRef = push(ref(fbDb, 'players'));
-      fbPlayerKey = newRef.key;
-    }
-    window._fbSet(window._fbRef(fbDb, `players/${fbPlayerKey}`), {
-      name: fbPlayerName,
-      boxId: new URLSearchParams(location.search).get('box') || '?',
-      boxTitle: C.title || '?',
-      game: C.game || '?',
-      lastSeen: Date.now(),
-      ...data
-    });
-  } catch(e) {}
-}
-
-function fbReportCodeUsed(code, effectLabel) {
-  if (!fbDb || !fbPlayerName) return;
-  try {
-    window._fbSet(window._fbRef(fbDb, `helpCodes/${code}`), {
-      player: fbPlayerName,
-      boxId: new URLSearchParams(location.search).get('box') || '?',
-      effect: effectLabel,
-      ts: Date.now()
-    });
-  } catch(e) {}
-}
-
-function fbResetCode(code) {
-  if (!fbDb) return;
-  try { window._fbRemove(window._fbRef(fbDb, `helpCodes/${code}`)); } catch(e) {}
-}
-
-// Heartbeat — updates lastSeen every 30s
-setInterval(() => fbReport({}), 30000);
-
-initFirebase();
 
 
 // ── Name screen logic ─────────────────────────────────
@@ -1114,6 +1125,65 @@ initFirebase();
   setTimeout(() => inp.focus(), 200);
 })();
 // ─────────────────────────────────────────────────────
+
+
+// ════════════════════════════════════════════════════════
+//  Firebase — REST API (ללא SDK)
+// ════════════════════════════════════════════════════════
+const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
+let fbPlayerKey = null;
+let fbPlayerName = '';
+
+function fbGet(path) {
+  return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null);
+}
+function fbSet(path, data) {
+  return fetch(`${FB_URL}/${path}.json`, {
+    method:'PUT', body:JSON.stringify(data),
+    headers:{'Content-Type':'application/json'}
+  }).catch(()=>{});
+}
+function fbPush(path, data) {
+  return fetch(`${FB_URL}/${path}.json`, {
+    method:'POST', body:JSON.stringify(data),
+    headers:{'Content-Type':'application/json'}
+  }).then(r=>r.json()).catch(()=>null);
+}
+function fbDelete(path) {
+  return fetch(`${FB_URL}/${path}.json`, {method:'DELETE'}).catch(()=>{});
+}
+
+async function fbReport(extra={}) {
+  if (!fbPlayerName) return;
+  const data = {
+    name: fbPlayerName,
+    boxId: new URLSearchParams(location.search).get('box') || '?',
+    boxTitle: (typeof C !== 'undefined' && C.title) ? C.title : '?',
+    game: (typeof C !== 'undefined' && C.game) ? C.game : '?',
+    lastSeen: Date.now(),
+    ...extra
+  };
+  if (!fbPlayerKey) {
+    const res = await fbPush('players', data);
+    if (res && res.name) fbPlayerKey = res.name;
+  } else {
+    fbSet(`players/${fbPlayerKey}`, data);
+  }
+}
+
+function fbReportCodeUsed(code, effectLabel) {
+  if (!fbPlayerName) return;
+  fbSet(`helpCodes/${code}`, {
+    player: fbPlayerName,
+    boxId: new URLSearchParams(location.search).get('box') || '?',
+    effect: effectLabel,
+    ts: Date.now()
+  });
+}
+
+// Heartbeat every 30s
+setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
+// ════════════════════════════════════════════════════════
 
 </script>
 </body>
