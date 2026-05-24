@@ -238,65 +238,54 @@ header{
   </div>
 </div>
 
-<script type="module">
-// ════════════════════════════════════════════════════════
-//  הגדרות — שנה כאן
-// ════════════════════════════════════════════════════════
-const ADMIN_PASSWORD = 'npc2024';   // ← סיסמת כניסה לפאנל
+<script>
+const ADMIN_PASSWORD = 'npc2024';
+const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
 
-// Firebase config — הדבק כאן את הפרטים מ-Firebase Console
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyBQylFseHge48iq3U5CqgJJZPdHM5QHbtA",
-  authDomain:        "hack-the-box-larp.firebaseapp.com",
-  databaseURL:       "https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:         "hack-the-box-larp",
-  storageBucket:     "hack-the-box-larp.firebasestorage.app",
-  messagingSenderId: "637845792573",
-  appId:             "1:637845792573:web:40d074d97f2ee1f1d90754"
-};
-// ════════════════════════════════════════════════════════
-
-import { initializeApp }                from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, onValue, remove, set, get }
-  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+function fbGet(path) {
+  return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null);
+}
+function fbDelete(path) {
+  return fetch(`${FB_URL}/${path}.json`,{method:'DELETE'}).catch(()=>{});
+}
 
 const EFFECT_NAMES = { T:'⏱ זמן', W:'✓ פתרון', L:'💡 עזרה', E:'↓ הקלה' };
 const GAME_ICONS   = { shooter:'🔫', sequence:'🧠', blocks:'🧩' };
 
-let db, playersData = {}, codesData = {};
+let playersData = {}, codesData = {};
 
 // ── LOGIN ──────────────────────────────────────────────
 document.getElementById('login-btn').addEventListener('click', login);
-document.getElementById('admin-pass').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+document.getElementById('admin-pass').addEventListener('keydown', e=>{if(e.key==='Enter')login();});
 
 function login() {
   const pass = document.getElementById('admin-pass').value.trim();
   if (pass === ADMIN_PASSWORD) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main').style.display = 'flex';
-    initFirebase();
+    startPolling();
   } else {
     document.getElementById('login-err').textContent = 'סיסמה שגויה';
     document.getElementById('admin-pass').value = '';
   }
 }
 
-// ── FIREBASE ───────────────────────────────────────────
-function initFirebase() {
-  const app = initializeApp(FIREBASE_CONFIG);
-  db = getDatabase(app);
+// ── POLLING (every 5s) ─────────────────────────────────
+function startPolling() {
+  refreshData();
+  setInterval(refreshData, 5000);
+}
 
-  // Listen to players in realtime
-  onValue(ref(db, 'players'), snap => {
-    playersData = snap.val() || {};
-    renderAll();
-  });
-
-  // Listen to help code usage
-  onValue(ref(db, 'helpCodes'), snap => {
-    codesData = snap.val() || {};
-    renderAll();
-  });
+async function refreshData() {
+  const [players, codes] = await Promise.all([
+    fbGet('players'),
+    fbGet('helpCodes')
+  ]);
+  playersData = players || {};
+  codesData   = codes   || {};
+  renderAll();
+  document.getElementById('live-indicator').innerHTML =
+    '<div class="live-dot"></div><span>עודכן ' + new Date().toLocaleTimeString('he-IL') + '</span>';
 }
 
 // ── RENDER ─────────────────────────────────────────────
@@ -316,52 +305,36 @@ function timeAgo(ts) {
 
 function renderStats() {
   const players = Object.values(playersData);
-  const wins    = players.filter(p => p.won).length;
-  const active  = players.filter(p => p.lastSeen && Date.now()-p.lastSeen < 300000).length;
-  const codes   = Object.keys(codesData).length;
-
   document.getElementById('stat-players').textContent = players.length;
-  document.getElementById('stat-wins').textContent    = wins;
-  document.getElementById('stat-codes').textContent   = codes;
-  document.getElementById('stat-active').textContent  = active;
+  document.getElementById('stat-wins').textContent    = players.filter(p=>p.won).length;
+  document.getElementById('stat-codes').textContent   = Object.keys(codesData).length;
+  document.getElementById('stat-active').textContent  = players.filter(p=>p.lastSeen&&Date.now()-p.lastSeen<300000).length;
 }
 
 function renderPlayers() {
   const tbody = document.getElementById('players-body');
   const players = Object.entries(playersData);
-
   if (!players.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">ממתין לשחקנים...</td></tr>';
     return;
   }
-
-  // Sort by lastSeen desc
-  players.sort((a,b) => (b[1].lastSeen||0) - (a[1].lastSeen||0));
-
-  tbody.innerHTML = players.map(([key, p]) => {
-    const icon = GAME_ICONS[p.game] || '❓';
+  players.sort((a,b)=>(b[1].lastSeen||0)-(a[1].lastSeen||0));
+  tbody.innerHTML = players.map(([key,p]) => {
+    const icon = GAME_ICONS[p.game]||'❓';
     const status = p.won
-      ? `<span style="color:var(--green)">✓ פתח</span>`
-      : `<span style="color:var(--mid)">⏳ משחק</span>`;
-
-    // Find codes used by this player
+      ? '<span style="color:var(--green)">✓ פתח</span>'
+      : '<span style="color:var(--mid)">⏳ משחק</span>';
     const usedCodes = Object.entries(codesData)
-      .filter(([,cd]) => cd.player === p.name)
-      .map(([code,cd]) => `<span class="code-badge code-${code[0]}">${code[0]} — ${EFFECT_NAMES[code[0]]||code}</span>`)
+      .filter(([,cd])=>cd.player===p.name)
+      .map(([code])=>`<span class="code-badge code-${code[0]}">${EFFECT_NAMES[code[0]]||code[0]}</span>`)
       .join('') || '—';
-
     return `<tr>
-      <td><div class="player-name">${p.name || '—'}</div></td>
-      <td>
-        <span class="box-badge">${icon} ${p.boxId || '?'}</span>
-        <span style="font-size:10px;color:var(--mid)">${p.boxTitle||''}</span>
-      </td>
+      <td><div class="player-name">${p.name||'—'}</div></td>
+      <td><span class="box-badge">${icon} ${p.boxId||'?'}</span> <span style="font-size:10px;color:var(--mid)">${p.boxTitle||''}</span></td>
       <td>${status}</td>
       <td>${usedCodes}</td>
       <td class="time-ago">${timeAgo(p.lastSeen)}</td>
-      <td>
-        <button class="action-btn" onclick="window.removePlayer('${key}')">הסר</button>
-      </td>
+      <td><button class="action-btn" onclick="removePlayer('${key}')">הסר</button></td>
     </tr>`;
   }).join('');
 }
@@ -369,25 +342,20 @@ function renderPlayers() {
 function renderCodes() {
   const tbody = document.getElementById('codes-body');
   const codes = Object.entries(codesData);
-
   if (!codes.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">אין שימוש בקודים עדיין</td></tr>';
     return;
   }
-
-  codes.sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
-
-  tbody.innerHTML = codes.map(([code, cd]) => {
+  codes.sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+  tbody.innerHTML = codes.map(([code,cd]) => {
     const type = code[0];
     return `<tr>
-      <td class="player-name">${cd.player || '—'}</td>
+      <td class="player-name">${cd.player||'—'}</td>
       <td style="letter-spacing:4px">${code}</td>
       <td><span class="code-badge code-${type}">${EFFECT_NAMES[type]||type}</span></td>
       <td><span class="box-badge">${cd.boxId||'?'}</span></td>
       <td class="time-ago">${timeAgo(cd.ts)}</td>
-      <td>
-        <button class="action-btn ok" onclick="window.resetCode('${code}')">אפס</button>
-      </td>
+      <td><button class="action-btn ok" onclick="resetCode('${code}')">אפס</button></td>
     </tr>`;
   }).join('');
 }
@@ -397,50 +365,57 @@ function showMsg(text, isOk=true) {
   const el = document.getElementById('reset-msg');
   el.textContent = text;
   el.style.color = isOk ? 'var(--green)' : 'var(--red)';
-  setTimeout(() => el.textContent='', 2500);
+  setTimeout(()=>el.textContent='', 2500);
 }
 
-window.resetCode = async (code) => {
-  await remove(ref(db, `helpCodes/${code}`));
+async function resetCode(code) {
+  await fbDelete(`helpCodes/${code}`);
   showMsg(`קוד ${code} אופס`);
-};
+  refreshData();
+}
 
-window.removePlayer = async (key) => {
-  await remove(ref(db, `players/${key}`));
+async function removePlayer(key) {
+  await fbDelete(`players/${key}`);
   showMsg('שחקן הוסר');
-};
+  refreshData();
+}
+
+window.resetCode = resetCode;
+window.removePlayer = removePlayer;
 
 window.resetSpecificCode = async () => {
   const code = document.getElementById('reset-code-input').value.trim().toUpperCase();
   if (!code) return;
-  await remove(ref(db, `helpCodes/${code}`));
+  await fbDelete(`helpCodes/${code}`);
   document.getElementById('reset-code-input').value = '';
   showMsg(`קוד ${code} אופס`);
+  refreshData();
 };
 
 window.resetPlayerCodes = async () => {
   const name = document.getElementById('reset-player-input').value.trim();
   if (!name) return;
-  const snap = await get(ref(db, 'helpCodes'));
-  const all = snap.val() || {};
   let count = 0;
-  for (const [code, cd] of Object.entries(all)) {
+  for (const [code,cd] of Object.entries(codesData)) {
     if (cd.player && cd.player.includes(name)) {
-      await remove(ref(db, `helpCodes/${code}`));
+      await fbDelete(`helpCodes/${code}`);
       count++;
     }
   }
   document.getElementById('reset-player-input').value = '';
   showMsg(`אופסו ${count} קודים של ${name}`);
+  refreshData();
 };
 
 window.resetAllCodes = async () => {
   if (!confirm('לאפס את כל קודי העזרה?')) return;
-  await remove(ref(db, 'helpCodes'));
+  await fbDelete('helpCodes');
   showMsg('כל הקודים אופסו');
+  refreshData();
 };
 
-window.refreshData = () => showMsg('מתרענן...', true);
+window.refreshData = refreshData;
+
 </script>
 </body>
 </html>
