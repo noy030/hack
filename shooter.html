@@ -496,6 +496,7 @@ body::after{
 
 
 
+
 // Global player tracking
 let fbPlayerName = '';
 let fbAttempts = 0;
@@ -643,6 +644,11 @@ function updateHp(){hpdots.innerHTML='';for(let i=0;i<3;i++){const d=document.cr
 
 function initGame(){
   resize();walls=[];bullets=[];eBullets=[];particles=[];
+  // Reset joystick knobs to center
+  const _lk=document.getElementById('lk'), _rk=document.getElementById('rk');
+  if(_lk) _lk.style.transform='translate(0,0)';
+  if(_rk) _rk.style.transform='translate(0,0)';
+  tMove={x:0,y:0}; tAim={x:0,y:0};
   player={x:canvas.width/2,y:canvas.height*.78,size:9,hp:3,angle:-Math.PI/2,lastShot:0,invUntil:0};
   core={x:canvas.width/2,y:canvas.height*.27,size:24,hp:C.coreHp,maxHp:C.coreHp,lastShot:0,angle:0};
 
@@ -1032,6 +1038,7 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
 
 </script>
 </body>
