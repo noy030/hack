@@ -500,6 +500,7 @@ body::after{
 
 
 
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -661,7 +662,15 @@ function initGame(){
 
 window.addEventListener('resize',resize);
 document.getElementById('sb').addEventListener('click',()=>{initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('startscreen').style.display='none'; document.getElementById('pblabel').textContent=TEXT.hudCoreLabel; isActive=true;requestAnimationFrame(loop);});
-document.getElementById('rbtn').addEventListener('click',()=>location.reload());
+document.getElementById('rbtn').addEventListener('click',()=>{
+  document.getElementById('goscreen').style.display='none';
+  isOver=false; isActive=false;
+  initGame();
+  if(ac.state==='suspended') ac.resume();
+  startBGM();
+  requestAnimationFrame(loop);
+  fbReport({won:false, attempts: (fbAttempts||0)});
+});
 
 function handleT(e){let lA=false,rA=false;for(const t of e.touches){const iL=t.clientX<window.innerWidth/2;if(iL){lA=true;const dx=t.clientX-75,dy=t.clientY-(window.innerHeight-72);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);lk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;tMove=dist>6?{x:Math.cos(angle)*Math.min(dist/MJ,1),y:Math.sin(angle)*Math.min(dist/MJ,1)}:{x:0,y:0};}else{rA=true;const dx=t.clientX-(window.innerWidth-75),dy=t.clientY-(window.innerHeight-72);const dist=Math.hypot(dx,dy),angle=Math.atan2(dy,dx),disp=Math.min(dist,MJ);rk.style.transform=`translate(${Math.cos(angle)*disp}px,${Math.sin(angle)*disp}px)`;if(dist>8){tAim={x:Math.cos(angle),y:Math.sin(angle)};lastDir=tAim;player.angle=angle;}else tAim={x:0,y:0};}}if(!lA){tMove={x:0,y:0};lk.style.transform='translate(0,0)';}if(!rA){tAim={x:0,y:0};rk.style.transform='translate(0,0)';}e.preventDefault();}
 window.addEventListener('touchstart',e=>{if(isActive&&!isOver){if(!hasMoved){hasMoved=true;startTime=Date.now();}handleT(e);}},{passive:false});
@@ -750,7 +759,7 @@ function updateWalls(time){
 }
 
 function triggerLoss(){if(isOver)return;isOver=true; stopBGM();let c=0;const iv=setInterval(()=>{sfx('glitch');if(++c>=6){clearInterval(iv);setTimeout(()=>document.getElementById('goscreen').style.display='flex',400);}},180);}
-function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win); fbReport({won:true});
+function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win); fbReport({won:true, attempts: fbAttempts});
   document.getElementById('wincode').textContent=C.code;
   setTimeout(()=>{
     document.getElementById('winscreen').style.display='flex';
@@ -979,6 +988,7 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
 
 </script>
 </body>
