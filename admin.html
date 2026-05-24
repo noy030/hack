@@ -233,8 +233,14 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
           <button class="action-btn ok" onclick="resetPlayerCodes()">אפס קודי שחקן</button>
         </div>
         <div class="reset-row">
-          <button class="action-btn" onclick="resetAllCodes()" style="color:var(--red);border-color:rgba(196,48,0,0.4)">⚠ אפס הכל</button>
+          <button class="action-btn" onclick="resetAllCodes()" style="color:var(--red);border-color:rgba(196,48,0,0.4)">⚠ אפס קודים</button>
           <button class="action-btn ok" onclick="refreshData()" style="margin-right:auto">רענן</button>
+        </div>
+        <div class="reset-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <button class="action-btn" onclick="resetEverything()"
+            style="color:var(--red);border-color:var(--red);padding:10px 24px;font-size:12px;letter-spacing:3px;width:100%">
+            🔴 איפוס מלא — מחק הכל והתחל מחדש
+          </button>
         </div>
         <div id="reset-msg" style="font-size:10px;letter-spacing:3px;min-height:16px;color:var(--green);margin-top:8px;"></div>
       </div>
@@ -491,6 +497,18 @@ window.resetPlayerCodes=async()=>{
 window.resetAllCodes=async()=>{
   if(!confirm('לאפס את כל קודי העזרה?'))return;
   await fbDelete('helpCodes'); showMsg('כל הקודים אופסו'); refreshData();
+};
+
+window.resetEverything=async()=>{
+  if(!confirm('⚠️ מחיקה מלאה!\n\nכל השחקנים, כל הנתונים, כל הקודים — הכל יימחק.\n\nלהמשיך?'))return;
+  if(!confirm('בטוחה לגמרי? אין דרך חזרה.'))return;
+  await Promise.all([
+    fbDelete('players'),
+    fbDelete('helpCodes'),
+  ]);
+  playersData = {}; codesData = {};
+  renderAll();
+  showMsg('✓ המערכת אופסה — מוכן לאירוע חדש', true);
 };
 window.refreshData=refreshData;
 window.toggleSound=toggleSound;
