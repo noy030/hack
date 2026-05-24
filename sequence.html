@@ -1012,7 +1012,7 @@ function initHelpSystem() {
       msg.textContent = 'קוד זה כבר שומש'; msg.className = 'help-msg bad'; vibe([150]); return;
     }
     // Valid — apply
-    localStorage.setItem(storageKey, '1');
+    localStorage.setItem(storageKey, '1'); fbReportCodeUsed(val, EFFECTS[type].label);
     msg.textContent = EFFECTS[type].label; msg.className = 'help-msg ok';
     EFFECTS[type].apply();
     vibe([80,40,80,40,120]);
@@ -1025,6 +1025,95 @@ function initHelpSystem() {
   });
 }
 initHelpSystem();
+
+
+// ════════════════════════════════════════════════════════
+//  Firebase — דיווח לנאפס
+//  הדבק כאן את הפרטים מ-Firebase Console
+// ════════════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey:      "YOUR_API_KEY",
+  authDomain:  "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId:   "YOUR_PROJECT",
+};
+// ════════════════════════════════════════════════════════
+
+let fbDb = null, fbPlayerKey = null, fbPlayerName = '';
+
+async function initFirebase() {
+  try {
+    const { initializeApp }         = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getDatabase, ref, set, push, remove } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
+    const app = initializeApp(FB_CONFIG, 'hackthebox');
+    fbDb = getDatabase(app);
+    window._fbRef = ref; window._fbSet = set; window._fbPush = push; window._fbRemove = remove;
+  } catch(e) { console.warn('Firebase not available:', e); }
+}
+
+function fbReport(data) {
+  if (!fbDb || !fbPlayerName) return;
+  try {
+    const { ref, set } = { ref: window._fbRef, set: window._fbSet };
+    if (!fbPlayerKey) {
+      const { push } = { push: window._fbPush };
+      const newRef = push(ref(fbDb, 'players'));
+      fbPlayerKey = newRef.key;
+    }
+    window._fbSet(window._fbRef(fbDb, `players/${fbPlayerKey}`), {
+      name: fbPlayerName,
+      boxId: new URLSearchParams(location.search).get('box') || '?',
+      boxTitle: C.title || '?',
+      game: C.game || '?',
+      lastSeen: Date.now(),
+      ...data
+    });
+  } catch(e) {}
+}
+
+function fbReportCodeUsed(code, effectLabel) {
+  if (!fbDb || !fbPlayerName) return;
+  try {
+    window._fbSet(window._fbRef(fbDb, `helpCodes/${code}`), {
+      player: fbPlayerName,
+      boxId: new URLSearchParams(location.search).get('box') || '?',
+      effect: effectLabel,
+      ts: Date.now()
+    });
+  } catch(e) {}
+}
+
+function fbResetCode(code) {
+  if (!fbDb) return;
+  try { window._fbRemove(window._fbRef(fbDb, `helpCodes/${code}`)); } catch(e) {}
+}
+
+// Heartbeat — updates lastSeen every 30s
+setInterval(() => fbReport({}), 30000);
+
+initFirebase();
+
+
+// ── Name screen logic ─────────────────────────────────
+(function() {
+  const ns = document.getElementById('name-screen');
+  const inp = document.getElementById('player-name-input');
+  const btn = document.getElementById('name-submit');
+  if (!ns || !inp || !btn) return;
+
+  function submitName() {
+    const name = inp.value.trim();
+    if (!name) { inp.style.borderBottomColor='var(--red)'; inp.focus(); return; }
+    fbPlayerName = name;
+    ns.style.display = 'none';
+    fbReport({ won: false });
+  }
+
+  btn.addEventListener('click', submitName);
+  inp.addEventListener('keydown', e => { if(e.key==='Enter') submitName(); });
+  setTimeout(() => inp.focus(), 200);
+})();
+// ─────────────────────────────────────────────────────
 
 </script>
 </body>
