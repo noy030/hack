@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
-<title>HACK THE BOX — Memory Breach</title>
+<title>HACK THE BOX — Block Infiltration</title>
 <style>
 
 :root{
@@ -237,38 +237,25 @@ body::after{
 @keyframes su{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 
 
-#gamewrap{width:100%;max-width:min(420px,96vw);padding:clamp(10px,3vw,16px);display:none;flex-direction:column;align-items:center;gap:clamp(10px,2.5vh,16px);position:relative;z-index:1;}
-.hudbar{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:clamp(9px,2.5vw,11px);color:var(--mid);letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:8px;}
-.hudval{color:var(--text);}
-.phase-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.phase-col{flex:1;display:flex;flex-direction:column;gap:8px;}
-.phase-label{font-size:clamp(9px,2.5vw,11px);letter-spacing:4px;color:var(--mid);text-align:center;height:16px;}
-.seq-display{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:32px;align-items:center;}
-.seq-node{width:clamp(24px,7vw,30px);height:clamp(24px,7vw,30px);border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2.5vw,12px);font-weight:bold;color:#fff;transition:all .18s;}
-.seq-node.active{transform:scale(1.35);box-shadow:0 0 16px currentColor;}
-.seq-hidden{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:32px;align-items:center;}
-.seq-slot{width:clamp(24px,7vw,30px);height:clamp(24px,7vw,30px);border-radius:50%;border:1px solid rgba(232,227,218,0.2);background:rgba(232,227,218,0.05);display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2.5vw,12px);font-weight:bold;transition:all .15s;}
-.seq-slot.correct{border-color:#5a8a4a;background:rgba(90,138,74,0.25);}
-.seq-slot.wrong-flash{border-color:var(--red);background:rgba(196,48,0,0.3);}
-.timerring{position:relative;width:clamp(58px,15vw,74px);height:clamp(58px,15vw,74px);flex-shrink:0;}
-.timerring svg{transform:rotate(-90deg);}
-.ring-bg{fill:none;stroke:rgba(240,235,224,0.22);stroke-width:4;}
-.ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .3s;}
-.ring-fg.danger{stroke:var(--red);}
-.ring-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(15px,4.5vw,20px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
-.nodegrid{display:grid;gap:clamp(5px,1.5vw,9px);width:100%;max-width:min(360px,92vw);}
-.nodebtn{aspect-ratio:1;border-radius:5px;border:2px solid rgba(240,235,224,0.28);background:rgba(240,235,224,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;color:rgba(240,235,224,0.65);transition:all .12s;touch-action:manipulation;min-height:clamp(44px,12vw,60px);}
-.nodebtn:active{transform:scale(0.9);}
-.nodebtn.disabled{pointer-events:none;opacity:0.2;}
-.progbar{width:100%;}
-.proglbl{font-size:9px;letter-spacing:3px;color:var(--mid);margin-bottom:4px;display:flex;justify-content:space-between;}
-.progtrack{height:4px;background:rgba(232,227,218,0.07);border:1px solid rgba(232,227,218,0.1);}
-.progfill{height:100%;background:var(--accent);transition:width .4s;}
-#cdoverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(20,18,14,0.94);z-index:150;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
-#cdnum{font-family:'Rajdhani',sans-serif;font-size:clamp(80px,22vw,110px);color:var(--text);animation:cdpop .35s ease-out;}
-#cdlbl{font-size:11px;letter-spacing:6px;color:var(--mid);}
-@keyframes cdpop{from{transform:scale(1.8);opacity:0;}to{transform:scale(1);opacity:1;}}
-#msg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(20,18,14,0.97);border:1px solid var(--accent);padding:16px 28px;text-align:center;font-size:15px;letter-spacing:4px;color:var(--text);z-index:160;pointer-events:none;display:none;}
+body{touch-action:none;}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;z-index:50;pointer-events:none;border-bottom:1px solid rgba(232,227,218,0.07);background:rgba(20,18,14,0.92);}
+.huds{font-size:clamp(9px,2.2vw,11px);color:var(--mid);letter-spacing:2px;line-height:1.8;}
+.hudv{color:var(--text);}
+.hudtimer{font-size:clamp(20px,5vw,26px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
+.hudtimer.danger{color:var(--red);animation:pulse .5s infinite;}
+#boardwrap{display:flex;align-items:center;justify-content:center;flex:1;width:100%;padding-top:48px;padding-bottom:52px;}
+#board{position:relative;}
+.cell{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;border-radius:4px;transition:top .15s,left .15s;cursor:pointer;touch-action:none;}
+.cell.wall{background:rgba(240,235,224,0.22);border:2px solid rgba(240,235,224,0.75);color:rgba(240,235,224,0.95);font-size:11px;}
+.cell.empty-hole{background:rgba(240,235,224,0.05);border:1px solid rgba(240,235,224,0.18);}
+.cell.core{background:rgba(240,235,224,0.28);border:3px solid var(--text);color:var(--text);box-shadow:0 0 14px rgba(232,227,218,0.25),inset 0 0 6px rgba(232,227,218,0.08);}
+.cell.core.active{box-shadow:0 0 24px rgba(232,227,218,0.45),inset 0 0 12px rgba(232,227,218,0.15);}
+#exitmarker{position:absolute;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:2px;color:rgba(232,227,218,0.7);pointer-events:none;text-shadow:0 0 8px rgba(232,227,218,0.35);}
+#pzdots{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;pointer-events:none;}
+.pzdot{width:7px;height:7px;border:1px solid rgba(232,227,218,0.25);}
+.pzdot.done{background:var(--accent);}
+.pzdot.active{background:var(--accent);animation:pulse .8s infinite;}
+#statusmsg{position:fixed;bottom:34px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;color:var(--mid);white-space:nowrap;z-index:50;pointer-events:none;}
 
 
 /* ── Show code again button ── */
@@ -463,15 +450,15 @@ body::after{
     <div class="ss-div-line r"></div>
   </div>
 
-  <div class="ss-subtitle">MEMORY BREACH</div>
+  <div class="ss-subtitle">BLOCK INFILTRATION</div>
 
   <div class="ss-brief">
-    צפה ברצף הצמתים בתשומת לב<br>הרצף ייעלם — ואז חזור עליו<br>פרוץ את כל הרצפים לפתיחת הקוד
+    הזז בלוקים כדי לפנות מסלול<br>הובל את הגרעין ▣ ליציאה ←<br><span style="color:var(--red)">⚠ בלוקים זזים בציר אחד בלבד</span>
   </div>
 
-  <button class="ss-btn outline" id="startbtn">START BREACH</button>
+  <button class="ss-btn outline" id="startbtn">BREACH CORE</button>
 
-  <div class="ss-foot">[ MEMORY ENCRYPTION DETECTED <span>■</span> ]</div>
+  <div class="ss-foot">[ HIGH THREAT ENVIRONMENT <span>■</span> ]</div>
 <button id="help-btn">🔑 קוד עזרה</button>
 <div id="help-overlay">
   <div class="help-box">
@@ -485,38 +472,18 @@ body::after{
 </div>
 </div>
 
-<div id="gamewrap">
-  <div class="hudbar">
-    <span id="hudtitle">---</span>
-    <span>SEQ <span class="hudval" id="seqnum">1</span>/<span class="hudval" id="seqtotal">3</span></span>
-    <span>SCORE <span class="hudval" id="score">0</span></span>
-  </div>
-  <div class="phase-row">
-    <div class="phase-col">
-      <div class="phase-label" id="phaselabel">INITIALIZING</div>
-      <div class="seq-display" id="seqdisplay" style="display:none;"></div>
-      <div class="seq-hidden" id="seqhidden" style="display:none;"></div>
-    </div>
-    <div class="timerring">
-      <svg width="70" height="70" viewBox="0 0 70 70">
-        <circle class="ring-bg" cx="35" cy="35" r="29"/>
-        <circle class="ring-fg" id="ringfg" cx="35" cy="35" r="29" stroke-dasharray="182.2" stroke-dashoffset="0"/>
-      </svg>
-      <div class="ring-txt" id="timertxt">--</div>
-    </div>
-  </div>
-  <div class="nodegrid" id="nodegrid"></div>
-  <div class="progbar">
-    <div class="proglbl"><span>SEQUENCES BREACHED</span><span id="proglbl">0 / 3</span></div>
-    <div class="progtrack"><div class="progfill" id="progfill" style="width:0%"></div></div>
-  </div>
+<div id="hud">
+  <div class="huds"><span id="hudtitle">---</span><br>PUZZLE <span class="hudv" id="pznum">1</span>/<span class="hudv" id="pztotal">3</span></div>
+  <div class="hudtimer" id="timer">--</div>
+  <div class="huds" style="text-align:right;">MOVES <span class="hudv" id="moves">0</span><br>DIFF <span class="hudv" id="difflbl">--</span></div>
 </div>
 
-<div id="cdoverlay"><div id="cdnum">3</div><div id="cdlbl">MEMORIZE — NOW REPEAT</div></div>
-<div id="msg"></div>
+<div id="boardwrap"><div id="board"></div></div>
+<div id="statusmsg">SLIDE TO FREE THE CORE</div>
+<div id="pzdots"></div>
 
 <div id="goscreen">
-  <div class="go-title">BREACH FAILED</div>
+  <div class="go-title">CORE BLOCKED</div>
   
   <button id="rbtn">נסה שנית</button>
 </div>
@@ -525,7 +492,7 @@ body::after{
     <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
     <div class="wincodelbl">קוד פתיחה</div>
     <div class="wincode" id="wincode">----</div>
-    <div class="windesc">כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה</div>
+    <div class="windesc">מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה</div>
     
   </div>
 </div>
@@ -558,34 +525,32 @@ const VIB = {
 // ════════════════════════════════════════════════════════════
 const TEXT = {
   startEyebrow:   'TERMINAL // ',
-  instructions:   'צפה ברצף הצמתים בתשומת לב<br>הרצף ייעלם — ואז חזור עליו<br>פרוץ את כל הרצפים לפתיחת הקוד',
-  startBtn:       'START BREACH',
-  startFooter:    'MEMORY ENCRYPTION DETECTED',
-  statSeqLabel:   'SEQUENCES',
-  statTimeLabel:  'TIME / SEQ',
-  phaseWatch:     '— WATCH —',
-  phaseRepeat:    '— REPEAT —',
-  phaseInit:      'INITIALIZING',
-  countdownLabel: 'MEMORIZE — NOW REPEAT',
-  hudSeqLabel:    'SEQ',
-  hudScoreLabel:  'SCORE',
-  hudProgLabel:   'SEQUENCES BREACHED',
-  winHeader:     'SYSTEM STATUS: BREACH COMPLETE',
+  instructions:   'הזז בלוקים כדי לפנות מסלול<br>הובל את הגרעין ▣ ליציאה ←<br>החלק בלוקים ימינה / שמאלה / מעלה / מטה',
+  warning:        '⚠ בלוקים זזים בציר אחד בלבד',
+  startBtn:       'BREACH CORE',
+  startFooter:    'HIGH THREAT ENVIRONMENT',
+  hudPuzzleLabel: 'PUZZLE',
+  hudMovesLabel:  'MOVES',
+  hudDiffLabel:   'DIFF',
+  diffNames:      ['EASY', 'MEDIUM', 'HARD'],
+  statusIdle:     'SLIDE TO FREE THE CORE',
+  statusNext:     'CORE OUT — NEXT PUZZLE',
+  exitLabel:      '▶ EXIT',
+  winHeader:     'SYSTEM STATUS: CORE EXTRACTED',
   winCodeLabel:  'קוד פתיחה',
-  winDesc:       'כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה',
+  winDesc:       'מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה',
   winBtn:        'RETURN',
-  loseTitle:     'BREACH FAILED',
+  loseTitle:     'CORE BLOCKED',
   loseSub:       '',
   loseBtn:       'נסה שנית',
-  msgBreachPlus: 'BREACH +1',
   orientTitle:   'ROTATE TO PORTRAIT',
   orientSub:     '[ PORTRAIT MODE REQUIRED ]',
   errorLines: [
-    ['BREACH FAILED',   'אי-התאמה ברצף'],
-    ['MEMORY ERROR',    'זיכרון שגוי'],
-    ['SYSTEM FAILURE',  'הרצף נכשל'],
-    ['SIGNAL LOST',     'מתחבר מחדש...'],
-    ['ACCESS DENIED',   'הניסיון נכשל'],
+    ['CORE BLOCKED',   'המסלול חסום'],
+    ['TIME OUT',       'הזמן אזל'],
+    ['MISSION FAILED', 'החדירה נכשלה'],
+    ['SYSTEM FAILURE', 'ניסיון שנכשל'],
+    ['ACCESS DENIED',  'הגרעין לא חולץ'],
   ],
 };
 // ════════════════════════════════════════════════════════════
@@ -598,7 +563,7 @@ function spawnNierPopup(header, body, sub, color, duration) {
   setTimeout(()=>div.remove(), duration);
 }
 function showErrorPopups(cb) {
-  const lines=[...TEXT.errorLines,['CRITICAL ERROR','OPERATIVE TERMINATED'],['SYSTEM FAILURE','YOU LOST A LIFE POINT'],['BREACH FAILED','MISSION UNSUCCESSFUL'],['MEMORY CORRUPT','TACTICAL LINK SEVERED'],['SIGNAL LOST','RECONNECTING...'],['CORE INTACT','ENEMY DEFENSE HELD'],['ACCESS DENIED','CLEARANCE REVOKED']];
+  const lines=[['CRITICAL ERROR','OPERATIVE TERMINATED'],['SYSTEM FAILURE','YOU LOST A LIFE POINT'],['BREACH FAILED','MISSION UNSUCCESSFUL'],['MEMORY CORRUPT','TACTICAL LINK SEVERED'],['SIGNAL LOST','RECONNECTING...'],['CORE INTACT','ENEMY DEFENSE HELD'],['ACCESS DENIED','CLEARANCE REVOKED']];
   let i=0;
   const iv=setInterval(()=>{
     const[hdr,msg]=lines[i%lines.length];
@@ -609,36 +574,49 @@ function showErrorPopups(cb) {
 }
 const urlCfg = JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('cfg') || '{}'));
 const C = {
-  code:       urlCfg.code       || '0000',
-  title:      urlCfg.title      || 'UNKNOWN',
-  diff:       urlCfg.diff       || 1,
-  sequences:  Math.min(3, urlCfg.sequences  || 3),
-  baseLen:    urlCfg.baseLen    || 5,
-  timePerSeq: urlCfg.timePerSeq || 45,
-  showSpeed:  urlCfg.showSpeed  || 'normal',  // slow|normal|fast
-  nodeCount:  urlCfg.nodeCount  || 10,        // 4|7|10
-  noise:      urlCfg.noise      || false,     // random flashes during watch
+  code:      urlCfg.code      || '0000',
+  title:     urlCfg.title     || 'UNKNOWN',
+  diff:      urlCfg.diff      || 1,
+  puzzles:   Math.min(3, urlCfg.puzzles || 1),
+  time:      urlCfg.time      || 50,
+  puzzleSet: urlCfg.puzzleSet || 'easy',  // easy|medium|hard
+};
+document.getElementById('ss-id').textContent     = `TERMINAL — ${C.title}`;
+document.getElementById('hudtitle').textContent  = C.title;
+document.getElementById('pztotal').textContent   = C.puzzles;
+document.getElementById('difflbl').textContent = [...TEXT.diffNames][C.diff-1] || 'MEDIUM';
+
+// ─── PUZZLE SETS ─────────────────────────────────────────────────
+// Each puzzle: {grid, blocks:[{id,row,col,len,horiz}]}
+// Core block always id:'core', row:2(grid6) or row:2(grid5), horiz:true → needs col+len >= grid to exit
+
+// All puzzles BFS-verified solvable
+const PUZZLE_SETS = {
+  easy: [
+    { grid:5, blocks:[{id:'core',row:2,col:2,len:2,horiz:true},{id:'a',row:3,col:1,len:2,horiz:false},{id:'b',row:2,col:4,len:2,horiz:false},{id:'c',row:1,col:2,len:3,horiz:true}]},
+    { grid:5, blocks:[{id:'core',row:2,col:1,len:2,horiz:true},{id:'a',row:0,col:1,len:3,horiz:true},{id:'b',row:1,col:0,len:3,horiz:false},{id:'c',row:3,col:1,len:3,horiz:true},{id:'d',row:1,col:4,len:2,horiz:false}]},
+    { grid:6, blocks:[{id:'core',row:2,col:2,len:2,horiz:true},{id:'a',row:5,col:3,len:3,horiz:true},{id:'b',row:0,col:2,len:2,horiz:true},{id:'c',row:1,col:5,len:3,horiz:false},{id:'d',row:0,col:4,len:2,horiz:true}]},
+  ],
+  medium: [
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:3,col:1,len:3,horiz:false},{id:'b',row:0,col:3,len:2,horiz:false},{id:'c',row:5,col:2,len:2,horiz:true},{id:'d',row:2,col:3,len:3,horiz:false},{id:'e',row:0,col:2,len:3,horiz:false}]},
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:4,col:0,len:2,horiz:true},{id:'b',row:1,col:1,len:3,horiz:true},{id:'c',row:2,col:3,len:2,horiz:false},{id:'d',row:4,col:3,len:3,horiz:true},{id:'e',row:2,col:2,len:3,horiz:false},{id:'f',row:5,col:2,len:2,horiz:true}]},
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:5,col:2,len:2,horiz:true},{id:'b',row:4,col:1,len:2,horiz:false},{id:'c',row:0,col:3,len:3,horiz:true},{id:'d',row:4,col:5,len:2,horiz:false},{id:'e',row:1,col:5,len:2,horiz:false},{id:'f',row:1,col:3,len:3,horiz:false}]},
+  ],
+  hard: [
+    { grid:6, blocks:[{id:'core',row:2,col:0,len:2,horiz:true},{id:'a',row:3,col:2,len:3,horiz:true},{id:'b',row:1,col:3,len:2,horiz:false},{id:'c',row:0,col:3,len:3,horiz:true},{id:'d',row:3,col:0,len:2,horiz:true},{id:'e',row:0,col:2,len:3,horiz:false},{id:'f',row:4,col:5,len:2,horiz:false},{id:'g',row:0,col:0,len:2,horiz:false}]},
+    { grid:6, blocks:[{id:'core',row:2,col:1,len:2,horiz:true},{id:'a',row:3,col:1,len:3,horiz:false},{id:'b',row:2,col:4,len:3,horiz:false},{id:'c',row:5,col:4,len:2,horiz:true},{id:'d',row:4,col:0,len:2,horiz:false},{id:'e',row:0,col:3,len:2,horiz:false},{id:'f',row:3,col:2,len:2,horiz:false},{id:'g',row:5,col:2,len:2,horiz:true}]},
+    { grid:6, blocks:[{id:'core',row:2,col:1,len:2,horiz:true},{id:'a',row:2,col:4,len:2,horiz:false},{id:'b',row:2,col:3,len:3,horiz:false},{id:'c',row:4,col:1,len:2,horiz:false},{id:'d',row:4,col:4,len:2,horiz:true},{id:'e',row:1,col:0,len:3,horiz:false},{id:'f',row:5,col:3,len:3,horiz:true},{id:'g',row:0,col:4,len:2,horiz:true},{id:'h',row:4,col:0,len:2,horiz:false}]},
+  ],
 };
 
-// showSpeed → flash duration + inter-node gap
-const SPEED_MAP = { slow:{dur:600,gap:180}, normal:{dur:420,gap:100}, fast:{dur:220,gap:60} };
-const spd = SPEED_MAP[C.showSpeed] || SPEED_MAP.normal;
-
-document.getElementById('ss-id').textContent    = `TERMINAL — ${C.title}`;
-document.getElementById('hudtitle').textContent = C.title;
-document.getElementById('seqtotal').textContent = C.sequences;
-document.getElementById('proglbl').textContent  = `0 / ${C.sequences}`;
-
-const ALL_NODES = [
-  {id:0,label:'A',color:'#4a8fa8'},{id:1,label:'B',color:'#a8834a'},
-  {id:2,label:'C',color:'#6a8a4a'},{id:3,label:'D',color:'#8a4a6a'},
-  {id:4,label:'E',color:'#4a5a8a'},{id:5,label:'F',color:'#8a704a'},
-  {id:6,label:'G',color:'#4a8a70'},{id:7,label:'H',color:'#7a4a8a'},
-  {id:8,label:'I',color:'#8a4a4a'},{id:9,label:'J',color:'#4a7a8a'},
-];
-// Slice to nodeCount — affects grid size and sequence pool
-const NODES = ALL_NODES.slice(0, C.nodeCount);
-const freqs = [220,277,330,415,523,622,740,880,1047,1175];
+// Pick puzzles from the correct set, shuffled each game
+function getPuzzles() {
+  const set = [...(PUZZLE_SETS[C.puzzleSet] || PUZZLE_SETS.easy)];
+  // Shuffle
+  for (let i = set.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [set[i],set[j]]=[set[j],set[i]]; }
+  return set.slice(0, C.puzzles);
+}
+let activePuzzles = [];
 
 const AC = window.AudioContext || window.webkitAudioContext;
 
@@ -654,310 +632,273 @@ function stopBGM()  { bgmEl.pause(); bgmEl.currentTime = 0; }
 // ────────────────────────────────────────────────────────────
 
 const audioCtx = new AC();
-function sfx(t, f) {
+function sfx(t) {
   if (audioCtx.state === 'suspended') return;
   const o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.connect(g); g.connect(audioCtx.destination);
   const n = audioCtx.currentTime;
-  if (t==='show')   { o.type='sine';     o.frequency.setValueAtTime(f||440,n); g.gain.setValueAtTime(0.07,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.25); o.start(n); o.stop(n+0.25); }
-  else if (t==='tap')    { o.type='sine';     o.frequency.setValueAtTime(f||440,n); g.gain.setValueAtTime(0.05,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.12); o.start(n); o.stop(n+0.12); }
-  else if (t==='correct'){ o.type='sine';     o.frequency.setValueAtTime(660,n); o.frequency.setValueAtTime(880,n+0.08); g.gain.setValueAtTime(0.06,n); o.start(n); o.stop(n+0.2); }
-  else if (t==='wrong')  { o.type='sawtooth'; o.frequency.setValueAtTime(180,n); o.frequency.exponentialRampToValueAtTime(60,n+0.35); g.gain.setValueAtTime(0.1,n); o.start(n); o.stop(n+0.35); }
-  else if (t==='tick')   { o.type='square';   o.frequency.setValueAtTime(800,n); g.gain.setValueAtTime(0.02,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.05); o.start(n); o.stop(n+0.05); }
-  else if (t==='win')    { [440,550,660,880].forEach((f2,i)=>{ const o2=audioCtx.createOscillator(),g2=audioCtx.createGain(); o2.connect(g2); g2.connect(audioCtx.destination); o2.frequency.value=f2; o2.type='sine'; g2.gain.setValueAtTime(0.06,n+i*0.1); g2.gain.exponentialRampToValueAtTime(0.001,n+i*0.1+0.3); o2.start(n+i*0.1); o2.stop(n+i*0.1+0.3); }); }
+  if (t==='slide') { o.type='sine';     o.frequency.setValueAtTime(300,n); g.gain.setValueAtTime(0.04,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.1); o.start(n); o.stop(n+0.1); }
+  if (t==='bump')  { o.type='sawtooth'; o.frequency.setValueAtTime(120,n); g.gain.setValueAtTime(0.05,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.08); o.start(n); o.stop(n+0.08); }
+  if (t==='win')   { [330,440,550,660].forEach((f,i)=>{ const o2=audioCtx.createOscillator(),g2=audioCtx.createGain(); o2.connect(g2); g2.connect(audioCtx.destination); o2.type='sine'; o2.frequency.value=f; g2.gain.setValueAtTime(0.06,n+i*0.08); g2.gain.exponentialRampToValueAtTime(0.001,n+i*0.08+0.3); o2.start(n+i*0.08); o2.stop(n+i*0.08+0.3); }); }
+  if (t==='wrong') { o.type='sawtooth'; o.frequency.setValueAtTime(100,n); g.gain.setValueAtTime(0.08,n); o.start(n); o.stop(n+0.25); }
 }
 
-// DOM refs
-const gridEl    = document.getElementById('nodegrid');
-const seqDisp   = document.getElementById('seqdisplay');
-const seqHidden = document.getElementById('seqhidden');
-const phaseEl   = document.getElementById('phaselabel');
-const ringFg    = document.getElementById('ringfg');
-const timerTxt  = document.getElementById('timertxt');
-const progFill  = document.getElementById('progfill');
-const progLbl   = document.getElementById('proglbl');
-const seqNumEl  = document.getElementById('seqnum');
-const scoreEl   = document.getElementById('score');
-const msgEl     = document.getElementById('msg');
-const cdOverlay = document.getElementById('cdoverlay');
-const cdNum     = document.getElementById('cdnum');
-const CIRC      = 182.2;
+const boardEl = document.getElementById('board');
+let CELL, GRID_SIZE, blocks, moves, isOver=false, curPz=0, pzDone=0, tl=C.time, timerIv;
+let dragging=null, dragStartX, dragStartY, dragBlockStartPos;
 
-let curSeq=[], playerInput=[], seqIdx=0;
-let canInput=false, isOver=false, seqsDone=0, timerInterval, tl=C.timePerSeq;
-
-// Build grid — columns adapt to nodeCount
-function buildGrid() {
-  gridEl.innerHTML = '';
-  const cols = C.nodeCount <= 4 ? 4 : C.nodeCount <= 7 ? 4 : 5;
-  gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  NODES.forEach(n => {
-    const btn = document.createElement('div');
-    btn.className = 'nodebtn';
-    btn.textContent = n.label;
-    btn.style.color = n.color + '55';
-    btn.style.borderColor = n.color + '38';
-    btn.dataset.id = n.id;
-    btn.addEventListener('click',    () => onTap(n.id));
-    btn.addEventListener('touchend', e  => { e.preventDefault(); onTap(n.id); });
-    gridEl.appendChild(btn);
-  });
-}
-
-// Light up a button briefly
-function flashBtn(id, dur = spd.dur) {
-  const btn = gridEl.querySelector(`[data-id="${id}"]`);
-  const n = NODES[id];
-  if (!btn) return;
-  btn.style.background   = n.color + '55';
-  btn.style.borderColor  = n.color;
-  btn.style.color        = '#fff';
-  btn.style.boxShadow    = `0 0 20px ${n.color}`;
-  sfx('show', freqs[id]);
-  return new Promise(r => {
-    setTimeout(() => {
-      btn.style.background  = '';
-      btn.style.borderColor = n.color + '38';
-      btn.style.color       = n.color + '55';
-      btn.style.boxShadow   = '';
-      setTimeout(r, 80);
-    }, dur);
-  });
-}
-
-// Light up button on player tap (shorter)
-function flashBtnTap(id) {
-  const btn = gridEl.querySelector(`[data-id="${id}"]`);
-  const n = NODES[id];
-  if (!btn) return;
-  btn.style.background  = n.color + '44';
-  btn.style.borderColor = n.color;
-  btn.style.color       = '#fff';
-  btn.style.boxShadow   = `0 0 12px ${n.color}`;
-  sfx('tap', freqs[id]);
-  setTimeout(() => {
-    btn.style.background  = '';
-    btn.style.borderColor = n.color + '38';
-    btn.style.color       = n.color + '55';
-    btn.style.boxShadow   = '';
-  }, 200);
-}
-
-// ---- WATCH PHASE: show full sequence ----
-function buildWatchDisplay(seq) {
-  seqDisp.innerHTML = '';
-  seq.forEach(id => {
-    const n = NODES[id];
-    const dot = document.createElement('div');
-    dot.className = 'seq-node';
-    dot.textContent = n.label;
-    dot.style.borderColor = n.color + '60';
-    dot.style.color       = n.color;
-    dot.style.background  = n.color + '22';
-    seqDisp.appendChild(dot);
-  });
-}
-function hiWatchNode(idx) {
-  seqDisp.querySelectorAll('.seq-node').forEach((n,i) => n.classList.toggle('active', i===idx));
-}
-
-// ---- INPUT PHASE: show hidden slots ----
-function buildHiddenSlots(len) {
-  seqHidden.innerHTML = '';
-  for (let i = 0; i < len; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'seq-slot';
-    slot.dataset.idx = i;
-    seqHidden.appendChild(slot);
+function buildDots() {
+  const el = document.getElementById('pzdots');
+  el.innerHTML = '';
+  for (let i=0; i<C.puzzles; i++) {
+    const d = document.createElement('div');
+    d.className = 'pzdot' + (i<pzDone?' done':i===curPz?' active':'');
+    el.appendChild(d);
   }
 }
-function fillSlot(idx, nodeId, correct) {
-  const slot = seqHidden.querySelector(`[data-idx="${idx}"]`);
-  if (!slot) return;
-  const n = NODES[nodeId];
-  slot.textContent = n.label;
-  slot.style.color = n.color;
-  if (correct) {
-    slot.classList.add('correct');
+
+function calcCell() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const availW = W * 0.96;
+  const availH = (H - 52 - 55) * 0.95;
+  CELL = Math.floor(Math.min(availW, availH) / GRID_SIZE);
+  if (CELL < 1) CELL = 1;
+  boardEl.style.width    = (CELL * GRID_SIZE) + 'px';
+  boardEl.style.height   = (CELL * GRID_SIZE) + 'px';
+  boardEl.style.position = 'relative';
+  boardEl.style.border   = '1px solid rgba(212,207,198,0.2)';
+  boardEl.style.background = 'rgba(240,235,224,0.03)';
+}
+
+function initPuzzle() {
+  const pzData = activePuzzles[Math.min(curPz, activePuzzles.length-1)];
+  GRID_SIZE = pzData.grid;
+  // Deep-copy blocks
+  blocks = pzData.blocks.map(b => ({...b}));
+  moves = 0;
+  document.getElementById('moves').textContent = moves;
+  document.getElementById('pznum').textContent = curPz+1;
+  calcCell();
+  renderBoard();
+  buildDots();
+}
+
+function renderBoard() {
+  boardEl.innerHTML = '';
+
+  // Grid lines
+  for (let r=0; r<GRID_SIZE; r++) for (let c=0; c<GRID_SIZE; c++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell empty-hole';
+    cell.style.width  = (CELL-2) + 'px';
+    cell.style.height = (CELL-2) + 'px';
+    cell.style.top    = (r*CELL+1) + 'px';
+    cell.style.left   = (c*CELL+1) + 'px';
+    boardEl.appendChild(cell);
+  }
+
+  // Exit arrow on right of row 2
+  const exitEl = document.createElement('div');
+  exitEl.id = 'exitmarker';
+  exitEl.textContent = TEXT.exitLabel;
+  exitEl.style.cssText = `right:-52px;top:${2*CELL + CELL/2 - 10}px;height:20px;`;
+  boardEl.appendChild(exitEl);
+
+  // Blocks
+  blocks.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'cell wall' + (b.id==='core' ? ' core' : '');
+    el.dataset.id = b.id;
+    positionBlock(el, b);
+    el.textContent = b.id === 'core' ? '▣' : '';
+    el.style.fontSize = b.id==='core' ? '22px' : '12px';
+
+    // Touch
+    el.addEventListener('touchstart', e => startDrag(e.touches[0], b, el), {passive:false});
+    el.addEventListener('mousedown',  e => startDrag(e, b, el));
+    boardEl.appendChild(el);
+  });
+}
+
+function positionBlock(el, b) {
+  const w = b.horiz ? b.len * CELL - 4 : CELL - 4;
+  const h = b.horiz ? CELL - 4 : b.len * CELL - 4;
+  el.style.width  = w + 'px';
+  el.style.height = h + 'px';
+  el.style.left   = (b.col * CELL + 2) + 'px';
+  el.style.top    = (b.row * CELL + 2) + 'px';
+}
+
+function startDrag(e, block, el) {
+  if (isOver) return;
+  dragging = { block, el };
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  dragBlockStartPos = block.horiz ? block.col : block.row;
+  el.classList.add('active');
+  e.preventDefault();
+}
+
+function onMove(e) {
+  if (!dragging || isOver) return;
+  const {block, el} = dragging;
+  const dx = (e.clientX || e.touches[0].clientX) - dragStartX;
+  const dy = (e.clientY || e.touches[0].clientY) - dragStartY;
+  const delta = block.horiz ? dx : dy;
+  const cellDelta = Math.round(delta / CELL);
+  const newPos = clampBlock(block, dragBlockStartPos + cellDelta);
+  if (block.horiz) block.col = newPos;
+  else             block.row = newPos;
+  positionBlock(el, block);
+  e.preventDefault();
+}
+
+function onEnd(e) {
+  if (!dragging) return;
+  const {block, el} = dragging;
+  const dx = ((e.clientX||e.changedTouches?.[0]?.clientX||dragStartX)) - dragStartX;
+  const dy = ((e.clientY||e.changedTouches?.[0]?.clientY||dragStartY)) - dragStartY;
+  const delta = block.horiz ? dx : dy;
+  const cellDelta = Math.round(delta / CELL);
+  const oldPos = dragBlockStartPos;
+  const newPos = clampBlock(block, oldPos + cellDelta);
+
+  if (newPos !== oldPos) {
+    if (block.horiz) block.col = newPos;
+    else             block.row = newPos;
+    sfx('slide');
+    moves++;
+    document.getElementById('moves').textContent = moves;
   } else {
-    slot.classList.add('wrong-flash');
-    setTimeout(() => slot.classList.remove('wrong-flash'), 300);
+    sfx('bump');
+  }
+
+  positionBlock(el, block);
+  el.classList.remove('active');
+  dragging = null;
+
+  // Check win: core block col+len >= GRID_SIZE (exits right)
+  const core = blocks.find(b => b.id === 'core');
+  if (core && core.row === 2 && core.col + core.len >= GRID_SIZE) {
+    triggerPuzzleWin();
   }
 }
 
-// ---- COUNTDOWN before input ----
-function runCountdown() {
-  return new Promise(res => {
-    let count = 3;
-    cdOverlay.style.display = 'flex';
-    cdNum.textContent = count;
-    sfx('tick');
-    const iv = setInterval(() => {
-      count--;
-      // Force re-trigger animation
-      cdNum.style.animation = 'none';
-      void cdNum.offsetWidth;
-      cdNum.style.animation = '';
-      if (count > 0) {
-        cdNum.textContent = count;
-        sfx('tick');
+function clampBlock(block, newPos) {
+  // Check bounds
+  const maxPos = GRID_SIZE - block.len;
+  newPos = Math.max(0, Math.min(maxPos, newPos));
+
+  // Check collisions against other blocks
+  for (const other of blocks) {
+    if (other.id === block.id) continue;
+    if (block.horiz) {
+      // Moving horizontally: check blocks in same row
+      if (!other.horiz) {
+        // Vertical block: check if it's in block's row range
+        const otherRow = other.row, otherEnd = other.row + other.len - 1;
+        if (block.row >= otherRow && block.row <= otherEnd) {
+          // other.col is the column to avoid
+          if (newPos < dragBlockStartPos) {
+            // Moving left: don't go past other.col\n            if (other.col < dragBlockStartPos) newPos = Math.max(newPos, other.col + 1);\n          } else {\n            // Moving right: don't go past other.col - block.len
+            if (other.col > dragBlockStartPos) newPos = Math.min(newPos, other.col - block.len);
+          }
+        }
       } else {
-        clearInterval(iv);
-        cdOverlay.style.display = 'none';
-        res();
+        // Horizontal block in same row
+        if (other.row === block.row) {
+          if (newPos < dragBlockStartPos && other.col + other.len - 1 < dragBlockStartPos)
+            newPos = Math.max(newPos, other.col + other.len);
+          else if (newPos > dragBlockStartPos && other.col > dragBlockStartPos + block.len - 1)
+            newPos = Math.min(newPos, other.col - block.len);
+        }
       }
-    }, 700);
-  });
-}
-
-async function showSequence(seq) {
-  canInput = false;
-  setGridEnabled(false);
-  phaseEl.textContent = '— WATCH SEQUENCE —';
-
-  // Show watch display, hide hidden
-  seqDisp.style.display   = 'flex';
-  seqHidden.style.display = 'none';
-  buildWatchDisplay(seq);
-
-  for (let i = 0; i < seq.length; i++) {
-    hiWatchNode(i);
-    await flashBtn(seq[i]);
-    await delay(spd.gap);
-    // Noise: random false flash during watch phase
-    if (C.noise && Math.random() < 0.35) {
-      const rnd = Math.floor(Math.random() * NODES.length);
-      if (rnd !== seq[i]) { flashBtn(rnd, spd.dur * 0.4); }
+    } else {
+      // Moving vertically: check blocks in same col
+      if (other.horiz) {
+        const otherCol = other.col, otherEnd = other.col + other.len - 1;
+        if (block.col >= otherCol && block.col <= otherEnd) {
+          if (newPos < dragBlockStartPos) {
+            if (other.row < dragBlockStartPos) newPos = Math.max(newPos, other.row + 1);
+          } else {
+            if (other.row > dragBlockStartPos) newPos = Math.min(newPos, other.row - block.len);
+          }
+        }
+      } else {
+        if (other.col === block.col) {
+          if (newPos < dragBlockStartPos && other.row + other.len - 1 < dragBlockStartPos)
+            newPos = Math.max(newPos, other.row + other.len);
+          else if (newPos > dragBlockStartPos && other.row > dragBlockStartPos + block.len - 1)
+            newPos = Math.min(newPos, other.row - block.len);
+        }
+      }
     }
   }
-  hiWatchNode(-1);
-
-  // Hide sequence, countdown, then input
-  seqDisp.style.display = 'none';
-  await runCountdown();
-  startInput(seq);
+  return newPos;
 }
 
-function startInput(seq) {
-  canInput = true;
-  playerInput = [];
-  seqIdx = 0;
-  phaseEl.textContent = '— REPEAT SEQUENCE —';
-
-  seqDisp.style.display   = 'none';
-  seqHidden.style.display = 'flex';
-  buildHiddenSlots(seq.length);
-  setGridEnabled(true);
-  startTimer();
-}
-
-function setGridEnabled(on) {
-  gridEl.querySelectorAll('.nodebtn').forEach(b => {
-    b.classList.toggle('disabled', !on);
-  });
+function triggerPuzzleWin() {
+  pzDone++;
+  clearInterval(timerIv);
+  sfx('win');
+  if (pzDone >= C.puzzles) {
+    triggerFinalWin();
+  } else {
+    document.getElementById('statusmsg').textContent = TEXT.statusNext;
+    setTimeout(() => {
+      curPz++;
+      tl = C.time;
+      initPuzzle();
+      startTimer();
+      document.getElementById('statusmsg').textContent = TEXT.statusIdle;
+    }, 1200);
+  }
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
-  tl = C.timePerSeq;
-  updateTimer();
-  timerInterval = setInterval(() => {
+  clearInterval(timerIv);
+  tl = C.time;
+  updateTimerEl();
+  timerIv = setInterval(() => {
     tl--;
-    updateTimer();
-    if (tl <= 0) { clearInterval(timerInterval); triggerFail('TIME LIMIT EXCEEDED'); }
+    updateTimerEl();
+    if (tl <= 0) { clearInterval(timerIv); triggerFail(); }
     if (tl === 10) vibe(VIB.warning);
   }, 1000);
 }
-function updateTimer() {
-  timerTxt.textContent = tl;
-  const off = CIRC * (1 - tl / C.timePerSeq);
-  ringFg.style.strokeDashoffset = off;
-  ringFg.classList.toggle('danger', tl <= 10);
+function updateTimerEl() {
+  const el = document.getElementById('timer');
+  el.textContent = tl;
+  el.className = 'hud-timer' + (tl <= 10 ? ' danger' : '');
 }
-
-function onTap(id) {
-  if (!canInput || isOver) return;
-  flashBtnTap(id);
-  playerInput.push(id);
-
-  const correct = (id === curSeq[seqIdx]);
-  fillSlot(seqIdx, id, correct);
-
-  if (!correct) {
-    sfx('wrong');
-    canInput = false;
-    clearInterval(timerInterval);
-    setGridEnabled(false);
-    setTimeout(() => triggerFail('SEQUENCE MISMATCH'), 500);
-    return;
-  }
-
-  seqIdx++;
-  if (seqIdx >= curSeq.length) {
-    // Full sequence correct!
-    canInput = false;
-    clearInterval(timerInterval);
-    setGridEnabled(false);
-    sfx('correct');
-    seqsDone++;
-    scoreEl.textContent = seqsDone * (10 + Math.floor(tl));
-    progFill.style.width = (seqsDone / C.sequences * 100) + '%';
-    progLbl.textContent  = `${seqsDone} / ${C.sequences}`;
-
-    if (seqsDone >= C.sequences) {
-      triggerWin();
-      return;
-    }
-    showMsg(TEXT.msgBreachPlus, 700);
-    setTimeout(nextSeq, 1400);
-  }
-}
-
-function nextSeq() {
-  seqNumEl.textContent = seqsDone + 1;
-  const len = C.baseLen + Math.floor(seqsDone * 0.7);
-  curSeq = Array.from({length: len}, () => Math.floor(Math.random() * NODES.length));
-  showSequence(curSeq);
-}
-
-function showMsg(text, dur) {
-  msgEl.textContent = text;
-  msgEl.style.display = 'block';
-  setTimeout(() => msgEl.style.display = 'none', dur);
-}
-
 function triggerFail() {
   if (isOver) return;
-  isOver = true; canInput = false;
-  clearInterval(timerInterval);
-  stopBGM(); sfx('wrong'); vibe(VIB.lose);
-  showErrorPopups(() => document.getElementById('goscreen').style.display = 'flex');
+  isOver=true; stopBGM(); sfx('wrong'); vibe(VIB.lose);
+  showErrorPopups(() => document.getElementById('goscreen').style.display='flex');
 }
-function triggerWin() {
+function triggerFinalWin() {
   if (isOver) return; stopBGM();
   isOver = true;
-  sfx('win'); vibe(VIB.win);
   document.getElementById('wincode').textContent = C.code;
   setTimeout(() => {
-    document.getElementById('winscreen').style.display = 'flex';
+    document.getElementById('winscreen').style.display='flex';
     const _scb = document.getElementById('show-code-btn');
     if (_scb) { _scb.style.display='block'; _scb.onclick=()=>document.getElementById('winscreen').style.display='flex'; }
-  }, 500);
+  }, 400);
 }
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Update stats on start screen
-const statSeqs = document.getElementById('stat-seqs');
-const statTime = document.getElementById('stat-time');
-if(statSeqs) statSeqs.textContent = C.sequences;
-if(statTime) statTime.textContent = C.timePerSeq + 's';
-document.getElementById('startbtn').addEventListener('click', async () => {
+// Global pointer events (so drag works outside element)
+window.addEventListener('touchmove', e => { if(dragging) onMove(e.touches[0]); e.preventDefault(); }, {passive:false});
+window.addEventListener('touchend',  e => { if(dragging) onEnd(e); });
+window.addEventListener('mousemove', e => { if(dragging) onMove(e); });
+window.addEventListener('mouseup',   e => { if(dragging) onEnd(e); });
+window.addEventListener('resize',    ()=> { if(!isOver){ calcCell(); renderBoard(); }});
+
+document.getElementById('startbtn').addEventListener('click', () => {
   if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
   document.getElementById('startscreen').style.display = 'none';
-  document.getElementById('gamewrap').style.display    = 'flex';
-  buildGrid();
-  await delay(400);
-  nextSeq();
+  activePuzzles = getPuzzles(); initPuzzle(); startTimer(); document.getElementById('statusmsg').textContent=TEXT.statusIdle;
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
 
@@ -987,10 +928,11 @@ function initHelpSystem() {
 
   // Effects per game
   const EFFECTS = {
-    T: { label: '⏱ +45 שניות',        apply: () => { C.timePerSeq+=45; spawnNierPopup('+45 שניות לכל רצף','זמן נוסף הופעל','','#5a8a4a',2000); } },
-    W: { label: '✓ פתירה אוטומטית',   apply: () => { seqsDone=C.sequences-1; sfx('correct'); canInput=false; clearInterval(timerInterval); setTimeout(()=>{ seqsDone=C.sequences; triggerWin(); },300); } },
-    L: { label: '👁 הצג רצף שוב',     apply: () => { if(canInput&&curSeq.length>0){ canInput=false; clearInterval(timerInterval); Object.assign(spd,{dur:700,gap:200}); setTimeout(async()=>{await showSequence(curSeq);startInput(curSeq);},300); } spawnNierPopup('הרצף מוצג שוב','צפה בעיון','','#5a8a4a',2000); } },
-    E: { label: '↓ המשחק הוקל',       apply: () => { Object.assign(spd,{dur:700,gap:200}); C.noise=false; spawnNierPopup('המשחק הוקל','מהירות איטית','','#5a8a4a',2000); } },
+    T: { label: '⏱ +45 שניות',      apply: () => { tl+=45; updateTimerEl(); spawnNierPopup('+45 שניות','זמן נוסף הופעל','','#5a8a4a',2000); } },
+    W: { label: '✓ פתירה אוטומטית', apply: () => { triggerPuzzleWin(); } },
+    L: { label: '💡 רמז', apply: () => { const coreB=blocks.find(b=>b.id==='core'); if(coreB){const brd=document.getElementById('board');if(brd){brd.querySelectorAll('.cell.wall').forEach(el=>{const t=parseInt(el.style.top||0),l=parseInt(el.style.left||0);const er=Math.round((t-2)/CELL),ec=Math.round((l-2)/CELL);if(er<=coreB.row&&er+3>=coreB.row&&ec>coreB.col+coreB.len-1){el.style.boxShadow='0 0 14px rgba(196,48,0,0.9)';el.style.border='2px solid rgba(196,48,0,1)';setTimeout(()=>{el.style.boxShadow='';el.style.border='';},3500);}});}} spawnNierPopup('רמז','הבלוק החוסם מסומן','','#5a8a4a',2500); } },
+    E: { label: '↓ המשחק הוקל',    apply: () => { // highlight exit row
+const brd=document.getElementById('board'); if(brd){brd.querySelectorAll('.cell.empty-hole').forEach(el=>{const t=parseInt(el.style.top||0); if(Math.abs(t-(2*CELL+1))<5){el.style.background='rgba(90,138,74,0.18)';el.style.border='1px solid rgba(90,138,74,0.45)';}}); } spawnNierPopup('המשחק הוקל','שורת הגרעין מסומנת','','#5a8a4a',2000); } },
   };
 
   btn.addEventListener('click', () => {
