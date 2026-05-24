@@ -930,7 +930,7 @@ function initHelpSystem() {
   const EFFECTS = {
     T: { label: '⏱ +45 שניות',      apply: () => { tl+=45; updateTimerEl(); spawnNierPopup('+45 שניות','זמן נוסף הופעל','','#5a8a4a',2000); } },
     W: { label: '✓ פתירה אוטומטית', apply: () => { triggerPuzzleWin(); } },
-    L: { label: '♥ חיים מלאים',     apply: () => { tl=Math.max(tl,30); updateTimerEl(); spawnNierPopup('זמן שוחזר','30 שניות מינימום','','#5a8a4a',2000); } },
+    L: { label: '💡 רמז', apply: () => { const coreB=blocks.find(b=>b.id==='core'); if(coreB){const brd=document.getElementById('board');if(brd){brd.querySelectorAll('.cell.wall').forEach(el=>{const t=parseInt(el.style.top||0),l=parseInt(el.style.left||0);const er=Math.round((t-2)/CELL),ec=Math.round((l-2)/CELL);if(er<=coreB.row&&er+3>=coreB.row&&ec>coreB.col+coreB.len-1){el.style.boxShadow='0 0 14px rgba(196,48,0,0.9)';el.style.border='2px solid rgba(196,48,0,1)';setTimeout(()=>{el.style.boxShadow='';el.style.border='';},3500);}});}} spawnNierPopup('רמז','הבלוק החוסם מסומן','','#5a8a4a',2500); } },
     E: { label: '↓ המשחק הוקל',    apply: () => { // highlight exit row
 const brd=document.getElementById('board'); if(brd){brd.querySelectorAll('.cell.empty-hole').forEach(el=>{const t=parseInt(el.style.top||0); if(Math.abs(t-(2*CELL+1))<5){el.style.background='rgba(90,138,74,0.18)';el.style.border='1px solid rgba(90,138,74,0.45)';}}); } spawnNierPopup('המשחק הוקל','שורת הגרעין מסומנת','','#5a8a4a',2000); } },
   };
