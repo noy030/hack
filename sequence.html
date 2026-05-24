@@ -611,6 +611,14 @@ body::after{
 
 
 
+// Global player tracking
+let fbPlayerName = '';
+let fbAttempts = 0;
+
+
+
+
+
 
 
 
@@ -1018,11 +1026,8 @@ function triggerWin() {
   fbReport({won:true, attempts: fbAttempts, winTime: Date.now()});
   sfx('win'); vibe(VIB.win);
   document.getElementById('wincode').textContent = C.code;
-  setTimeout(() => {
-    document.getElementById('winscreen').style.display = 'flex';
-    const _scb = document.getElementById('show-code-btn');
-    if (_scb) { _scb.style.display='block'; _scb.onclick=()=>document.getElementById('winscreen').style.display='flex'; }
-  }, 500);
+  document.getElementById('winscreen').style.display='flex';
+  const _scb=document.getElementById('show-code-btn'); if(_scb){_scb.style.display='block';_scb.onclick=()=>document.getElementById('winscreen').style.display='flex';};
 }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -1039,7 +1044,16 @@ document.getElementById('startbtn').addEventListener('click', async () => {
   await delay(400);
   nextSeq();
 });
-document.getElementById('rbtn').addEventListener('click', () => location.reload());
+document.getElementById('rbtn').addEventListener('click', () => {
+  document.getElementById('goscreen').style.display = 'none';
+  isOver = false; canInput = false;
+  seqsDone = 0; score = 0; curSeq = [];
+  clearInterval(timerInterval);
+  stopBGM();
+  document.getElementById('gamewrap').style.display = 'none';
+  document.getElementById('startscreen').style.display = 'flex';
+  fbReport({won: false, attempts: fbAttempts});
+});
 
 
 
@@ -1109,19 +1123,27 @@ initHelpSystem();
 
 
 
-// Attempt counter
-let fbAttempts = 0;
 // ── Name screen logic ─────────────────────────────────
 (function() {
-  const ns = document.getElementById('name-screen');
+  const ns  = document.getElementById('name-screen');
   const inp = document.getElementById('player-name-input');
   const btn = document.getElementById('name-submit');
   if (!ns || !inp || !btn) return;
+
+  // Check if name already saved from previous attempt this session
+  const saved = sessionStorage.getItem('htb_player_name');
+  if (saved) {
+    fbPlayerName = saved;
+    ns.style.display = 'none';
+    fbReport({ won: false, startTime: Date.now() });
+    return; // skip name screen entirely
+  }
 
   function submitName() {
     const name = inp.value.trim();
     if (!name) { inp.style.borderBottomColor='var(--red)'; inp.focus(); return; }
     fbPlayerName = name;
+    sessionStorage.setItem('htb_player_name', name); // save for retries
     ns.style.display = 'none';
     fbReport({ won: false, startTime: Date.now() });
   }
@@ -1138,7 +1160,7 @@ let fbAttempts = 0;
 // ════════════════════════════════════════════════════════
 const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
 let fbPlayerKey = null;
-let fbPlayerName = '';
+// fbPlayerName declared at top
 
 function fbGet(path) {
   return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null);
@@ -1190,6 +1212,10 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
+
+
+
 
 
 
