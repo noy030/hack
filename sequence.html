@@ -612,9 +612,11 @@ body::after{
 
 
 
+
 // Global player tracking
 let fbPlayerName = '';
-let fbAttempts = 0;
+const _attemptKey = 'htb_attempts_' + (new URLSearchParams(location.search).get('box')||'0');
+let fbAttempts = parseInt(sessionStorage.getItem(_attemptKey)||'0');
 
 
 
@@ -1016,7 +1018,7 @@ function showMsg(text, dur) {
 
 function triggerFail() {
   if (isOver) return;
-  isOver = true; fbAttempts++; canInput = false; fbAttempts++;
+  isOver = true; fbAttempts++; sessionStorage.setItem(_attemptKey, fbAttempts); canInput = false; fbAttempts++;
   clearInterval(timerInterval);
   stopBGM(); sfx('wrong'); vibe(VIB.lose);
   showErrorPopups(() => document.getElementById('goscreen').style.display = 'flex');
@@ -1024,7 +1026,7 @@ function triggerFail() {
 function triggerWin() {
   if (isOver) return; stopBGM();
   isOver = true;
-  fbReport({won:true, attempts: fbAttempts, winTime: Date.now()});
+  sessionStorage.removeItem(_attemptKey); fbReport({won: true, winTime: Date.now()});
   sfx('win'); vibe(VIB.win);
   document.getElementById('wincode').textContent = C.code;
   document.getElementById('winscreen').style.display='flex';
@@ -1053,7 +1055,7 @@ document.getElementById('rbtn').addEventListener('click', () => {
   stopBGM();
   document.getElementById('gamewrap').style.display = 'none';
   document.getElementById('startscreen').style.display = 'flex';
-  fbReport({countAttempt: false});
+  fbReport({});
 });
 
 
@@ -1205,7 +1207,7 @@ async function fbReport(extra={}) {
     name:      fbPlayerName,
     lastSeen:  now,
     firstSeen: existing.firstSeen || now,
-    attempts:  (existing.attempts || 0) + (extra.countAttempt ? 1 : 0),
+    attempts:  fbAttempts,
     totalWins: existing.totalWins || 0,
     boxes:     existing.boxes || {},
     // Current session box info (for active display)
@@ -1242,6 +1244,7 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
 
 </script>
 </body>
