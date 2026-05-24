@@ -579,9 +579,12 @@ body{touch-action:none;}
 
 
 
+
+
 // Global player tracking
 let fbPlayerName = '';
-let fbAttempts = 0;
+const _attemptKey = 'htb_attempts_' + (new URLSearchParams(location.search).get('box')||'0');
+let fbAttempts = parseInt(sessionStorage.getItem(_attemptKey)||'0');
 
 
 
@@ -956,13 +959,13 @@ function updateTimerEl() {
 }
 function triggerFail() {
   if (isOver) return;
-  isOver=true; stopBGM(); sfx('wrong'); vibe(VIB.lose);
+  isOver=true; fbAttempts++; sessionStorage.setItem(_attemptKey,fbAttempts); stopBGM(); sfx('wrong'); vibe(VIB.lose);
   showErrorPopups(() => document.getElementById('goscreen').style.display='flex');
 }
 function triggerFinalWin() {
   if (isOver) return; stopBGM();
   isOver = true;
-  fbReport({won:true, attempts: fbAttempts, winTime: Date.now()});
+  sessionStorage.removeItem(_attemptKey); fbReport({won: true, winTime: Date.now()});
   document.getElementById('wincode').textContent = C.code;
   document.getElementById('winscreen').style.display='flex';
   const _scb=document.getElementById('show-code-btn'); if(_scb){_scb.style.display='block';_scb.onclick=()=>document.getElementById('winscreen').style.display='flex';};
@@ -987,7 +990,7 @@ document.getElementById('rbtn').addEventListener('click', () => {
   stopBGM();
   document.getElementById('boardwrap').style.display = 'none';
   document.getElementById('startscreen').style.display = 'flex';
-  fbReport({countAttempt: false});
+  fbReport({});
 });
 
 
@@ -1148,7 +1151,7 @@ async function fbReport(extra={}) {
     name:      fbPlayerName,
     lastSeen:  now,
     firstSeen: existing.firstSeen || now,
-    attempts:  (existing.attempts || 0) + (extra.countAttempt ? 1 : 0),
+    attempts:  fbAttempts,
     totalWins: existing.totalWins || 0,
     boxes:     existing.boxes || {},
     // Current session box info (for active display)
@@ -1185,6 +1188,8 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
+
 
 </script>
 </body>
