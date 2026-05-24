@@ -347,6 +347,7 @@ body{touch-action:none;}
 
 
 
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -499,13 +500,17 @@ function buildDots() {
 }
 
 function calcCell() {
-  const wrap = document.getElementById('boardwrap');
-  const avail = Math.min(wrap.clientWidth*0.9, wrap.clientHeight*0.9);
-  CELL = Math.floor(avail / GRID_SIZE);
-  boardEl.style.width  = (CELL * GRID_SIZE) + 'px';
-  boardEl.style.height = (CELL * GRID_SIZE) + 'px';
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const availW = W * 0.96;
+  const availH = (H - 52 - 55) * 0.95;
+  CELL = Math.floor(Math.min(availW, availH) / GRID_SIZE);
+  if (CELL < 1) CELL = 1;
+  boardEl.style.width    = (CELL * GRID_SIZE) + 'px';
+  boardEl.style.height   = (CELL * GRID_SIZE) + 'px';
   boardEl.style.position = 'relative';
-  boardEl.style.border = '1px solid rgba(212,207,198,0.2)'; boardEl.style.background = 'rgba(212,207,198,0.03)';
+  boardEl.style.border   = '1px solid rgba(212,207,198,0.2)';
+  boardEl.style.background = 'rgba(240,235,224,0.03)';
 }
 
 function initPuzzle() {
@@ -738,6 +743,7 @@ document.getElementById('startbtn').addEventListener('click', () => {
   activePuzzles = getPuzzles(); initPuzzle(); startTimer(); document.getElementById('statusmsg').textContent=TEXT.statusIdle;
 });
 document.getElementById('rbtn').addEventListener('click', () => location.reload());
+
 
 
 
