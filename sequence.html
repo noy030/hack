@@ -987,11 +987,10 @@ function initHelpSystem() {
 
   // Effects per game
   const EFFECTS = {
-    T: { label: '⏱ +45 שניות',      apply: () => { C.timePerSeq+=45; spawnNierPopup('+45 שניות לכל רצף','זמן נוסף הופעל','','#5a8a4a',2000); } },
-    W: { label: '✓ פתירה אוטומטית', apply: () => { seqsDone=C.sequences-1; sfx('correct'); canInput=false; clearInterval(timerInterval); setTimeout(()=>{ seqsDone=C.sequences; triggerWin(); },300); } },
-    L: { label: '♥ חיים מלאים',     apply: () => { // sequence has no lives - re-show the current sequence instead
-if(canInput&&curSeq.length>0){ canInput=false; clearInterval(timerInterval); setTimeout(async()=>{await showSequence(curSeq);startInput(curSeq);},300); } spawnNierPopup('הרצף מוצג שוב','צפה שוב','','#5a8a4a',2000); } },
-    E: { label: '↓ המשחק הוקל',    apply: () => { Object.assign(spd,{dur:700,gap:200}); C.noise=false; spawnNierPopup('המשחק הוקל','מהירות איטית','','#5a8a4a',2000); } },
+    T: { label: '⏱ +45 שניות',        apply: () => { C.timePerSeq+=45; spawnNierPopup('+45 שניות לכל רצף','זמן נוסף הופעל','','#5a8a4a',2000); } },
+    W: { label: '✓ פתירה אוטומטית',   apply: () => { seqsDone=C.sequences-1; sfx('correct'); canInput=false; clearInterval(timerInterval); setTimeout(()=>{ seqsDone=C.sequences; triggerWin(); },300); } },
+    L: { label: '👁 הצג רצף שוב',     apply: () => { if(canInput&&curSeq.length>0){ canInput=false; clearInterval(timerInterval); Object.assign(spd,{dur:700,gap:200}); setTimeout(async()=>{await showSequence(curSeq);startInput(curSeq);},300); } spawnNierPopup('הרצף מוצג שוב','צפה בעיון','','#5a8a4a',2000); } },
+    E: { label: '↓ המשחק הוקל',       apply: () => { Object.assign(spd,{dur:700,gap:200}); C.noise=false; spawnNierPopup('המשחק הוקל','מהירות איטית','','#5a8a4a',2000); } },
   };
 
   btn.addEventListener('click', () => {
