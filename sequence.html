@@ -611,6 +611,7 @@ body::after{
 
 
 
+
 // Global player tracking
 let fbPlayerName = '';
 let fbAttempts = 0;
@@ -1052,7 +1053,7 @@ document.getElementById('rbtn').addEventListener('click', () => {
   stopBGM();
   document.getElementById('gamewrap').style.display = 'none';
   document.getElementById('startscreen').style.display = 'flex';
-  fbReport({won: false, attempts: fbAttempts});
+  fbReport({countAttempt: false});
 });
 
 
@@ -1155,70 +1156,92 @@ initHelpSystem();
 // ─────────────────────────────────────────────────────
 
 
+
+
+
+
+
+
+
+
+
+
 // ════════════════════════════════════════════════════════
-//  Firebase — REST API (ללא SDK)
+//  Firebase — REST API — Per-Player Cumulative Tracking
 // ════════════════════════════════════════════════════════
 const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
-let fbPlayerKey = null;
-// fbPlayerName declared at top
 
-function fbGet(path) {
-  return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null);
+function fbKey(name) {
+  // Sanitize name for use as Firebase key
+  return name.trim().toLowerCase()
+    .replace(/[.#$[\]/]/g, '_')
+    .replace(/\s+/g, '_')
+    .slice(0, 30);
 }
+function fbGet(path)  { return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null); }
 function fbSet(path, data) {
   return fetch(`${FB_URL}/${path}.json`, {
     method:'PUT', body:JSON.stringify(data),
     headers:{'Content-Type':'application/json'}
   }).catch(()=>{});
 }
-function fbPush(path, data) {
+function fbPatch(path, data) {
   return fetch(`${FB_URL}/${path}.json`, {
-    method:'POST', body:JSON.stringify(data),
+    method:'PATCH', body:JSON.stringify(data),
     headers:{'Content-Type':'application/json'}
-  }).then(r=>r.json()).catch(()=>null);
+  }).catch(()=>{});
 }
-function fbDelete(path) {
-  return fetch(`${FB_URL}/${path}.json`, {method:'DELETE'}).catch(()=>{});
-}
+function fbDelete(path) { return fetch(`${FB_URL}/${path}.json`,{method:'DELETE'}).catch(()=>{}); }
+
+const BOX_ID = new URLSearchParams(location.search).get('box') || '?';
 
 async function fbReport(extra={}) {
   if (!fbPlayerName) return;
-  const data = {
-    name: fbPlayerName,
-    boxId: new URLSearchParams(location.search).get('box') || '?',
-    boxTitle: (typeof C !== 'undefined' && C.title) ? C.title : '?',
-    game: (typeof C !== 'undefined' && C.game) ? C.game : '?',
-    lastSeen: Date.now(),
-    ...extra
+  const key = fbKey(fbPlayerName);
+  // Get existing player data
+  const existing = await fbGet(`players/${key}`) || {};
+  const now = Date.now();
+  const update = {
+    name:      fbPlayerName,
+    lastSeen:  now,
+    firstSeen: existing.firstSeen || now,
+    attempts:  (existing.attempts || 0) + (extra.countAttempt ? 1 : 0),
+    totalWins: existing.totalWins || 0,
+    boxes:     existing.boxes || {},
+    // Current session box info (for active display)
+    currentBox:      BOX_ID,
+    currentBoxTitle: (typeof C !== 'undefined') ? C.title : '?',
+    currentGame:     (typeof C !== 'undefined') ? C.game  : '?',
   };
-  if (!fbPlayerKey) {
-    const res = await fbPush('players', data);
-    if (res && res.name) fbPlayerKey = res.name;
-  } else {
-    fbSet(`players/${fbPlayerKey}`, data);
+  // Merge extra (won, etc) without overwriting structure
+  if (extra.won) {
+    update.totalWins = (existing.totalWins || 0) + 1;
+    update.boxes = existing.boxes || {};
+    update.boxes[BOX_ID] = {
+      boxId:    BOX_ID,
+      boxTitle: (typeof C !== 'undefined') ? C.title : '?',
+      game:     (typeof C !== 'undefined') ? C.game  : '?',
+      winTime:  extra.winTime || now,
+      attempts: fbAttempts,
+    };
   }
+  if (extra.startTime) update.startTime = extra.startTime;
+  fbSet(`players/${key}`, update);
 }
 
 function fbReportCodeUsed(code, effectLabel) {
   if (!fbPlayerName) return;
   fbSet(`helpCodes/${code}`, {
     player: fbPlayerName,
-    boxId: new URLSearchParams(location.search).get('box') || '?',
+    boxId:  BOX_ID,
     effect: effectLabel,
-    ts: Date.now()
+    ts:     Date.now()
   });
 }
 
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
-
-
-
-
-
-
-
 
 </script>
 </body>
