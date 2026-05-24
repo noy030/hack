@@ -190,6 +190,7 @@ header{
           <th>תיבה</th>
           <th>סטטוס</th>
           <th>קודי עזרה</th>
+          <th>ניסיונות</th>
           <th>זמן אחרון</th>
           <th>פעולות</th>
         </tr>
@@ -322,7 +323,7 @@ function renderPlayers() {
   tbody.innerHTML = players.map(([key,p]) => {
     const icon = GAME_ICONS[p.game]||'❓';
     const status = p.won
-      ? '<span style="color:var(--green)">✓ פתח</span>'
+      ? '<span style="color:var(--green)">✓ פרצה את הקוד</span>'
       : '<span style="color:var(--mid)">⏳ משחק</span>';
     const usedCodes = Object.entries(codesData)
       .filter(([,cd])=>cd.player===p.name)
@@ -333,6 +334,7 @@ function renderPlayers() {
       <td><span class="box-badge">${icon} ${p.boxId||'?'}</span> <span style="font-size:10px;color:var(--mid)">${p.boxTitle||''}</span></td>
       <td>${status}</td>
       <td>${usedCodes}</td>
+      <td style='text-align:center;font-family:Rajdhani,sans-serif;font-size:18px;color:var(--accent)'>${p.attempts||0}</td>
       <td class="time-ago">${timeAgo(p.lastSeen)}</td>
       <td><button class="action-btn" onclick="removePlayer('${key}')">הסר</button></td>
     </tr>`;
