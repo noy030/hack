@@ -615,6 +615,7 @@ body::after{
 
 
 
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -1004,7 +1005,7 @@ function showMsg(text, dur) {
 
 function triggerFail() {
   if (isOver) return;
-  isOver = true; canInput = false;
+  isOver = true; fbAttempts++; canInput = false; fbAttempts++;
   clearInterval(timerInterval);
   stopBGM(); sfx('wrong'); vibe(VIB.lose);
   showErrorPopups(() => document.getElementById('goscreen').style.display = 'flex');
@@ -1105,6 +1106,8 @@ initHelpSystem();
 
 
 
+// Attempt counter
+let fbAttempts = 0;
 // ── Name screen logic ─────────────────────────────────
 (function() {
   const ns = document.getElementById('name-screen');
@@ -1184,6 +1187,7 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
 
 </script>
 </body>
