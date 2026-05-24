@@ -587,6 +587,11 @@ body{touch-action:none;}
 
 
 
+
+
+
+
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -866,56 +871,42 @@ function onEnd(e) {
 }
 
 function clampBlock(block, newPos) {
-  // Check bounds
-  const maxPos = GRID_SIZE - block.len;
-  newPos = Math.max(0, Math.min(maxPos, newPos));
+  // Clamp to grid bounds
+  newPos = Math.max(0, Math.min(GRID_SIZE - block.len, newPos));
 
-  // Check collisions against other blocks
+  // Build occupancy set of all OTHER blocks
+  const occ = new Set();
   for (const other of blocks) {
     if (other.id === block.id) continue;
-    if (block.horiz) {
-      // Moving horizontally: check blocks in same row
-      if (!other.horiz) {
-        // Vertical block: check if it's in block's row range
-        const otherRow = other.row, otherEnd = other.row + other.len - 1;
-        if (block.row >= otherRow && block.row <= otherEnd) {
-          // other.col is the column to avoid
-          if (newPos < dragBlockStartPos) {
-            // Moving left: don't go past other.col\n            if (other.col < dragBlockStartPos) newPos = Math.max(newPos, other.col + 1);\n          } else {\n            // Moving right: don't go past other.col - block.len
-            if (other.col > dragBlockStartPos) newPos = Math.min(newPos, other.col - block.len);
-          }
-        }
-      } else {
-        // Horizontal block in same row
-        if (other.row === block.row) {
-          if (newPos < dragBlockStartPos && other.col + other.len - 1 < dragBlockStartPos)
-            newPos = Math.max(newPos, other.col + other.len);
-          else if (newPos > dragBlockStartPos && other.col > dragBlockStartPos + block.len - 1)
-            newPos = Math.min(newPos, other.col - block.len);
-        }
-      }
-    } else {
-      // Moving vertically: check blocks in same col
-      if (other.horiz) {
-        const otherCol = other.col, otherEnd = other.col + other.len - 1;
-        if (block.col >= otherCol && block.col <= otherEnd) {
-          if (newPos < dragBlockStartPos) {
-            if (other.row < dragBlockStartPos) newPos = Math.max(newPos, other.row + 1);
-          } else {
-            if (other.row > dragBlockStartPos) newPos = Math.min(newPos, other.row - block.len);
-          }
-        }
-      } else {
-        if (other.col === block.col) {
-          if (newPos < dragBlockStartPos && other.row + other.len - 1 < dragBlockStartPos)
-            newPos = Math.max(newPos, other.row + other.len);
-          else if (newPos > dragBlockStartPos && other.row > dragBlockStartPos + block.len - 1)
-            newPos = Math.min(newPos, other.row - block.len);
-        }
-      }
+    for (let i = 0; i < other.len; i++) {
+      occ.add(other.horiz
+        ? `${other.row},${other.col+i}`      // horiz: fixed row, varying col
+        : `${other.row+i},${other.col}`);    // vert:  varying row, fixed col
     }
   }
-  return newPos;
+
+  // Check if block at position pos collides with anything
+  function collides(pos) {
+    for (let i = 0; i < block.len; i++) {
+      const key = block.horiz
+        ? `${block.row},${pos+i}`    // horiz: fixed row, pos = col
+        : `${pos+i},${block.col}`;   // vert:  pos = row, fixed col
+      if (occ.has(key)) return true;
+    }
+    return false;
+  }
+
+  // Walk from dragBlockStartPos toward newPos, stop before collision
+  const dir = newPos >= dragBlockStartPos ? 1 : -1;
+  let best = dragBlockStartPos;
+  for (let p = dragBlockStartPos + dir;
+       dir > 0 ? p <= newPos : p >= newPos;
+       p += dir) {
+    if (p < 0 || p > GRID_SIZE - block.len) break;
+    if (collides(p)) break;
+    best = p;
+  }
+  return best;
 }
 
 function triggerPuzzleWin() {
@@ -1051,6 +1042,8 @@ initHelpSystem();
 
 
 
+// Attempt counter
+let fbAttempts = 0;
 // ── Name screen logic ─────────────────────────────────
 (function() {
   const ns = document.getElementById('name-screen');
@@ -1135,6 +1128,11 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
+
+
+
+
 
 </script>
 </body>
