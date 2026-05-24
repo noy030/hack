@@ -66,8 +66,9 @@ body::after{
   background:var(--bg);z-index:2000;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  gap:clamp(14px,3.5vh,22px);
-  padding:clamp(20px,5vw,32px);
+  gap:clamp(8px,2vh,16px);
+  padding:clamp(14px,3vw,24px) clamp(20px,5vw,40px);
+  overflow:hidden;
 }
 
 /* Subtle bg texture */
@@ -99,9 +100,9 @@ body::after{
 /* Main title */
 .ss-title-main{
   font-family:'Rajdhani',sans-serif;
-  font-size:clamp(38px,13vw,68px);
+  font-size:clamp(28px,8vw,56px);
   font-weight:700;
-  letter-spacing:clamp(4px,2.5vw,12px);
+  letter-spacing:clamp(3px,2vw,10px);
   color:var(--accent);
   line-height:1;position:relative;text-align:center;
 }
@@ -140,14 +141,14 @@ body::after{
 
 /* Instructions box */
 .ss-brief{
-  font-size:clamp(11px,2.8vw,13px);
+  font-size:clamp(10px,2.2vw,12px);
   color:var(--mid);letter-spacing:2px;
-  text-align:center;line-height:2.3;
+  text-align:center;line-height:2;
   border:1px solid var(--border);
-  padding:clamp(12px,3vw,18px) clamp(16px,4vw,28px);
+  padding:clamp(8px,1.5vh,14px) clamp(14px,3vw,22px);
   background:var(--panel);
   position:relative;
-  width:min(340px,88%);
+  width:min(380px,90%);
 }
 .ss-brief::before{
   content:'[ הוראות ]';
@@ -158,10 +159,10 @@ body::after{
 
 /* Start button */
 .ss-btn{
-  padding:clamp(13px,3vh,17px) clamp(42px,11vw,58px);
+  padding:clamp(10px,2vh,14px) clamp(36px,9vw,52px);
   background:var(--accent);color:var(--bg);
   border:none;
-  font-size:clamp(13px,3.5vw,16px);
+  font-size:clamp(12px,3vw,15px);
   font-family:inherit;cursor:pointer;letter-spacing:4px;
   clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
   transition:transform .1s,filter .15s;
@@ -287,108 +288,16 @@ body::after{
 
 
 
-#help-btn {
-  position: absolute;
-  bottom: clamp(60px,12vh,80px);
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: var(--mid);
-  background: none;
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  cursor: pointer;
-  font-family: 'Share Tech Mono', monospace;
-  opacity: 0.7;
-  transition: opacity .2s;
-}
-#help-btn:hover { opacity: 1; }
-#help-btn.used {
-  color: #5a8a4a;
-  border-color: #5a8a4a;
-  pointer-events: none;
-}
-
-#help-overlay {
-  display: none;
-  position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(20,18,14,0.92);
-  z-index: 3000;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 30px;
-}
-#help-overlay.show { display: flex; }
-.help-box {
-  border: 1px solid var(--border);
-  background: var(--bg2);
-  padding: clamp(20px,5vw,30px);
-  width: min(320px,88vw);
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-}
-.help-box-title {
-  font-size: 12px;
-  letter-spacing: 4px;
-  color: var(--mid);
-  margin-bottom: 16px;
-}
-#help-input {
-  width: 100%;
-  background: rgba(240,235,224,0.06);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 18px;
-  letter-spacing: 6px;
-  padding: 10px;
-  text-align: center;
-  text-transform: uppercase;
-  outline: none;
-  margin-bottom: 14px;
-}
-#help-input:focus { border-color: var(--accent); }
-#help-submit {
-  background: var(--accent);
-  color: var(--bg);
-  border: none;
-  padding: 10px 28px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 4px;
-  cursor: pointer;
-  clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
-}
-#help-cancel {
-  background: none;
-  border: none;
-  color: var(--mid);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 3px;
-  cursor: pointer;
-  margin-top: 8px;
-}
-#help-msg {
-  font-size: 11px;
-  letter-spacing: 2px;
-  height: 16px;
-  margin-bottom: 6px;
-}
-#help-msg.ok  { color: #5a8a4a; }
-#help-msg.bad { color: var(--red); }
-
 
 /* ── Help Code System v2 ── */
 #help-btn {
-  position: absolute;
-  bottom: clamp(55px,11vh,75px);
-  font-size: 10px; letter-spacing: 3px; color: var(--mid);
-  background: none; border: 1px solid var(--border);
-  padding: 6px 14px; cursor: pointer;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 16px; cursor: pointer;
   font-family: 'Share Tech Mono', monospace;
-  opacity: 0.7; transition: opacity .2s;
+  opacity: 0.85; transition: opacity .2s;
 }
 #help-btn:hover { opacity: 1; }
 #help-overlay {
@@ -466,8 +375,9 @@ body::after{
 
   <button class="ss-btn" id="sb">ACCESS CORE</button>
 
+  <button id="help-btn">🔑 קוד עזרה</button>
+
   <div class="ss-foot">[ INITIATING LINK <span>■</span> ]</div>
-<button id="help-btn">🔑 קוד עזרה</button>
 <div id="help-overlay">
   <div class="help-box">
     <div class="help-title">[ קוד עזרה מנאפס ]</div>
