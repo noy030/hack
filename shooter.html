@@ -501,6 +501,7 @@ body::after{
 
 
 
+
 // ════════════════════════════════════════════════════════════
 
 // ── Vibration ─────────────────────────────────────────────
@@ -759,7 +760,7 @@ function updateWalls(time){
 }
 
 function triggerLoss(){if(isOver)return;isOver=true; stopBGM();let c=0;const iv=setInterval(()=>{sfx('glitch');if(++c>=6){clearInterval(iv);setTimeout(()=>document.getElementById('goscreen').style.display='flex',400);}},180);}
-function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win); fbReport({won:true, attempts: fbAttempts});
+function triggerWin(){if(isOver)return;isOver=true; stopBGM(); sfx('win'); vibe(VIB.win); fbReport({won:true, attempts: fbAttempts, winTime: Date.now()});
   document.getElementById('wincode').textContent=C.code;
   setTimeout(()=>{
     document.getElementById('winscreen').style.display='flex';
@@ -921,7 +922,7 @@ initHelpSystem();
     if (!name) { inp.style.borderBottomColor='var(--red)'; inp.focus(); return; }
     fbPlayerName = name;
     ns.style.display = 'none';
-    fbReport({ won: false });
+    fbReport({ won: false, startTime: Date.now() });
   }
 
   btn.addEventListener('click', submitName);
@@ -988,6 +989,7 @@ function fbReportCodeUsed(code, effectLabel) {
 // Heartbeat every 30s
 setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
 
 
 </script>
