@@ -285,6 +285,153 @@ body::after{
 }
 #show-code-btn:hover { opacity: 1; }
 
+
+
+#help-btn {
+  position: absolute;
+  bottom: clamp(60px,12vh,80px);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--mid);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  opacity: 0.7;
+  transition: opacity .2s;
+}
+#help-btn:hover { opacity: 1; }
+#help-btn.used {
+  color: #5a8a4a;
+  border-color: #5a8a4a;
+  pointer-events: none;
+}
+
+#help-overlay {
+  display: none;
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  background: rgba(20,18,14,0.92);
+  z-index: 3000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 30px;
+}
+#help-overlay.show { display: flex; }
+.help-box {
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  padding: clamp(20px,5vw,30px);
+  width: min(320px,88vw);
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+.help-box-title {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--mid);
+  margin-bottom: 16px;
+}
+#help-input {
+  width: 100%;
+  background: rgba(240,235,224,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 18px;
+  letter-spacing: 6px;
+  padding: 10px;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+  margin-bottom: 14px;
+}
+#help-input:focus { border-color: var(--accent); }
+#help-submit {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 10px 28px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+}
+#help-cancel {
+  background: none;
+  border: none;
+  color: var(--mid);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+#help-msg {
+  font-size: 11px;
+  letter-spacing: 2px;
+  height: 16px;
+  margin-bottom: 6px;
+}
+#help-msg.ok  { color: #5a8a4a; }
+#help-msg.bad { color: var(--red); }
+
+
+/* ── Help Code System v2 ── */
+#help-btn {
+  position: absolute;
+  bottom: clamp(55px,11vh,75px);
+  font-size: 10px; letter-spacing: 3px; color: var(--mid);
+  background: none; border: 1px solid var(--border);
+  padding: 6px 14px; cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  opacity: 0.7; transition: opacity .2s;
+}
+#help-btn:hover { opacity: 1; }
+#help-overlay {
+  display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+  background: rgba(14,12,10,0.94); z-index: 5000;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 24px;
+}
+#help-overlay.show { display: flex; }
+.help-box {
+  border: 1px solid var(--border); background: var(--bg2, #2a2822);
+  padding: clamp(20px,5vw,32px); width: min(300px,88vw);
+  text-align: center; font-family: 'Share Tech Mono', monospace;
+  position: relative;
+}
+.help-title { font-size: 11px; letter-spacing: 4px; color: var(--mid); margin-bottom: 18px; }
+#help-input {
+  width: 100%; background: rgba(240,235,224,0.07); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Share Tech Mono', monospace;
+  font-size: 20px; letter-spacing: 8px; padding: 10px;
+  text-align: center; text-transform: uppercase; outline: none; margin-bottom: 10px;
+}
+#help-input:focus { border-color: var(--accent); }
+#help-msg { font-size: 11px; letter-spacing: 2px; min-height: 18px; margin-bottom: 10px; }
+#help-msg.ok  { color: #5a8a4a; }
+#help-msg.bad { color: var(--red); }
+#help-submit {
+  background: var(--accent, #e8e3da); color: var(--bg, #1e1c18);
+  border: none; padding: 10px 28px; cursor: pointer;
+  font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 4px;
+  clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+}
+#help-cancel {
+  background: none; border: none; color: var(--mid);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  letter-spacing: 3px; cursor: pointer; margin-top: 6px;
+}
+.help-effect-badge {
+  display: none; margin: 8px auto 0;
+  font-size: 11px; letter-spacing: 3px; color: #5a8a4a;
+  border: 1px solid #5a8a4a; padding: 4px 12px;
+}
+
 </style>
 </head>
 <body>
@@ -320,6 +467,17 @@ body::after{
   <button class="ss-btn" id="sb">ACCESS CORE</button>
 
   <div class="ss-foot">[ INITIATING LINK <span>■</span> ]</div>
+<button id="help-btn">🔑 קוד עזרה</button>
+<div id="help-overlay">
+  <div class="help-box">
+    <div class="help-title">[ קוד עזרה מנאפס ]</div>
+    <input id="help-input" type="text" maxlength="6" placeholder="XXXXXX"
+           autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <div id="help-msg"></div>
+    <button id="help-submit">אשר</button><br>
+    <button id="help-cancel">ביטול</button>
+  </div>
+</div>
 </div>
 
 <div id="hud">
@@ -694,6 +852,64 @@ function loop(time){
 
 
 
+
+
+
+
+// ═══════════════════════════════════════════════════════════
+//  קודי עזרה — מערכת 4 אפקטים
+//  פורמט קוד: אות ראשונה = סוג, 5 תווים נוספים = ייחודי לשחקן
+//  T = זמן  |  W = פתירה  |  L = חיים  |  E = הקלה
+//  דוגמאות: TA3K9F  /  WB7X2P  /  LC5M1Q  /  ED8P4R
+// ═══════════════════════════════════════════════════════════
+
+function initHelpSystem() {
+  const btn     = document.getElementById('help-btn');
+  const overlay = document.getElementById('help-overlay');
+  const input   = document.getElementById('help-input');
+  const msg     = document.getElementById('help-msg');
+  if (!btn) return;
+
+  // Effects per game
+  const EFFECTS = {
+    T: { label: '⏱ +45 שניות',      apply: () => { C.time+=45; if(typeof startTime!=='undefined'&&hasMoved) startTime-=45000; spawnNierPopup('+45 שניות','זמן נוסף הופעל','','#5a8a4a',2000); } },
+    W: { label: '✓ פתירה אוטומטית', apply: () => { triggerWin(); } },
+    L: { label: '♥ חיים מלאים',     apply: () => { player.hp=3; if(typeof updateHp==='function') updateHp(); spawnNierPopup('חיים מלאים','HP שוחזר','','#5a8a4a',2000); } },
+    E: { label: '↓ המשחק הוקל',    apply: () => { C.coreHp=Math.max(2,C.coreHp*0.4); if(typeof core!=='undefined'){core.hp=C.coreHp;core.maxHp=C.coreHp;} walls=walls.filter(w=>!w.rotate); spawnNierPopup('המשחק הוקל','גרעין מוחלש + חומות הוסרו','','#5a8a4a',2000); } },
+  };
+
+  btn.addEventListener('click', () => {
+    overlay.classList.add('show');
+    input.value = ''; msg.textContent = ''; msg.className = 'help-msg';
+    setTimeout(() => input.focus(), 100);
+  });
+  document.getElementById('help-cancel').addEventListener('click', () => {
+    overlay.classList.remove('show');
+  });
+  document.getElementById('help-submit').addEventListener('click', () => {
+    const val = input.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if (val.length < 4) { msg.textContent = 'קוד קצר מדי'; msg.className = 'help-msg bad'; return; }
+    const type = val[0];
+    if (!EFFECTS[type]) { msg.textContent = 'קוד לא מוכר'; msg.className = 'help-msg bad'; vibe([150]); return; }
+    // Check if used
+    const storageKey = 'hc_' + val;
+    if (localStorage.getItem(storageKey) === '1') {
+      msg.textContent = 'קוד זה כבר שומש'; msg.className = 'help-msg bad'; vibe([150]); return;
+    }
+    // Valid — apply
+    localStorage.setItem(storageKey, '1');
+    msg.textContent = EFFECTS[type].label; msg.className = 'help-msg ok';
+    EFFECTS[type].apply();
+    vibe([80,40,80,40,120]);
+    btn.textContent = '✓ ' + EFFECTS[type].label;
+    btn.style.color = '#5a8a4a'; btn.style.borderColor = '#5a8a4a';
+    setTimeout(() => overlay.classList.remove('show'), 1500);
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('help-submit').click();
+  });
+}
+initHelpSystem();
 
 </script>
 </body>
