@@ -609,15 +609,22 @@ body::after{
 <div id="msg"></div>
 
 <div id="goscreen">
+  <div class="go-title">ACCESS DENIED</div>
+  <button id="rbtn">נסה שנית</button>
   <div class="go-title">BREACH FAILED</div>
-  
-  <button i
 
+<div id="winscreen">
+  <div class="winbox">
+    <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
+    <div class="wincodelbl">קוד פתיחה</div>
+    <div class="wincode" id="wincode">----</div>
+    <div class="windesc">כל הרצפים פוענחו<br>גישה לאחסון הפיזי אושרה</div>
+  </div>
+</div>
+<button id="show-code-btn">🔒 הצג קוד</button>
+<div id="conn-status">⚠ שגיאת התחברות</div>
 
-
-
-
-
+<script>
 
 
 // Global player tracking
@@ -1290,21 +1297,9 @@ function hideConnError() {
   if (el) el.style.display = 'none';
 }
 
-ed(code, effectLabel) {
-  if (!fbPlayerName) return;
-  fbSet('helpCodes/'+code, {
-    player: fbPlayerName,
-    boxId:  BOX_ID,
-    effect: effectLabel,
-    ts:     Date.now()
-  });
-}
-
 // Heartbeat every 30s
 setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
-
-
 
 
 </script>
