@@ -485,6 +485,23 @@ body{touch-action:none;}
 #name-submit:active{transform:scale(0.96);}
 .ns-hint{font-size:9px;letter-spacing:3px;color:var(--mid);opacity:0.7;}
 
+
+/* ── Connection status ── */
+#conn-status {
+  position: fixed;
+  bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--red);
+  background: rgba(0,0,0,0.5);
+  padding: 4px 12px;
+  z-index: 5000;
+  display: none;
+  pointer-events: none;
+}
+
 </style>
 </head>
 <body>
@@ -561,19 +578,7 @@ body{touch-action:none;}
 <div id="goscreen">
   <div class="go-title">CORE BLOCKED</div>
   
-  <button id="rbtn">נסה שנית</button>
-</div>
-<div id="winscreen">
-  <div class="winbox">
-    <div class="winhdr">SYSTEM STATUS: BREACH COMPLETE</div>
-    <div class="wincodelbl">קוד פתיחה</div>
-    <div class="wincode" id="wincode">----</div>
-    <div class="windesc">מטריצת הבלוקים נפרצה<br>גישה לאחסון הפיזי אושרה</div>
-    
-  </div>
-</div>
-
-<script>
+  <button id="r
 
 
 
@@ -1138,12 +1143,16 @@ function fbKey(name) {
     .replace(/\s+/g, '_')
     .slice(0, 30);
 }
-function fbGet(path)  { return fetch(FB_URL+'/'+path+'.json').then(r=>r.json()).catch(()=>null); }
+function fbGet(path) {
+  return fetch(FB_URL+'/'+path+'.json')
+    .then(r => { if(r.ok){ hideConnError(); return r.json(); } else { showConnError(); return null; } })
+    .catch(() => { showConnError(); return null; });
+}
 function fbSet(path, data) {
   return fetch(FB_URL+'/'+path+'.json', {
     method:'PUT', body:JSON.stringify(data),
     headers:{'Content-Type':'application/json'}
-  }).catch(()=>{});
+  }).then(()=>hideConnError()).catch(()=>showConnError());
 }
 function fbDelete(path) {
   return fetch(FB_URL+'/'+path+'.json',{method:'DELETE'}).catch(()=>{});
@@ -1161,7 +1170,7 @@ async function fbReport(extra) {
   if (!_fbCache) {
     _fbCache = await fbGet('players/'+key) || {};
   }
-  const existing = _fbCache;
+  const existing = _fbCache || {};
 
   const update = {
     name:            fbPlayerName,
@@ -1197,6 +1206,36 @@ async function fbReport(extra) {
 }
 
 function fbReportCodeUsed(code, effectLabel) {
+  if (!fbPlayerName) return;
+  fbSet('helpCodes/'+code, {
+    player: fbPlayerName,
+    boxId:  BOX_ID,
+    effect: effectLabel,
+    ts:     Date.now()
+  });
+}
+
+// Heartbeat every 30s
+setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
+// ════════════════════════════════════════════════════════
+
+
+
+
+
+
+
+// ── Connection error display ──────────────────────────
+function showConnError() {
+  const el = document.getElementById('conn-status');
+  if (el) el.style.display = 'block';
+}
+function hideConnError() {
+  const el = document.getElementById('conn-status');
+  if (el) el.style.display = 'none';
+}
+
+d(code, effectLabel) {
   if (!fbPlayerName) return;
   fbSet('helpCodes/'+code, {
     player: fbPlayerName,
