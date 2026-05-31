@@ -493,8 +493,8 @@ body::after{
 
 <div id="goscreen">
   <div class="go-title">ACCESS DENIED</div>
-  
   <button id="rbtn">נסה שנית</button>
+</div>
 
 <div id="winscreen">
   <div class="winbox">
@@ -506,9 +506,11 @@ body::after{
 </div>
 <button id="show-code-btn">🔒 הצג קוד</button>
 <div id="conn-status">⚠ שגיאת התחברות</div>
-
 <canvas id="game"></canvas>
 <script>
+
+
+
 
 // Global player tracking
 let fbPlayerName = '';
@@ -691,7 +693,7 @@ function initGame(){
 }
 
 window.addEventListener('resize',resize);
-document.getElementById('sb').addEventListener('click',()=>{initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('startscreen').style.display='none'; document.getElementById('pblabel').textContent=TEXT.hudCoreLabel; isActive=true;requestAnimationFrame(loop);});
+document.getElementById('sb').addEventListener('click',()=>{hasMoved=false;startTime=0;initGame();if(ac.state==='suspended')ac.resume(); startBGM();document.getElementById('startscreen').style.display='none'; document.getElementById('pblabel').textContent=TEXT.hudCoreLabel; isActive=true;requestAnimationFrame(loop);});
 document.getElementById('rbtn').addEventListener('click',()=>{
   document.getElementById('goscreen').style.display='none';
   isOver=false; isActive=false; hasMoved=false;
@@ -1096,6 +1098,9 @@ function hideConnError() {
 // Heartbeat every 30s
 setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
+
+
 
 </script>
 </body>
