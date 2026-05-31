@@ -331,59 +331,80 @@ function showWinToast(p) {
 }
 
 // ── POLLING ───────────────────────────────
+let _lastPlayerHash = '';
+let _lastCodeHash = '';
+
+function quickHash(obj) {
+  // Fast change detection - stringify lastSeen values only
+  if (!obj || typeof obj !== 'object') return '';
+  return Object.values(obj).map(p => (p.lastSeen||0) + (p.totalWins||0)).join(',');
+}
+
 function startPolling() {
-  // Restore cached data immediately (before first fetch)
+  // Restore cached data immediately
   try {
     const cachedP = sessionStorage.getItem('htb_admin_players');
     const cachedC = sessionStorage.getItem('htb_admin_codes');
-    if (cachedP) { playersData = JSON.parse(cachedP); }
-    if (cachedC) { codesData   = JSON.parse(cachedC); }
+    if (cachedP) { playersData = JSON.parse(cachedP); _lastPlayerHash = quickHash(playersData); }
+    if (cachedC) { codesData   = JSON.parse(cachedC); _lastCodeHash = quickHash(codesData); }
     if (cachedP || cachedC) renderAll();
   } catch(e) {}
 
-  refreshData();
-  setInterval(refreshData, 5000);
+  refreshPlayers();
+  refreshCodes();
+  // Fast poll: 3s for players (active during event), 10s for codes (changes rarely)
+  setInterval(refreshPlayers, 3000);
+  setInterval(refreshCodes,   10000);
 }
 
-async function refreshData() {
+async function refreshPlayers() {
   try {
-    const [players, codes] = await Promise.all([fbGet('players'), fbGet('helpCodes')]);
+    const players = await fbGet('players');
+    if (players === null) return;
+    const newHash = quickHash(players);
+    if (newHash === _lastPlayerHash) return; // no change — skip render
+    _lastPlayerHash = newHash;
 
-    // Only update if we got real data (not null = Firebase error)
-    if (players !== null) {
-      const newPlayers = players || {};
-
-      // Detect new wins
-      for (const [key, p] of Object.entries(newPlayers)) {
-        const prev = playersData[key];
-        const prevWins = prev ? (prev.totalWins||0) : 0;
-        if ((p.totalWins||0) > prevWins) showWinToast(p);
-      }
-      playersData = newPlayers;
-
-      // Cache in sessionStorage so page refresh keeps data
-      try { sessionStorage.setItem('htb_admin_players', JSON.stringify(playersData)); } catch(e){}
+    const newPlayers = players || {};
+    for (const [key, p] of Object.entries(newPlayers)) {
+      const prev = playersData[key];
+      if ((p.totalWins||0) > (prev ? prev.totalWins||0 : 0)) showWinToast(p);
     }
-    if (codes !== null) {
-      codesData = codes || {};
-      try { sessionStorage.setItem('htb_admin_codes', JSON.stringify(codesData)); } catch(e){}
-    }
+    playersData = newPlayers;
+    try { sessionStorage.setItem('htb_admin_players', JSON.stringify(playersData)); } catch(e){}
 
-    renderAll();
+    renderStats(); renderLeaderboard(); renderPlayers();
     const t = new Date().toLocaleTimeString('he-IL');
     document.getElementById('live-indicator').innerHTML =
       '<div class="live-dot"></div><span>עודכן ' + t + '</span>';
     document.getElementById('live-indicator').style.color = 'var(--green)';
   } catch(e) {
-    console.warn('Firebase refresh failed:', e.message || e);
-    // Only show connection error if it's actually a network/fetch error
-    if (e instanceof TypeError || (e.message && e.message.includes('fetch'))) {
+    if (e instanceof TypeError) {
       document.getElementById('live-indicator').innerHTML =
         '<div class="live-dot" style="background:var(--red);animation:none"></div>' +
-        '<span style="color:var(--red);letter-spacing:2px">⚠ שגיאת התחברות</span>';
-      document.getElementById('live-indicator').style.color = 'var(--red)';
+        '<span style="color:var(--red)">⚠ שגיאת התחברות</span>';
     }
   }
+}
+
+async function refreshCodes() {
+  try {
+    const codes = await fbGet('helpCodes');
+    if (codes === null) return;
+    const newHash = quickHash(codes);
+    if (newHash === _lastCodeHash) return;
+    _lastCodeHash = newHash;
+    codesData = codes || {};
+    try { sessionStorage.setItem('htb_admin_codes', JSON.stringify(codesData)); } catch(e){}
+    renderStats(); renderCodes();
+  } catch(e) {}
+}
+
+async function refreshData() {
+  // Force full refresh (bypass hash cache)
+  _lastPlayerHash = '';
+  _lastCodeHash = '';
+  await Promise.all([refreshPlayers(), refreshCodes()]);
 }
 
 // ── TABS ──────────────────────────────────
