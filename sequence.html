@@ -13,7 +13,7 @@
   --panel:rgba(240,235,224,0.1); --red:#c43000;
   --cream:#d4cfc6; --warm:#b8b2a8; --darker:#0e0d0b;
 }
-body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;}
 @media screen and (orientation:landscape){#orient-warn{display:flex;}}
 
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
@@ -257,7 +257,7 @@ body::after{
 .ring-fg.danger{stroke:var(--red);}
 .ring-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(15px,4.5vw,20px);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);}
 .nodegrid{display:grid;gap:clamp(5px,1.5vw,9px);width:100%;max-width:min(360px,92vw);}
-.nodebtn{aspect-ratio:1;border-radius:5px;border:2px solid rgba(240,235,224,0.28);background:rgba(240,235,224,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;color:rgba(240,235,224,0.65);transition:all .12s;touch-action:manipulation;min-height:clamp(44px,12vw,60px);}
+.nodebtn{aspect-ratio:1;border-radius:5px;border:2px solid rgba(240,235,224,0.28);background:rgba(240,235,224,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,18px);font-family:'Rajdhani',sans-serif;font-weight:700;color:rgba(240,235,224,0.65);transition:all .12s;touch-action:manipulation;min-height:clamp(48px,13vw,64px);}
 .nodebtn:active{transform:scale(0.9);}
 .nodebtn.disabled{pointer-events:none;opacity:0.2;}
 .progbar{width:100%;}
@@ -282,7 +282,7 @@ body::after{
   font-family: 'Share Tech Mono', monospace;
   font-size: 10px;
   letter-spacing: 3px;
-  padding: 8px 14px;
+  padding: 11px 18px;
   cursor: pointer;
   z-index: 100;
   display: none;
@@ -488,7 +488,7 @@ body::after{
 }
 #player-name-input:focus{border-bottom-color:var(--red,#c43000);}
 #name-submit{
-  padding:clamp(10px,2.5vh,14px) clamp(36px,9vw,52px);
+  padding:clamp(14px,3.5vh,18px) clamp(40px,10vw,58px);
   background:var(--accent);color:var(--bg);
   border:none;font-size:clamp(12px,3vw,14px);
   font-family:inherit;cursor:pointer;letter-spacing:4px;
@@ -553,7 +553,7 @@ body::after{
   <div class="help-box">
     <div class="help-title">[ קוד עזרה מנאפס ]</div>
     <input id="help-input" type="text" maxlength="6" placeholder="XXXXXX"
-           autocomplete="off" autocorrect="off" spellcheck="false"/>
+           autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"/>
     <div id="help-msg"></div>
     <button id="help-submit">אשר</button><br>
     <button id="help-cancel">ביטול</button>
@@ -607,6 +607,8 @@ body::after{
 </div>
 
 <script>
+
+
 
 
 
@@ -1098,18 +1100,27 @@ function initHelpSystem() {
   document.getElementById('help-cancel').addEventListener('click', () => {
     overlay.classList.remove('show');
   });
-  document.getElementById('help-submit').addEventListener('click', () => {
+    document.getElementById('help-submit').addEventListener('click', async () => {
     const val = input.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     if (val.length < 4) { msg.textContent = 'קוד קצר מדי'; msg.className = 'help-msg bad'; return; }
     const type = val[0];
     if (!EFFECTS[type]) { msg.textContent = 'קוד לא מוכר'; msg.className = 'help-msg bad'; vibe([150]); return; }
-    // Check if used
-    const storageKey = 'hc_' + val;
-    if (localStorage.getItem(storageKey) === '1') {
+
+    // Check localStorage (fast) AND Firebase (authoritative)
+    const localUsed = localStorage.getItem('hc_'+val) === '1';
+    let firebaseUsed = false;
+    try {
+      const fbData = await fbGet('helpCodes/'+val);
+      firebaseUsed = fbData !== null && fbData.player;
+    } catch(e) {}
+
+    if (localUsed && firebaseUsed) {
       msg.textContent = 'קוד זה כבר שומש'; msg.className = 'help-msg bad'; vibe([150]); return;
     }
+
     // Valid — apply
-    localStorage.setItem(storageKey, '1'); fbReportCodeUsed(val, EFFECTS[type].label);
+    localStorage.setItem('hc_'+val, '1');
+    fbReportCodeUsed(val, EFFECTS[type].label);
     msg.textContent = EFFECTS[type].label; msg.className = 'help-msg ok';
     EFFECTS[type].apply();
     vibe([80,40,80,40,120]);
@@ -1170,70 +1181,80 @@ initHelpSystem();
 
 // ════════════════════════════════════════════════════════
 //  Firebase — REST API — Per-Player Cumulative Tracking
+
+// ════════════════════════════════════════════════════════
+//  Firebase REST API — with local cache
 // ════════════════════════════════════════════════════════
 const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
+const BOX_ID = new URLSearchParams(location.search).get('box') || '?';
 
 function fbKey(name) {
-  // Sanitize name for use as Firebase key
   return name.trim().toLowerCase()
     .replace(/[.#$[\]/]/g, '_')
     .replace(/\s+/g, '_')
     .slice(0, 30);
 }
-function fbGet(path)  { return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null); }
+function fbGet(path)  { return fetch(FB_URL+'/'+path+'.json').then(r=>r.json()).catch(()=>null); }
 function fbSet(path, data) {
-  return fetch(`${FB_URL}/${path}.json`, {
+  return fetch(FB_URL+'/'+path+'.json', {
     method:'PUT', body:JSON.stringify(data),
     headers:{'Content-Type':'application/json'}
   }).catch(()=>{});
 }
-function fbPatch(path, data) {
-  return fetch(`${FB_URL}/${path}.json`, {
-    method:'PATCH', body:JSON.stringify(data),
-    headers:{'Content-Type':'application/json'}
-  }).catch(()=>{});
+function fbDelete(path) {
+  return fetch(FB_URL+'/'+path+'.json',{method:'DELETE'}).catch(()=>{});
 }
-function fbDelete(path) { return fetch(`${FB_URL}/${path}.json`,{method:'DELETE'}).catch(()=>{}); }
 
-const BOX_ID = new URLSearchParams(location.search).get('box') || '?';
+// Local cache — avoids GET race condition between rapid calls
+let _fbCache = null;
 
-async function fbReport(extra={}) {
+async function fbReport(extra) {
   if (!fbPlayerName) return;
+  extra = extra || {};
   const key = fbKey(fbPlayerName);
-  // Get existing player data
-  const existing = await fbGet(`players/${key}`) || {};
   const now = Date.now();
+
+  if (!_fbCache) {
+    _fbCache = await fbGet('players/'+key) || {};
+  }
+  const existing = _fbCache;
+
   const update = {
-    name:      fbPlayerName,
-    lastSeen:  now,
-    firstSeen: existing.firstSeen || now,
-    attempts:  fbAttempts,
-    totalWins: existing.totalWins || 0,
-    boxes:     existing.boxes || {},
-    // Current session box info (for active display)
+    name:            fbPlayerName,
+    lastSeen:        now,
+    firstSeen:       existing.firstSeen || now,
+    attempts:        fbAttempts,
+    totalWins:       existing.totalWins || 0,
+    boxes:           existing.boxes     || {},
     currentBox:      BOX_ID,
-    currentBoxTitle: (typeof C !== 'undefined') ? C.title : '?',
-    currentGame:     (typeof C !== 'undefined') ? C.game  : '?',
+    currentBoxTitle: typeof C !== 'undefined' ? C.title : '?',
+    currentGame:     typeof C !== 'undefined' ? C.game  : '?',
+    startTime:       existing.startTime || extra.startTime || now,
   };
-  // Merge extra (won, etc) without overwriting structure
+
   if (extra.won) {
     update.totalWins = (existing.totalWins || 0) + 1;
-    update.boxes = existing.boxes || {};
-    update.boxes[BOX_ID] = {
+    const newBoxes = {};
+    if (existing.boxes) {
+      Object.assign(newBoxes, existing.boxes);
+    }
+    newBoxes[BOX_ID] = {
       boxId:    BOX_ID,
-      boxTitle: (typeof C !== 'undefined') ? C.title : '?',
-      game:     (typeof C !== 'undefined') ? C.game  : '?',
+      boxTitle: typeof C !== 'undefined' ? C.title : '?',
+      game:     typeof C !== 'undefined' ? C.game  : '?',
       winTime:  extra.winTime || now,
       attempts: fbAttempts,
     };
+    update.boxes = newBoxes;
   }
-  if (extra.startTime) update.startTime = extra.startTime;
-  fbSet(`players/${key}`, update);
+
+  _fbCache = Object.assign({}, _fbCache, update);
+  fbSet('players/'+key, update);
 }
 
 function fbReportCodeUsed(code, effectLabel) {
   if (!fbPlayerName) return;
-  fbSet(`helpCodes/${code}`, {
+  fbSet('helpCodes/'+code, {
     player: fbPlayerName,
     boxId:  BOX_ID,
     effect: effectLabel,
@@ -1242,8 +1263,10 @@ function fbReportCodeUsed(code, effectLabel) {
 }
 
 // Heartbeat every 30s
-setInterval(() => { if(fbPlayerName) fbReport({}); }, 30000);
+setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
+
 
 
 </script>
