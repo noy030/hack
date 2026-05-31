@@ -264,7 +264,11 @@ let prevWinKeys = new Set();
 let audioCtx = null;
 
 // ── FIREBASE REST ─────────────────────────
-function fbGet(path){ return fetch(`${FB_URL}/${path}.json`).then(r=>r.json()).catch(()=>null); }
+function fbGet(path) {
+  return fetch(FB_URL+'/'+path+'.json')
+    .then(r => r.ok ? r.json() : null)
+    .catch(() => null);
+}
 function fbDelete(path){ return fetch(`${FB_URL}/${path}.json`,{method:'DELETE'}).catch(()=>{}); }
 
 // ── LOGIN ─────────────────────────────────
@@ -369,10 +373,16 @@ async function refreshData() {
     const t = new Date().toLocaleTimeString('he-IL');
     document.getElementById('live-indicator').innerHTML =
       '<div class="live-dot"></div><span>עודכן ' + t + '</span>';
+    document.getElementById('live-indicator').style.color = 'var(--green)';
   } catch(e) {
-    console.warn('Firebase refresh failed:', e);
-    document.getElementById('live-indicator').innerHTML =
-      '<div class="live-dot" style="background:var(--red)"></div><span style="color:var(--red)">שגיאת חיבור</span>';
+    console.warn('Firebase refresh failed:', e.message || e);
+    // Only show connection error if it's actually a network/fetch error
+    if (e instanceof TypeError || (e.message && e.message.includes('fetch'))) {
+      document.getElementById('live-indicator').innerHTML =
+        '<div class="live-dot" style="background:var(--red);animation:none"></div>' +
+        '<span style="color:var(--red);letter-spacing:2px">⚠ שגיאת התחברות</span>';
+      document.getElementById('live-indicator').style.color = 'var(--red)';
+    }
   }
 }
 
@@ -399,16 +409,22 @@ function timeAgo(ts) {
 }
 
 function renderStats() {
-  const pl = Object.values(playersData);
+  const pl = playersData && typeof playersData === 'object'
+    ? Object.values(playersData).filter(p => p && p.name)
+    : [];
+  const cd = codesData && typeof codesData === 'object'
+    ? Object.keys(codesData)
+    : [];
   document.getElementById('stat-players').textContent = pl.length;
-  document.getElementById('stat-wins').textContent = pl.reduce((s,p)=>s+(p.totalWins||0),0);
-  document.getElementById('stat-codes').textContent = Object.keys(codesData).length;
-  document.getElementById('stat-active').textContent = pl.filter(p=>p.lastSeen&&Date.now()-p.lastSeen<300000).length;
+  document.getElementById('stat-wins').textContent    = pl.reduce((s,p)=>s+(p.totalWins||0),0);
+  document.getElementById('stat-codes').textContent   = cd.length;
+  document.getElementById('stat-active').textContent  = pl.filter(p=>p.lastSeen&&Date.now()-p.lastSeen<120000).length;
 }
 
 function renderLeaderboard() {
   const el = document.getElementById('leaderboard-list');
-  const players = Object.values(playersData);
+  if (!playersData || typeof playersData !== 'object') { el.innerHTML='<div class="empty">ממתין לשחקנים...</div>'; return; }
+  const players = Object.values(playersData).filter(p => p && p.name);
   if (!players.length) { el.innerHTML='<div class="empty">ממתין לשחקנים...</div>'; return; }
 
   // Sort: by totalWins desc, then by lastSeen desc
