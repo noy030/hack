@@ -576,9 +576,9 @@ body{touch-action:none;}
 <div id="pzdots"></div>
 
 <div id="goscreen">
-  <div class="go-title">ACCESS DENIED</div>
-  <button id="rbtn">נסה שנית</button>
   <div class="go-title">CORE BLOCKED</div>
+  <button id="rbtn">נסה שנית</button>
+</div>
 
 <div id="winscreen">
   <div class="winbox">
@@ -590,8 +590,8 @@ body{touch-action:none;}
 </div>
 <button id="show-code-btn">🔒 הצג קוד</button>
 <div id="conn-status">⚠ שגיאת התחברות</div>
-
 <script>
+
 
 // Global player tracking
 let fbPlayerName = '';
@@ -1244,6 +1244,7 @@ function hideConnError() {
 // Heartbeat every 30s
 setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
 
 </script>
 </body>
