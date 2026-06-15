@@ -250,30 +250,55 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
 </div>
 
 <script>
-// ════════════════════════════════════════════
-const ADMIN_PASSWORD = 'npc2024';
-const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
-// ════════════════════════════════════════════
 
-const EFFECT_NAMES = {T:'⏱ זמן',W:'✓ פתרון',L:'💡 עזרה',E:'↓ הקלה'};
+const ADMIN_PASSWORD = 'npc2024';
+const FB_URL     = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
+const FB_API_KEY = 'AIzaSyBQylFseHge48iq3U5CqgJJZPdHM5QHbtA';
+
+const EFFECT_NAMES = {T:'עזרה T',W:'פתרון W',L:'רמז L',E:'הקלה E'};
 const GAME_ICONS   = {shooter:'🔫',sequence:'🧠',blocks:'🧩'};
 
 let playersData = {}, codesData = {};
-let soundOn = false;
-let prevWinKeys = new Set();
-let audioCtx = null;
+let soundOn = false, audioCtx = null;
+let _adminToken = null;
+let _lastPHash = '', _lastCHash = '';
 
-// ── FIREBASE REST ─────────────────────────
-function fbGet(path) {
-  return fetch(FB_URL+'/'+path+'.json')
-    .then(r => r.ok ? r.json() : null)
-    .catch(() => null);
+// ── Firebase Auth ──────────────────────────────────────
+function fbAuth() {
+  if (_adminToken) return Promise.resolve(_adminToken);
+  return fetch(
+    'https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=' + FB_API_KEY,
+    { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }
+  ).then(function(r){ return r.json(); })
+   .then(function(d){ _adminToken = d.idToken || null; return _adminToken; })
+   .catch(function(){ return null; });
 }
-function fbDelete(path){ return fetch(`${FB_URL}/${path}.json`,{method:'DELETE'}).catch(()=>{}); }
 
-// ── LOGIN ─────────────────────────────────
+function fbGet(path) {
+  return fbAuth().then(function(token) {
+    var auth = token ? '?auth=' + token : '';
+    return fetch(FB_URL + '/' + path + '.json' + auth)
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; });
+  });
+}
+
+function fbDelete(path) {
+  return fbAuth().then(function(token) {
+    var auth = token ? '?auth=' + token : '';
+    return fetch(FB_URL + '/' + path + '.json' + auth, {method:'DELETE'})
+      .catch(function(){});
+  });
+}
+
+// Pre-fetch auth
+fbAuth();
+
+// ── Login ──────────────────────────────────────────────
 document.getElementById('login-btn').addEventListener('click', login);
-document.getElementById('admin-pass').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+document.getElementById('admin-pass').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') login();
+});
 
 function login() {
   if (document.getElementById('admin-pass').value.trim() === ADMIN_PASSWORD) {
@@ -286,303 +311,334 @@ function login() {
   }
 }
 
-// ── SOUND ─────────────────────────────────
+// ── Sound ──────────────────────────────────────────────
 function toggleSound() {
   soundOn = !soundOn;
-  const btn = document.getElementById('sound-btn');
+  var btn = document.getElementById('sound-btn');
   btn.textContent = soundOn ? '🔔 התראות' : '🔇 התראות';
   btn.className = soundOn ? 'on' : '';
-  if (soundOn) {
-    // Init AudioContext on user gesture
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  if (soundOn) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
 
 function playWinSound() {
   if (!soundOn || !audioCtx) return;
-  // NieR-style ascending arpeggio
-  const notes = [440, 554, 659, 880];
-  notes.forEach((freq, i) => {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    const t = audioCtx.currentTime + i * 0.12;
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.3, t + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-    osc.start(t); osc.stop(t + 0.4);
-  });
-}
-
-// ── WIN TOAST ─────────────────────────────
-function showWinToast(p) {
-  const player = p;
-  document.getElementById('toast-name').textContent = player.name || '—';
-  const lastBox = player.boxes ? Object.values(player.boxes).sort((a,b)=>(b.winTime||0)-(a.winTime||0))[0] : null;
-  document.getElementById('toast-box').textContent = lastBox
-    ? `${GAME_ICONS[lastBox.game]||'📦'} תיבה ${lastBox.boxId} — ${lastBox.boxTitle||''}`
-    : `תיבה ${player.currentBox||'?'}`;
-  const t = document.getElementById('win-toast');
-  t.classList.add('show');
-  playWinSound();
-  setTimeout(() => t.classList.remove('show'), 4000);
-}
-
-// ── POLLING ───────────────────────────────
-let _lastPlayerHash = '';
-let _lastCodeHash = '';
-
-function quickHash(obj) {
-  // Fast change detection - stringify lastSeen values only
-  if (!obj || typeof obj !== 'object') return '';
-  return Object.values(obj).map(p => (p.lastSeen||0) + (p.totalWins||0)).join(',');
-}
-
-function startPolling() {
-  // Restore cached data immediately
-  try {
-    const cachedP = sessionStorage.getItem('htb_admin_players');
-    const cachedC = sessionStorage.getItem('htb_admin_codes');
-    if (cachedP) { playersData = JSON.parse(cachedP); _lastPlayerHash = quickHash(playersData); }
-    if (cachedC) { codesData   = JSON.parse(cachedC); _lastCodeHash = quickHash(codesData); }
-    if (cachedP || cachedC) renderAll();
-  } catch(e) {}
-
-  refreshPlayers();
-  refreshCodes();
-  // Fast poll: 3s for players (active during event), 10s for codes (changes rarely)
-  setInterval(refreshPlayers, 3000);
-  setInterval(refreshCodes,   10000);
-}
-
-async function refreshPlayers() {
-  try {
-    const players = await fbGet('players');
-    if (players === null) return;
-    const newHash = quickHash(players);
-    if (newHash === _lastPlayerHash) return; // no change — skip render
-    _lastPlayerHash = newHash;
-
-    const newPlayers = players || {};
-    for (const [key, p] of Object.entries(newPlayers)) {
-      const prev = playersData[key];
-      if ((p.totalWins||0) > (prev ? prev.totalWins||0 : 0)) showWinToast(p);
-    }
-    playersData = newPlayers;
-    try { sessionStorage.setItem('htb_admin_players', JSON.stringify(playersData)); } catch(e){}
-
-    renderStats(); renderLeaderboard(); renderPlayers();
-    const t = new Date().toLocaleTimeString('he-IL');
-    document.getElementById('live-indicator').innerHTML =
-      '<div class="live-dot"></div><span>עודכן ' + t + '</span>';
-    document.getElementById('live-indicator').style.color = 'var(--green)';
-  } catch(e) {
-    if (e instanceof TypeError) {
-      document.getElementById('live-indicator').innerHTML =
-        '<div class="live-dot" style="background:var(--red);animation:none"></div>' +
-        '<span style="color:var(--red)">⚠ שגיאת התחברות</span>';
-    }
+  var notes = [440, 554, 659, 880];
+  for (var ni = 0; ni < notes.length; ni++) {
+    (function(freq, idx) {
+      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      var t = audioCtx.currentTime + idx * 0.12;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t); osc.stop(t + 0.4);
+    })(notes[ni], ni);
   }
 }
 
-async function refreshCodes() {
+// ── Win Toast ──────────────────────────────────────────
+function showWinToast(p) {
+  document.getElementById('toast-name').textContent = p.name || '—';
+  var lastBox = null;
+  if (p.boxes) {
+    var bkeys = Object.keys(p.boxes);
+    if (bkeys.length > 0) lastBox = p.boxes[bkeys[bkeys.length-1]];
+  }
+  document.getElementById('toast-box').textContent = lastBox
+    ? ((GAME_ICONS[lastBox.game]||'📦') + ' תיבה ' + lastBox.boxId)
+    : ('תיבה ' + (p.currentBox||'?'));
+  var t = document.getElementById('win-toast');
+  t.classList.add('show');
+  playWinSound();
+  setTimeout(function(){ t.classList.remove('show'); }, 4000);
+}
+
+// ── Polling ────────────────────────────────────────────
+function quickHash(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  var vals = Object.keys(obj).map(function(k){ return (obj[k].lastSeen||0)+'|'+(obj[k].totalWins||0); });
+  return vals.join(',');
+}
+
+function startPolling() {
   try {
-    const codes = await fbGet('helpCodes');
+    var cp = sessionStorage.getItem('htb_admin_players');
+    var cc = sessionStorage.getItem('htb_admin_codes');
+    if (cp) { playersData = JSON.parse(cp); _lastPHash = quickHash(playersData); }
+    if (cc) { codesData = JSON.parse(cc); }
+    if (cp || cc) renderAll();
+  } catch(e) {}
+  refreshPlayers();
+  refreshCodes();
+  setInterval(refreshPlayers, 3000);
+  setInterval(refreshCodes, 10000);
+}
+
+function refreshPlayers() {
+  fbGet('players').then(function(players) {
+    if (players === null) {
+      document.getElementById('live-indicator').innerHTML =
+        '<div class="live-dot" style="background:var(--red);animation:none"></div>' +
+        '<span style="color:var(--red)">שגיאת התחברות</span>';
+      return;
+    }
+    var newHash = quickHash(players);
+    if (newHash === _lastPHash) return;
+    _lastPHash = newHash;
+    var pkeys = Object.keys(players);
+    for (var pi = 0; pi < pkeys.length; pi++) {
+      var key = pkeys[pi], p = players[key];
+      var prev = playersData[key];
+      if ((p.totalWins||0) > (prev ? (prev.totalWins||0) : 0)) showWinToast(p);
+    }
+    playersData = players;
+    try { sessionStorage.setItem('htb_admin_players', JSON.stringify(playersData)); } catch(e){}
+    renderStats(); renderLeaderboard(); renderPlayers();
+    var t = new Date().toLocaleTimeString('he-IL');
+    document.getElementById('live-indicator').innerHTML =
+      '<div class="live-dot"></div><span>עודכן ' + t + '</span>';
+    document.getElementById('live-indicator').style.color = 'var(--green)';
+  });
+}
+
+function refreshCodes() {
+  fbGet('helpCodes').then(function(codes) {
     if (codes === null) return;
-    const newHash = quickHash(codes);
-    if (newHash === _lastCodeHash) return;
-    _lastCodeHash = newHash;
-    codesData = codes || {};
+    var newHash = quickHash(codes);
+    if (newHash === _lastPHash) return;
+    codesData = codes;
     try { sessionStorage.setItem('htb_admin_codes', JSON.stringify(codesData)); } catch(e){}
     renderStats(); renderCodes();
-  } catch(e) {}
+  });
 }
 
-async function refreshData() {
-  // Force full refresh (bypass hash cache)
-  _lastPlayerHash = '';
-  _lastCodeHash = '';
-  await Promise.all([refreshPlayers(), refreshCodes()]);
+function refreshData() {
+  _lastPHash = ''; _lastCHash = '';
+  refreshPlayers(); refreshCodes();
 }
 
-// ── TABS ──────────────────────────────────
+// ── Tabs ───────────────────────────────────────────────
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i)=>{
-    const names=['leaderboard','players','codes','reset'];
-    t.classList.toggle('active', names[i]===name);
-  });
-  document.querySelectorAll('.tab-panel').forEach(p=>{
-    p.classList.toggle('active', p.id==='tab-'+name);
-  });
+  var tabs = document.querySelectorAll('.tab');
+  var names = ['leaderboard','players','codes','reset'];
+  for (var ti = 0; ti < tabs.length; ti++) {
+    tabs[ti].classList[names[ti]===name ? 'add' : 'remove']('active');
+  }
+  var panels = document.querySelectorAll('.tab-panel');
+  for (var pi = 0; pi < panels.length; pi++) {
+    panels[pi].classList[panels[pi].id==='tab-'+name ? 'add' : 'remove']('active');
+  }
 }
 
-// ── RENDER ────────────────────────────────
+// ── Render ─────────────────────────────────────────────
 function renderAll() { renderStats(); renderLeaderboard(); renderPlayers(); renderCodes(); }
 
 function timeAgo(ts) {
   if (!ts) return '—';
-  const d = Date.now()-ts;
-  if(d<60000) return 'עכשיו';
-  if(d<3600000) return Math.floor(d/60000)+' דק\'';
-  return Math.floor(d/3600000)+' שע\'';
-}
-
-function renderStats() {
-  const pl = playersData && typeof playersData === 'object'
-    ? Object.values(playersData).filter(p => p && p.name)
-    : [];
-  const cd = codesData && typeof codesData === 'object'
-    ? Object.keys(codesData)
-    : [];
-  document.getElementById('stat-players').textContent = pl.length;
-  document.getElementById('stat-wins').textContent    = pl.reduce((s,p)=>s+(p.totalWins||0),0);
-  document.getElementById('stat-codes').textContent   = cd.length;
-  document.getElementById('stat-active').textContent  = pl.filter(p=>p.lastSeen&&Date.now()-p.lastSeen<120000).length;
-}
-
-function renderLeaderboard() {
-  const el = document.getElementById('leaderboard-list');
-  if (!playersData || typeof playersData !== 'object') { el.innerHTML='<div class="empty">ממתין לשחקנים...</div>'; return; }
-  const players = Object.values(playersData).filter(p => p && p.name);
-  if (!players.length) { el.innerHTML='<div class="empty">ממתין לשחקנים...</div>'; return; }
-
-  // Sort: by totalWins desc, then by lastSeen desc
-  const sorted = [...players].sort((a,b) => {
-    const wa = a.totalWins||0, wb = b.totalWins||0;
-    if (wa !== wb) return wb - wa;
-    return (b.lastSeen||0) - (a.lastSeen||0);
-  });
-
-  el.innerHTML = sorted.map((p, i) => {
-    const rank = i+1;
-    const medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
-    const rowClass = rank===1?'winner':rank===2?'second':'';
-    const wins = p.totalWins || 0;
-    const boxes = p.boxes ? Object.values(p.boxes) : [];
-
-    // List won boxes
-    const boxList = boxes.map(b =>
-      `<span class="box-badge">${GAME_ICONS[b.game]||'📦'} ${b.boxId}</span>`
-    ).join('') || '—';
-
-    return `<div class="lb-row ${rowClass}" style="grid-template-columns:40px 1fr auto auto">
-      <div class="lb-rank">${medal||rank}</div>
-      <div>
-        <div class="lb-name">${p.name||'—'}</div>
-        <div class="lb-boxes" style="margin-top:4px">${boxList}</div>
-      </div>
-      <div style="text-align:center;line-height:1.4">
-        <div class="lb-time" style="${wins>0?'':'color:var(--mid);font-size:16px'}">${wins}</div>
-        <div style="font-size:9px;letter-spacing:2px;color:var(--mid)">תיבות</div>
-      </div>
-      <div style="text-align:center;line-height:1.4;min-width:60px">
-        ${p.lastSeen&&Date.now()-p.lastSeen<120000
-          ? '<div style="color:#a89060;font-size:11px;letter-spacing:2px">🎮 פעיל</div><div style="font-size:9px;color:var(--mid)">'+timeAgo(p.lastSeen)+'</div>'
-          : '<div style="font-size:9px;color:var(--mid)">'+timeAgo(p.lastSeen)+'</div>'
-        }
-      </div>
-    </div>`;
-  }).join('');
+  var d = Date.now() - ts;
+  if (d < 60000) return 'עכשיו';
+  if (d < 3600000) return Math.floor(d/60000) + ' דק\'';
+  return Math.floor(d/3600000) + ' שע\'';
 }
 
 function formatDuration(ms) {
   if (!ms || ms < 0) return '—';
-  const s = Math.floor(ms/1000);
-  const m = Math.floor(s/60);
-  return m > 0 ? `${m}:${String(s%60).padStart(2,'0')}` : `${s}s`;
+  var s = Math.floor(ms/1000), m = Math.floor(s/60);
+  var sec = s % 60;
+  return m > 0 ? (m + ':' + (sec < 10 ? '0' : '') + sec) : (s + 's');
+}
+
+function renderStats() {
+  var pl = playersData && typeof playersData === 'object'
+    ? Object.keys(playersData).map(function(k){ return playersData[k]; }).filter(function(p){ return p && p.name; })
+    : [];
+  var cd = codesData && typeof codesData === 'object' ? Object.keys(codesData) : [];
+  var now = Date.now();
+  document.getElementById('stat-players').textContent = pl.length;
+  document.getElementById('stat-wins').textContent    = pl.reduce(function(s,p){ return s+(p.totalWins||0); }, 0);
+  document.getElementById('stat-codes').textContent   = cd.length;
+  document.getElementById('stat-active').textContent  = pl.filter(function(p){ return p.lastSeen && now-p.lastSeen<120000; }).length;
+}
+
+function renderLeaderboard() {
+  var el = document.getElementById('leaderboard-list');
+  if (!playersData || typeof playersData !== 'object') {
+    el.innerHTML = '<div class="empty">ממתין לשחקנים...</div>'; return;
+  }
+  var players = Object.keys(playersData).map(function(k){ return playersData[k]; }).filter(function(p){ return p && p.name; });
+  if (!players.length) { el.innerHTML = '<div class="empty">ממתין לשחקנים...</div>'; return; }
+
+  players.sort(function(a,b) {
+    var wa = a.totalWins||0, wb = b.totalWins||0;
+    if (wa !== wb) return wb - wa;
+    return (b.lastSeen||0) - (a.lastSeen||0);
+  });
+
+  var html = '';
+  for (var i = 0; i < players.length; i++) {
+    var p = players[i];
+    var rank = i + 1;
+    var medal = rank===1 ? '🥇' : rank===2 ? '🥈' : rank===3 ? '🥉' : '';
+    var rowCls = rank===1 ? 'winner' : rank===2 ? 'second' : '';
+    var wins = p.totalWins || 0;
+    var boxes = p.boxes ? Object.keys(p.boxes).map(function(k){ return p.boxes[k]; }) : [];
+    var boxList = '';
+    for (var bi = 0; bi < boxes.length; bi++) {
+      boxList += '<span class="box-badge">' + (GAME_ICONS[boxes[bi].game]||'📦') + ' ' + boxes[bi].boxId + '</span>';
+    }
+    if (!boxList) boxList = '—';
+    var isActive = p.lastSeen && Date.now()-p.lastSeen < 120000;
+    html += '<div class="lb-row ' + rowCls + '" style="grid-template-columns:40px 1fr auto auto">' +
+      '<div class="lb-rank">' + (medal||rank) + '</div>' +
+      '<div><div class="lb-name">' + (p.name||'—') + '</div>' +
+      '<div class="lb-boxes" style="margin-top:4px">' + boxList + '</div></div>' +
+      '<div style="text-align:center;line-height:1.4">' +
+        '<div class="lb-time' + (wins>0?'':' no-win') + '">' + wins + '</div>' +
+        '<div style="font-size:9px;letter-spacing:2px;color:var(--mid)">תיבות</div>' +
+      '</div>' +
+      '<div style="text-align:center;line-height:1.4;font-size:10px;color:' + (isActive?'#a89060':'var(--mid)') + '">' +
+        (isActive ? '🎮 פעיל' : timeAgo(p.lastSeen)) +
+      '</div></div>';
+  }
+  el.innerHTML = html;
 }
 
 function renderPlayers() {
-  const tbody = document.getElementById('players-body');
-  const players = Object.entries(playersData);
-  if (!players.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">ממתין...</td></tr>'; return; }
-  players.sort((a,b)=>(b[1].lastSeen||0)-(a[1].lastSeen||0));
-  tbody.innerHTML = players.map(([key,p]) => {
-    const wins = p.totalWins||0;
-    const isActive = p.lastSeen && Date.now()-p.lastSeen < 120000;
-    const status = wins > 0
-      ? `<span style="color:var(--green)">✓ ${wins} תיבות</span>`
-      : isActive
-        ? '<span style="color:#a89060">🎮 משחק עכשיו</span>'
-        : '<span style="color:var(--mid)">⏳ ממתין</span>';
-    const codes = Object.entries(codesData)
-      .filter(([,cd])=>cd.player===p.name)
-      .map(([code])=>`<span class="code-badge code-${code[0]}">${EFFECT_NAMES[code[0]]||code[0]}</span>`)
-      .join('')||'—';
-    const boxes = p.boxes ? Object.values(p.boxes) : [];
-    const boxList = boxes.map(b=>`<span class="box-badge">${GAME_ICONS[b.game]||'📦'} ${b.boxId}</span>`).join('')||'—';
-    return `<tr>
-      <td><div class="player-name">${p.name||'—'}</div></td>
-      <td>${boxList}</td>
-      <td>${status}</td><td>${codes}</td>
-      <td style="text-align:center;font-size:10px;letter-spacing:2px;color:${p.lastSeen&&Date.now()-p.lastSeen<120000?'#a89060':'var(--mid)'}">${p.currentBox?'📍 תיבה '+p.currentBox:''}<br>${p.currentBoxTitle||''}</td>
-      <td class="time-ago">${timeAgo(p.lastSeen)}</td>
-      <td><button class="action-btn" onclick="removePlayer('${key}')">הסר</button></td>
-    </tr>`;
-  }).join('');
+  var tbody = document.getElementById('players-body');
+  if (!playersData || typeof playersData !== 'object') {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">ממתין...</td></tr>'; return;
+  }
+  var players = Object.keys(playersData).map(function(k){ return {key:k, p:playersData[k]}; })
+    .filter(function(x){ return x.p && x.p.name; });
+  if (!players.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">ממתין...</td></tr>'; return; }
+  players.sort(function(a,b){ return (b.p.lastSeen||0)-(a.p.lastSeen||0); });
+
+  var html = '';
+  for (var i = 0; i < players.length; i++) {
+    var key = players[i].key, p = players[i].p;
+    var wins = p.totalWins||0;
+    var isActive = p.lastSeen && Date.now()-p.lastSeen<120000;
+    var status = wins > 0
+      ? '<span style="color:var(--green)">✓ ' + wins + ' תיבות</span>'
+      : isActive ? '<span style="color:#a89060">🎮 משחק</span>'
+      : '<span style="color:var(--mid)">⏳</span>';
+    var boxes = p.boxes ? Object.keys(p.boxes).map(function(k){ return p.boxes[k]; }) : [];
+    var boxList = '';
+    for (var bi = 0; bi < boxes.length; bi++) {
+      boxList += '<span class="box-badge">' + (GAME_ICONS[boxes[bi].game]||'📦') + ' ' + boxes[bi].boxId + '</span>';
+    }
+    if (!boxList) boxList = p.currentBox ? ('📍 ' + p.currentBox) : '—';
+    var codeKeys = Object.keys(codesData).filter(function(cd){ return codesData[cd].player===p.name; });
+    var codes = codeKeys.map(function(cd){ return '<span class="code-badge code-' + cd[0] + '">' + (EFFECT_NAMES[cd[0]]||cd[0]) + '</span>'; }).join('') || '—';
+    html += '<tr>' +
+      '<td><div class="player-name">' + (p.name||'—') + '</div></td>' +
+      '<td>' + boxList + '</td>' +
+      '<td>' + status + '</td>' +
+      '<td>' + codes + '</td>' +
+      '<td class="time-ago">' + timeAgo(p.lastSeen) + '</td>' +
+      '<td><button class="action-btn" onclick="removePlayer(\'' + key + '\')">הסר</button></td>' +
+      '</tr>';
+  }
+  tbody.innerHTML = html;
 }
 
 function renderCodes() {
-  const tbody = document.getElementById('codes-body');
-  const codes = Object.entries(codesData);
-  if (!codes.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">אין שימוש עדיין</td></tr>'; return; }
-  codes.sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
-  tbody.innerHTML = codes.map(([code,cd])=>{
-    const t=code[0];
-    return `<tr>
-      <td class="player-name">${cd.player||'—'}</td>
-      <td style="letter-spacing:4px">${code}</td>
-      <td><span class="code-badge code-${t}">${EFFECT_NAMES[t]||t}</span></td>
-      <td><span class="box-badge">${cd.boxId||'?'}</span></td>
-      <td class="time-ago">${timeAgo(cd.ts)}</td>
-      <td><button class="action-btn ok" onclick="resetCode('${code}')">אפס</button></td>
-    </tr>`;
-  }).join('');
-}
-
-// ── ACTIONS ───────────────────────────────
-function showMsg(text,isOk=true){
-  const el=document.getElementById('reset-msg');
-  el.textContent=text; el.style.color=isOk?'var(--green)':'var(--red)';
-  setTimeout(()=>el.textContent='',2500);
-}
-async function resetCode(code){ await fbDelete(`helpCodes/${code}`); showMsg(`קוד ${code} אופס`); refreshData(); }
-async function removePlayer(key){ await fbDelete(`players/${key}`); showMsg('שחקן הוסר'); refreshData(); }
-window.resetCode=resetCode; window.removePlayer=removePlayer;
-window.resetSpecificCode=async()=>{
-  const c=document.getElementById('reset-code-input').value.trim().toUpperCase();
-  if(!c)return; await fbDelete(`helpCodes/${c}`);
-  document.getElementById('reset-code-input').value=''; showMsg(`קוד ${c} אופס`); refreshData();
-};
-window.resetPlayerCodes=async()=>{
-  const name=document.getElementById('reset-player-input').value.trim(); if(!name)return;
-  let count=0;
-  for(const [code,cd] of Object.entries(codesData)){
-    if(cd.player&&cd.player.includes(name)){await fbDelete(`helpCodes/${code}`);count++;}
+  var tbody = document.getElementById('codes-body');
+  if (!codesData || typeof codesData !== 'object') {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">אין שימוש עדיין</td></tr>'; return;
   }
-  document.getElementById('reset-player-input').value='';
-  showMsg(`אופסו ${count} קודים של ${name}`); refreshData();
-};
-window.resetAllCodes=async()=>{
-  if(!confirm('לאפס את כל קודי העזרה?'))return;
-  await fbDelete('helpCodes'); showMsg('כל הקודים אופסו'); refreshData();
+  var codes = Object.keys(codesData).map(function(k){ return {code:k, cd:codesData[k]}; });
+  if (!codes.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">אין שימוש עדיין</td></tr>'; return; }
+  codes.sort(function(a,b){ return (b.cd.ts||0)-(a.cd.ts||0); });
+
+  var html = '';
+  for (var i = 0; i < codes.length; i++) {
+    var code = codes[i].code, cd = codes[i].cd, t = code[0];
+    html += '<tr>' +
+      '<td class="player-name">' + (cd.player||'—') + '</td>' +
+      '<td style="letter-spacing:4px">' + code + '</td>' +
+      '<td><span class="code-badge code-' + t + '">' + (EFFECT_NAMES[t]||t) + '</span></td>' +
+      '<td><span class="box-badge">' + (cd.boxId||'?') + '</span></td>' +
+      '<td class="time-ago">' + timeAgo(cd.ts) + '</td>' +
+      '<td><button class="action-btn ok" onclick="resetCode(\'' + code + '\')">אפס</button></td>' +
+      '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+// ── Actions ────────────────────────────────────────────
+function showMsg(text, isOk) {
+  if (isOk === undefined) isOk = true;
+  var el = document.getElementById('reset-msg');
+  el.textContent = text;
+  el.style.color = isOk ? 'var(--green)' : 'var(--red)';
+  setTimeout(function(){ el.textContent = ''; }, 2500);
+}
+
+function resetCode(code) {
+  fbDelete('helpCodes/' + code).then(function() {
+    showMsg('קוד ' + code + ' אופס');
+    _lastPHash = '';
+    refreshCodes();
+  });
+}
+
+function removePlayer(key) {
+  fbDelete('players/' + key).then(function() {
+    showMsg('שחקן הוסר');
+    _lastPHash = '';
+    refreshPlayers();
+  });
+}
+
+window.resetCode = resetCode;
+window.removePlayer = removePlayer;
+window.toggleSound = toggleSound;
+window.switchTab = switchTab;
+window.refreshData = refreshData;
+
+window.resetSpecificCode = function() {
+  var code = document.getElementById('reset-code-input').value.trim().toUpperCase();
+  if (!code) return;
+  fbDelete('helpCodes/' + code).then(function() {
+    document.getElementById('reset-code-input').value = '';
+    showMsg('קוד ' + code + ' אופס');
+    refreshCodes();
+  });
 };
 
-window.resetEverything=async()=>{
-  if(!confirm('⚠️ מחיקה מלאה!\n\nכל השחקנים, כל הנתונים, כל הקודים — הכל יימחק.\n\nלהמשיך?'))return;
-  if(!confirm('בטוחה לגמרי? אין דרך חזרה.'))return;
-  await Promise.all([
-    fbDelete('players'),
-    fbDelete('helpCodes'),
-  ]);
-  playersData = {}; codesData = {};
-  renderAll();
-  showMsg('✓ המערכת אופסה — מוכן לאירוע חדש', true);
+window.resetPlayerCodes = function() {
+  var name = document.getElementById('reset-player-input').value.trim();
+  if (!name) return;
+  var keys = Object.keys(codesData).filter(function(cd){ return codesData[cd].player && codesData[cd].player.indexOf(name) >= 0; });
+  var promises = keys.map(function(cd){ return fbDelete('helpCodes/' + cd); });
+  Promise.all(promises).then(function() {
+    document.getElementById('reset-player-input').value = '';
+    showMsg('אופסו ' + keys.length + ' קודים של ' + name);
+    refreshCodes();
+  });
 };
-window.refreshData=refreshData;
-window.toggleSound=toggleSound;
+
+window.resetAllCodes = function() {
+  if (!confirm('לאפס את כל קודי העזרה?')) return;
+  fbDelete('helpCodes').then(function() {
+    showMsg('כל הקודים אופסו');
+    refreshCodes();
+  });
+};
+
+window.resetEverything = function() {
+  if (!confirm('מחיקה מלאה של כל הנתונים?')) return;
+  if (!confirm('בטוחה לגמרי? אין דרך חזרה.')) return;
+  Promise.all([fbDelete('players'), fbDelete('helpCodes')]).then(function() {
+    playersData = {}; codesData = {};
+    _lastPHash = ''; _lastCHash = '';
+    renderAll();
+    showMsg('המערכת אופסה', true);
+  });
+};
+
 </script>
 </body>
 </html>
