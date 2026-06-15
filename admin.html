@@ -356,9 +356,10 @@ function showWinToast(p) {
 
 // ── Polling ────────────────────────────────────────────
 function quickHash(obj) {
-  if (!obj || typeof obj !== 'object') return '';
-  var vals = Object.keys(obj).map(function(k){ return (obj[k].lastSeen||0)+'|'+(obj[k].totalWins||0); });
-  return vals.join(',');
+  if (!obj || typeof obj !== 'object') return 'EMPTY';
+  var keys = Object.keys(obj);
+  if (!keys.length) return 'EMPTY';
+  return keys.map(function(k){ return (obj[k].lastSeen||0)+'|'+(obj[k].totalWins||0); }).join(',');
 }
 
 function startPolling() {
@@ -378,8 +379,6 @@ function startPolling() {
 function refreshPlayers() {
   fbGet('players').then(function(players) {
     if (players === null) {
-      // null can mean empty DB (after reset) or real error
-      // Only show error if we had data before (not a fresh/reset DB)
       var hadData = Object.keys(playersData).length > 0;
       if (hadData) {
         document.getElementById('live-indicator').innerHTML =
@@ -389,8 +388,10 @@ function refreshPlayers() {
       return;
     }
     var newHash = quickHash(players);
-    if (newHash === _lastPHash) return;
+    var changed = (newHash !== _lastPHash);
     _lastPHash = newHash;
+    if (!changed) return;
+
     var pkeys = Object.keys(players);
     for (var pi = 0; pi < pkeys.length; pi++) {
       var key = pkeys[pi], p = players[key];
@@ -419,8 +420,10 @@ function refreshCodes() {
 }
 
 function refreshData() {
-  _lastPHash = ''; _lastCHash = '';
-  refreshPlayers(); refreshCodes();
+  _lastPHash = null;
+  _lastCHash = null;
+  refreshPlayers();
+  refreshCodes();
 }
 
 // ── Tabs ───────────────────────────────────────────────
