@@ -512,6 +512,9 @@ body::after{
 
 
 
+
+
+
 // Global player tracking
 let fbPlayerName = '';
 const _attemptKey = 'htb_attempts_' + (new URLSearchParams(location.search).get('box')||'0');
@@ -593,7 +596,7 @@ function showWarning(hpLeft) {
   spawnNierPopup(TEXT.warningHeader, msgs[Math.floor(Math.random()*msgs.length)], TEXT.warningHpPre+hpLeft+' / 3', '#c43000', 1200);
 }
 function showErrorPopups(cb) {
-  const lines=[...TEXT.errorLines,['CORE INTACT','ההגנה עמדה'],['ACCESS DENIED','אישור בוטל']];
+  const lines=TEXT.errorLines.concat([['CORE INTACT','ההגנה עמדה'],['ACCESS DENIED','אישור בוטל']]);
   let i=0;
   const iv=setInterval(()=>{
     const[hdr,msg]=lines[i%lines.length];
@@ -992,9 +995,30 @@ initHelpSystem();
 
 // ════════════════════════════════════════════════════════
 //  Firebase REST API — with local cache
+
 // ════════════════════════════════════════════════════════
-const FB_URL = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
-const BOX_ID = new URLSearchParams(location.search).get('box') || '?';
+//  Firebase — Anonymous Auth + REST API
+// ════════════════════════════════════════════════════════
+const FB_URL     = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
+const FB_API_KEY = 'AIzaSyBQylFseHge48iq3U5CqgJJZPdHM5QHbtA';
+const BOX_ID     = new URLSearchParams(location.search).get('box') || '?';
+
+let _fbToken = null;
+let _fbCache = null;
+
+// Get anonymous auth token (cached)
+async function fbAuth() {
+  if (_fbToken) return _fbToken;
+  try {
+    const r = await fetch(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=' + FB_API_KEY,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }
+    );
+    const d = await r.json();
+    _fbToken = d.idToken || null;
+    return _fbToken;
+  } catch(e) { return null; }
+}
 
 function fbKey(name) {
   return name.trim().toLowerCase()
@@ -1002,24 +1026,32 @@ function fbKey(name) {
     .replace(/\s+/g, '_')
     .slice(0, 30);
 }
-function fbGet(path) {
-  return fetch(FB_URL+'/'+path+'.json')
-    .then(r => { if(r.ok){ hideConnError(); return r.json(); } else { showConnError(); return null; } })
-    .catch(() => { showConnError(); return null; });
-}
-function fbSet(path, data) {
-  return fetch(FB_URL+'/'+path+'.json', {
-    method:'PUT', body:JSON.stringify(data),
-    headers:{'Content-Type':'application/json'}
-  }).then(()=>hideConnError()).catch(()=>showConnError());
-}
-function fbDelete(path) {
-  return fetch(FB_URL+'/'+path+'.json',{method:'DELETE'}).catch(()=>{});
+
+async function fbGet(path) {
+  const token = await fbAuth();
+  const auth  = token ? '?auth=' + token : '';
+  return fetch(FB_URL + '/' + path + '.json' + auth)
+    .then(r => r.ok ? (hideConnError(), r.json()) : (showConnError(), null))
+    .catch(() => (showConnError(), null));
 }
 
-// Local cache — avoids GET race condition between rapid calls
-let _fbCache = null;
+async function fbSet(path, data) {
+  const token = await fbAuth();
+  const auth  = token ? '?auth=' + token : '';
+  return fetch(FB_URL + '/' + path + '.json' + auth, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' }
+  }).then(() => hideConnError()).catch(() => showConnError());
+}
 
+async function fbDelete(path) {
+  const token = await fbAuth();
+  const auth  = token ? '?auth=' + token : '';
+  return fetch(FB_URL + '/' + path + '.json' + auth, { method: 'DELETE' }).catch(() => {});
+}
+
+// Local cache to avoid read-write races
 async function fbReport(extra) {
   if (!fbPlayerName) return;
   extra = extra || {};
@@ -1027,7 +1059,7 @@ async function fbReport(extra) {
   const now = Date.now();
 
   if (!_fbCache) {
-    _fbCache = await fbGet('players/'+key) || {};
+    _fbCache = await fbGet('players/' + key) || {};
   }
   const existing = _fbCache || {};
 
@@ -1046,10 +1078,7 @@ async function fbReport(extra) {
 
   if (extra.won) {
     update.totalWins = (existing.totalWins || 0) + 1;
-    const newBoxes = {};
-    if (existing.boxes) {
-      Object.assign(newBoxes, existing.boxes);
-    }
+    const newBoxes = Object.assign({}, existing.boxes || {});
     newBoxes[BOX_ID] = {
       boxId:    BOX_ID,
       boxTitle: typeof C !== 'undefined' ? C.title : '?',
@@ -1061,12 +1090,12 @@ async function fbReport(extra) {
   }
 
   _fbCache = Object.assign({}, _fbCache, update);
-  fbSet('players/'+key, update);
+  fbSet('players/' + key, update);
 }
 
 function fbReportCodeUsed(code, effectLabel) {
   if (!fbPlayerName) return;
-  fbSet('helpCodes/'+code, {
+  fbSet('helpCodes/' + code, {
     player: fbPlayerName,
     boxId:  BOX_ID,
     effect: effectLabel,
@@ -1075,7 +1104,10 @@ function fbReportCodeUsed(code, effectLabel) {
 }
 
 // Heartbeat every 30s
-setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
+setInterval(function() { if (fbPlayerName) fbReport({}); }, 30000);
+
+// Pre-fetch auth token on load
+fbAuth();
 // ════════════════════════════════════════════════════════
 
 
@@ -1098,6 +1130,9 @@ function hideConnError() {
 // Heartbeat every 30s
 setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
 // ════════════════════════════════════════════════════════
+
+
+
 
 
 
