@@ -378,9 +378,14 @@ function startPolling() {
 function refreshPlayers() {
   fbGet('players').then(function(players) {
     if (players === null) {
-      document.getElementById('live-indicator').innerHTML =
-        '<div class="live-dot" style="background:var(--red);animation:none"></div>' +
-        '<span style="color:var(--red)">שגיאת התחברות</span>';
+      // null can mean empty DB (after reset) or real error
+      // Only show error if we had data before (not a fresh/reset DB)
+      var hadData = Object.keys(playersData).length > 0;
+      if (hadData) {
+        document.getElementById('live-indicator').innerHTML =
+          '<div class="live-dot" style="background:var(--red);animation:none"></div>' +
+          '<span style="color:var(--red)">שגיאת התחברות</span>';
+      }
       return;
     }
     var newHash = quickHash(players);
@@ -632,10 +637,17 @@ window.resetEverything = function() {
   if (!confirm('מחיקה מלאה של כל הנתונים?')) return;
   if (!confirm('בטוחה לגמרי? אין דרך חזרה.')) return;
   Promise.all([fbDelete('players'), fbDelete('helpCodes')]).then(function() {
+    // Clear local state BEFORE refresh so no false error
     playersData = {}; codesData = {};
     _lastPHash = ''; _lastCHash = '';
+    try { sessionStorage.removeItem('htb_admin_players'); } catch(e){}
+    try { sessionStorage.removeItem('htb_admin_codes'); } catch(e){}
     renderAll();
     showMsg('המערכת אופסה', true);
+    var t = new Date().toLocaleTimeString('he-IL');
+    document.getElementById('live-indicator').innerHTML =
+      '<div class="live-dot"></div><span>עודכן ' + t + '</span>';
+    document.getElementById('live-indicator').style.color = 'var(--green)';
   });
 };
 
