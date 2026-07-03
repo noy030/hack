@@ -235,34 +235,17 @@ var _adminToken = null;
 var _lastPHash = null, _lastCHash = null;
 
 // ── Auth ─────────────────────────────────────────────
-function fbAuth() {
-  if (_adminToken) return Promise.resolve(_adminToken);
-  return fetch(
-    'https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=' + FB_API_KEY,
-    {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}
-  ).then(function(r){ return r.json(); })
-   .then(function(d){ _adminToken = d.idToken || null; return _adminToken; })
-   .catch(function(){ return null; });
-}
-
+// DB rules are public — no auth needed in admin panel
 function fbGet(path) {
-  return fbAuth().then(function(token) {
-    var auth = token ? '?auth=' + token : '';
-    return fetch(FB_URL + '/' + path + '.json' + auth)
-      .then(function(r){ return r.ok ? r.json() : null; })
-      .catch(function(){ return null; });
-  });
+  return fetch(FB_URL + '/' + path + '.json')
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .catch(function(){ return null; });
 }
 
 function fbDelete(path) {
-  return fbAuth().then(function(token) {
-    var auth = token ? '?auth=' + token : '';
-    return fetch(FB_URL + '/' + path + '.json' + auth, {method:'DELETE'})
-      .catch(function(){});
-  });
+  return fetch(FB_URL + '/' + path + '.json', {method:'DELETE'})
+    .catch(function(){});
 }
-
-fbAuth();
 
 // ── Login ─────────────────────────────────────────────
 document.getElementById('login-btn').addEventListener('click', login);
