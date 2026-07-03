@@ -456,8 +456,8 @@ function renderLeaderboard() {
     var medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
     var rowCls = rank===1?'winner':rank===2?'second':'';
     var wins = p.totalWins||0;
-    var boxes = p.boxes ? Object.keys(p.boxes).map(function(k){ return p.boxes[k]; }) : [];
-    var boxList = boxes.map(function(b){ return '<span class="box-badge">'+(GAME_ICONS[b.game]||'📦')+' '+b.boxId+'</span>'; }).join('') || '—';
+    var boxes = p.boxes ? Object.keys(p.boxes).map(function(k){ return p.boxes[k]; }).filter(function(b){ return b; }) : [];
+    var boxList = boxes.map(function(b){ return '<span class="box-badge">'+(GAME_ICONS[b.game]||'📦')+' '+(b.boxId||'?')+'</span>'; }).join('') || '—';
     var isActive = p.lastSeen && Date.now()-p.lastSeen<120000;
     html += '<div class="lb-row ' + rowCls + '">' +
       '<div class="lb-rank">' + (medal||rank) + '</div>' +
@@ -494,8 +494,8 @@ function renderPlayers() {
       : isActive ? '<span style="color:#a89060">🎮 משחק</span>'
       : '<span style="color:var(--mid)">⏳</span>';
 
-    var boxes = p.boxes ? Object.keys(p.boxes).map(function(k){ return p.boxes[k]; }) : [];
-    var boxList = boxes.map(function(b){ return '<span class="box-badge">'+(GAME_ICONS[b.game]||'📦')+' '+b.boxId+'</span>'; }).join('');
+    var boxes = p.boxes ? Object.keys(p.boxes).map(function(k){ return p.boxes[k]; }).filter(function(b){ return b; }) : [];
+    var boxList = boxes.map(function(b){ return '<span class="box-badge">'+(GAME_ICONS[b.game]||'📦')+' '+(b.boxId||'?')+'</span>'; }).join('');
     if (!boxList) boxList = p.currentBox ? ('📍 ' + p.currentBox) : '—';
 
     var codeKeys = Object.keys(codesData).filter(function(cd){ return codesData[cd] && codesData[cd].player === p.name; });
