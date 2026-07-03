@@ -436,7 +436,13 @@ function renderAll() { renderStats(); renderLeaderboard(); renderPlayers(); rend
 
 function getPlayerList() {
   if (!playersData || typeof playersData !== 'object') return [];
-  return Object.keys(playersData).map(function(k){ return playersData[k]; }).filter(function(p){ return p && p.name; });
+  return Object.keys(playersData).map(function(k){
+    var p = playersData[k];
+    if (!p) return null;
+    // use key as fallback name if missing
+    if (!p.name) p = Object.assign({}, p, {name: k});
+    return p;
+  }).filter(function(p){ return p !== null; });
 }
 
 function renderStats() {
