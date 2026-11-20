@@ -6,6 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>HACK THE BOX — Memory Breach</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
 
 :root{
   --bg:#d4cfc6; --bg2:#e8e3da; --text:#1a1510; --mid:#4a4438;
@@ -16,7 +17,6 @@
 body{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;}
 @media screen and (orientation:landscape){#orient-warn{display:flex;}}
 
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
 
 *{margin:0;padding:0;box-sizing:border-box;}
 
@@ -361,278 +361,237 @@ body::after{
 </div>
 <button id="show-code-btn">🔒 הצג קוד</button>
 <div id="conn-status">⚠ שגיאת התחברות</div>
+<script src="boxes.js"></script>
+<script src="htb.js"></script>
 <script>
+// ═══ SEQUENCE — ES5 בלבד ══════════════════════════════════════════
+var C = HTB.init('sequence');
+C.diff = C.diff || 1;
+C.sequences = Math.min(3, C.sequences || 3);
+C.baseLen = C.baseLen || 5;
+C.timePerSeq = C.timePerSeq || 45;
+C.showSpeed = C.showSpeed || 'normal';
+C.nodeCount = C.nodeCount || 10;
+C.noise = !!C.noise;
 
-let fbPlayerName = '';
-const _attemptKey = 'htb_attempts_' + (new URLSearchParams(location.search).get('box')||'0');
-let fbAttempts = parseInt(sessionStorage.getItem(_attemptKey)||'0');
+var VIB = { hit:[100], hurt:[150,50,150], warning:[80,40,80,40,80], win:[80,40,80,40,200,40,300], lose:[300,80,300] };
+function vibe(p) { HTB.vibe(p); }
+var LOSS_LINES = [['BREACH FAILED','אי-התאמה ברצף'],['MEMORY ERROR','זיכרון שגוי'],['SYSTEM FAILURE','הרצף נכשל'],['SIGNAL LOST','מתחבר מחדש...'],['ACCESS DENIED','הניסיון נכשל']];
 
-function vibe(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {} }
-const VIB = { hit:[100], hurt:[150,50,150], warning:[80,40,80,40,80], win:[80,40,80,40,200,40,300], lose:[300,80,300] };
-
-function spawnNierPopup(header, body, sub, color, duration) {
-  const div = document.createElement('div');
-  div.style.cssText = `position:fixed;left:${8+Math.random()*45}%;top:${15+Math.random()*45}%;background:#e8e3da;border:2px solid ${color};font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);padding:10px 14px;box-shadow:4px 4px 0 rgba(0,0,0,0.15);z-index:2500;pointer-events:none;animation:nie-pop 0.15s ease-out;max-width:min(260px,60vw);`;
-  div.innerHTML = `<div style="background:${color};color:#fff;margin:-10px -14px 8px;padding:3px 8px;font-size:clamp(9px,2vw,10px);letter-spacing:3px;">${header}</div><div style="color:#2a2520;letter-spacing:1px;line-height:1.6;">${body}</div>${sub?`<div style="color:#5a554a;font-size:clamp(9px,2vw,10px);margin-top:4px;">${sub}</div>`:''}`;
-  if(!document.getElementById('nie-pop-style')){const s=document.createElement('style');s.id='nie-pop-style';s.textContent='@keyframes nie-pop{from{transform:scale(0.7);opacity:0;}to{transform:scale(1);opacity:1;}}';document.head.appendChild(s);}
-  document.body.appendChild(div);
-  setTimeout(function(){ div.remove(); }, duration);
-}
-
-function showErrorPopups(cb) {
-  const lines=[['BREACH FAILED','אי-התאמה ברצף'],['MEMORY ERROR','זיכרון שגוי'],['SYSTEM FAILURE','הרצף נכשל'],['SIGNAL LOST','מתחבר מחדש...'],['ACCESS DENIED','הניסיון נכשל']];
-  let i=0;
-  const iv=setInterval(function(){
-    const pair=lines[i%lines.length];
-    spawnNierPopup(pair[0],pair[1],'','#cc3300',900);
-    i++;
-    if(i>=7){clearInterval(iv);setTimeout(cb,500);}
-  },160);
-}
-
-const urlCfg = JSON.parse(decodeURIComponent(new URLSearchParams(location.search).get('cfg') || '{}'));
-const C = {
-  code:       urlCfg.code       || '0000',
-  title:      urlCfg.title      || 'UNKNOWN',
-  diff:       urlCfg.diff       || 1,
-  sequences:  Math.min(3, urlCfg.sequences  || 3),
-  baseLen:    urlCfg.baseLen    || 5,
-  timePerSeq: urlCfg.timePerSeq || 45,
-  showSpeed:  urlCfg.showSpeed  || 'normal',
-  nodeCount:  urlCfg.nodeCount  || 10,
-  noise:      urlCfg.noise      || false,
-};
-
-const SPEED_MAP = { slow:{dur:600,gap:180}, normal:{dur:420,gap:100}, fast:{dur:220,gap:60} };
-let spd = Object.assign({}, SPEED_MAP[C.showSpeed] || SPEED_MAP.normal);
+var SPEED_MAP = { slow:{dur:600,gap:180}, normal:{dur:420,gap:100}, fast:{dur:220,gap:60} };
+var SLOW = { dur:700, gap:200 };
+var base = SPEED_MAP[C.showSpeed] || SPEED_MAP.normal;
+var spd = { dur:base.dur, gap:base.gap };
 
 document.getElementById('ss-id').textContent    = 'TERMINAL — ' + C.title;
 document.getElementById('hudtitle').textContent = C.title;
 document.getElementById('seqtotal').textContent = C.sequences;
 document.getElementById('proglbl').textContent  = '0 / ' + C.sequences;
 
-const ALL_NODES = [
+var ALL_NODES = [
   {id:0,label:'A',color:'#4a8fa8'},{id:1,label:'B',color:'#a8834a'},
   {id:2,label:'C',color:'#6a8a4a'},{id:3,label:'D',color:'#8a4a6a'},
   {id:4,label:'E',color:'#4a5a8a'},{id:5,label:'F',color:'#8a704a'},
   {id:6,label:'G',color:'#4a8a70'},{id:7,label:'H',color:'#7a4a8a'},
-  {id:8,label:'I',color:'#8a4a4a'},{id:9,label:'J',color:'#4a7a8a'},
+  {id:8,label:'I',color:'#8a4a4a'},{id:9,label:'J',color:'#4a7a8a'}
 ];
-const NODES = ALL_NODES.slice(0, C.nodeCount);
-const freqs = [220,277,330,415,523,622,740,880,1047,1175];
+var NODES = ALL_NODES.slice(0, C.nodeCount);
+var freqs = [220,277,330,415,523,622,740,880,1047,1175];
 
-const AC = window.AudioContext || window.webkitAudioContext;
-const BGM_FILES = Array.from({length:10}, function(_,i){ return 'music/' + String(i+1).padStart(2,'0') + '.mp3'; });
-const bgmEl = document.createElement('audio');
-bgmEl.loop = true; bgmEl.volume = 0.6;
-bgmEl.src = BGM_FILES[Math.floor(Math.random() * BGM_FILES.length)];
-document.body.appendChild(bgmEl);
-function startBGM() { if (bgmEl.paused) bgmEl.play().catch(function(){}); }
-function stopBGM()  { bgmEl.pause(); bgmEl.currentTime = 0; }
-
-const audioCtx = new AC();
+var AC = window.AudioContext || window.webkitAudioContext;
+var audioCtx = AC ? new AC() : null;
 function sfx(t, f) {
-  if (audioCtx.state === 'suspended') return;
-  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  if (!audioCtx || audioCtx.state === 'suspended') return;
+  var o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.connect(g); g.connect(audioCtx.destination);
-  const n = audioCtx.currentTime;
+  var n = audioCtx.currentTime;
   if (t==='show')    { o.type='sine';     o.frequency.setValueAtTime(f||440,n); g.gain.setValueAtTime(0.07,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.25); o.start(n); o.stop(n+0.25); }
   else if(t==='tap') { o.type='sine';     o.frequency.setValueAtTime(f||440,n); g.gain.setValueAtTime(0.05,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.12); o.start(n); o.stop(n+0.12); }
   else if(t==='correct'){ o.type='sine'; o.frequency.setValueAtTime(660,n); o.frequency.setValueAtTime(880,n+0.08); g.gain.setValueAtTime(0.06,n); o.start(n); o.stop(n+0.2); }
   else if(t==='wrong')  { o.type='sawtooth'; o.frequency.setValueAtTime(180,n); o.frequency.exponentialRampToValueAtTime(60,n+0.35); g.gain.setValueAtTime(0.1,n); o.start(n); o.stop(n+0.35); }
   else if(t==='tick')   { o.type='square';   o.frequency.setValueAtTime(800,n); g.gain.setValueAtTime(0.02,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.05); o.start(n); o.stop(n+0.05); }
-  else if(t==='win')    { [440,550,660,880].forEach(function(f2,i){ const o2=audioCtx.createOscillator(),g2=audioCtx.createGain(); o2.connect(g2); g2.connect(audioCtx.destination); o2.frequency.value=f2; o2.type='sine'; g2.gain.setValueAtTime(0.06,n+i*0.1); g2.gain.exponentialRampToValueAtTime(0.001,n+i*0.1+0.3); o2.start(n+i*0.1); o2.stop(n+i*0.1+0.3); }); }
+  else if(t==='win') {
+    o.start(n); o.stop(n);
+    var notes = [440,550,660,880];
+    for (var i = 0; i < notes.length; i++) {
+      var o2 = audioCtx.createOscillator(), g2 = audioCtx.createGain(); o2.connect(g2); g2.connect(audioCtx.destination);
+      o2.frequency.value = notes[i]; o2.type = 'sine';
+      g2.gain.setValueAtTime(0.06, n+i*0.1); g2.gain.exponentialRampToValueAtTime(0.001, n+i*0.1+0.3);
+      o2.start(n+i*0.1); o2.stop(n+i*0.1+0.3);
+    }
+  }
 }
 
-const gridEl    = document.getElementById('nodegrid');
-const seqDisp   = document.getElementById('seqdisplay');
-const seqHidden = document.getElementById('seqhidden');
-const phaseEl   = document.getElementById('phaselabel');
-const ringFg    = document.getElementById('ringfg');
-const timerTxt  = document.getElementById('timertxt');
-const progFill  = document.getElementById('progfill');
-const progLbl   = document.getElementById('proglbl');
-const seqNumEl  = document.getElementById('seqnum');
-const scoreEl   = document.getElementById('score');
-const msgEl     = document.getElementById('msg');
-const cdOverlay = document.getElementById('cdoverlay');
-const cdNum     = document.getElementById('cdnum');
-const CIRC      = 182.2;
+var gridEl    = document.getElementById('nodegrid');
+var seqDisp   = document.getElementById('seqdisplay');
+var seqHidden = document.getElementById('seqhidden');
+var phaseEl   = document.getElementById('phaselabel');
+var ringFg    = document.getElementById('ringfg');
+var timerTxt  = document.getElementById('timertxt');
+var progFill  = document.getElementById('progfill');
+var progLbl   = document.getElementById('proglbl');
+var seqNumEl  = document.getElementById('seqnum');
+var scoreEl   = document.getElementById('score');
+var msgEl     = document.getElementById('msg');
+var cdOverlay = document.getElementById('cdoverlay');
+var cdNum     = document.getElementById('cdnum');
+var CIRC      = 182.2;
 
-let curSeq=[], playerInput=[], seqIdx=0;
-let canInput=false, isOver=false, seqsDone=0, timerInterval, tl=C.timePerSeq;
+var curSeq = [], seqIdx = 0, runId = 0, eased = false;
+var canInput = false, isOver = false, started = false, seqsDone = 0, timerInterval, tl = C.timePerSeq;
+
+function each(list, fn) { for (var i = 0; i < list.length; i++) fn(list[i], i); }
+function btnOf(id) { return gridEl.querySelector('[data-id="' + id + '"]'); }
 
 function buildGrid() {
   gridEl.innerHTML = '';
-  const cols = C.nodeCount <= 4 ? 4 : C.nodeCount <= 7 ? 4 : 5;
+  var cols = C.nodeCount <= 7 ? 4 : 5;
   gridEl.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
-  NODES.forEach(function(n) {
-    const btn = document.createElement('div');
+  each(NODES, function (n) {
+    var btn = document.createElement('div');
     btn.className = 'nodebtn';
     btn.textContent = n.label;
     btn.style.color = n.color + '88';
     btn.style.borderColor = n.color + '55';
-    btn.dataset.id = n.id;
-    btn.addEventListener('click',    function(){ onTap(n.id); });
-    btn.addEventListener('touchend', function(e){ e.preventDefault(); onTap(n.id); });
+    btn.setAttribute('data-id', n.id);
+    btn.addEventListener('click',    function () { onTap(n.id); });
+    btn.addEventListener('touchend', function (e) { e.preventDefault(); onTap(n.id); });
     gridEl.appendChild(btn);
   });
 }
 
-function flashBtn(id, dur) {
-  dur = dur || spd.dur;
-  const btn = gridEl.querySelector('[data-id="' + id + '"]');
-  const n = NODES[id];
-  if (!btn) return Promise.resolve();
-  btn.style.background   = n.color + '55';
-  btn.style.borderColor  = n.color;
-  btn.style.color        = '#fff';
-  btn.style.boxShadow    = '0 0 20px ' + n.color;
-  sfx('show', freqs[id]);
-  return new Promise(function(r) {
-    setTimeout(function() {
-      btn.style.background  = '';
-      btn.style.borderColor = n.color + '55';
-      btn.style.color       = n.color + '88';
-      btn.style.boxShadow   = '';
-      setTimeout(r, 80);
-    }, dur);
-  });
+function lightBtn(id, glow, bgAlpha) {
+  var btn = btnOf(id), n = NODES[id];
+  if (!btn) return null;
+  btn.style.background = n.color + bgAlpha; btn.style.borderColor = n.color;
+  btn.style.color = '#fff'; btn.style.boxShadow = '0 0 ' + glow + 'px ' + n.color;
+  return function () {
+    btn.style.background = ''; btn.style.borderColor = n.color + '55';
+    btn.style.color = n.color + '88'; btn.style.boxShadow = '';
+  };
 }
-
+function flashBtn(id, dur, done) {
+  var off = lightBtn(id, 20, '55');
+  sfx('show', freqs[id]);
+  setTimeout(function () { if (off) off(); setTimeout(done || function () {}, 80); }, dur);
+}
 function flashBtnTap(id) {
-  const btn = gridEl.querySelector('[data-id="' + id + '"]');
-  const n = NODES[id];
-  if (!btn) return;
-  btn.style.background  = n.color + '44';
-  btn.style.borderColor = n.color;
-  btn.style.color       = '#fff';
-  btn.style.boxShadow   = '0 0 12px ' + n.color;
+  var off = lightBtn(id, 12, '44');
   sfx('tap', freqs[id]);
-  setTimeout(function() {
-    btn.style.background  = '';
-    btn.style.borderColor = n.color + '55';
-    btn.style.color       = n.color + '88';
-    btn.style.boxShadow   = '';
-  }, 200);
+  setTimeout(function () { if (off) off(); }, 200);
 }
 
 function buildWatchDisplay(seq) {
   seqDisp.innerHTML = '';
-  seq.forEach(function(id) {
-    const n = NODES[id];
-    const dot = document.createElement('div');
-    dot.className = 'seq-node';
-    dot.textContent = n.label;
-    dot.style.borderColor = n.color + '60';
-    dot.style.color       = n.color;
-    dot.style.background  = n.color + '22';
+  each(seq, function (id) {
+    var n = NODES[id], dot = document.createElement('div');
+    dot.className = 'seq-node'; dot.textContent = n.label;
+    dot.style.borderColor = n.color + '60'; dot.style.color = n.color; dot.style.background = n.color + '22';
     seqDisp.appendChild(dot);
   });
 }
 function hiWatchNode(idx) {
-  seqDisp.querySelectorAll('.seq-node').forEach(function(n,i){ n.classList.toggle('active', i===idx); });
+  each(seqDisp.querySelectorAll('.seq-node'), function (n, i) {
+    if (i === idx) n.classList.add('active'); else n.classList.remove('active');
+  });
 }
-
 function buildHiddenSlots(len) {
   seqHidden.innerHTML = '';
-  for (let i = 0; i < len; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'seq-slot';
-    slot.dataset.idx = i;
+  for (var i = 0; i < len; i++) {
+    var slot = document.createElement('div'); slot.className = 'seq-slot'; slot.setAttribute('data-idx', i);
     seqHidden.appendChild(slot);
   }
 }
 function fillSlot(idx, nodeId, correct) {
-  const slot = seqHidden.querySelector('[data-idx="' + idx + '"]');
+  var slot = seqHidden.querySelector('[data-idx="' + idx + '"]');
   if (!slot) return;
-  const n = NODES[nodeId];
-  slot.textContent = n.label;
-  slot.style.color = n.color;
-  if (correct) { slot.classList.add('correct'); }
-  else { slot.classList.add('wrong-flash'); setTimeout(function(){ slot.classList.remove('wrong-flash'); }, 300); }
+  var n = NODES[nodeId];
+  slot.textContent = n.label; slot.style.color = n.color;
+  if (correct) slot.classList.add('correct');
+  else { slot.classList.add('wrong-flash'); setTimeout(function () { slot.classList.remove('wrong-flash'); }, 300); }
 }
 
-function runCountdown() {
-  return new Promise(function(res) {
-    let count = 3;
-    cdOverlay.style.display = 'flex';
-    cdNum.textContent = count;
-    sfx('tick');
-    const iv = setInterval(function() {
-      count--;
-      cdNum.style.animation = 'none';
-      void cdNum.offsetWidth;
-      cdNum.style.animation = '';
-      if (count > 0) { cdNum.textContent = count; sfx('tick'); }
-      else { clearInterval(iv); cdOverlay.style.display = 'none'; res(); }
-    }, 700);
-  });
+function runCountdown(done) {
+  var count = 3;
+  cdOverlay.style.display = 'flex'; cdNum.textContent = count; sfx('tick');
+  var iv = setInterval(function () {
+    if (HTB.isPaused()) return;
+    count--;
+    cdNum.style.animation = 'none'; void cdNum.offsetWidth; cdNum.style.animation = '';
+    if (count > 0) { cdNum.textContent = count; sfx('tick'); }
+    else { clearInterval(iv); cdOverlay.style.display = 'none'; done(); }
+  }, 700);
 }
 
-async function showSequence(seq) {
-  canInput = false;
-  setGridEnabled(false);
+// show the sequence step by step, then countdown, then input.
+// runId guards against a stale chain continuing after a fail/restart.
+function showSequence(seq) {
+  var myRun = ++runId;
+  canInput = false; setGridEnabled(false);
   phaseEl.textContent = '— WATCH SEQUENCE —';
-  seqDisp.style.display = 'flex';
-  seqHidden.style.display = 'none';
+  seqDisp.style.display = 'flex'; seqHidden.style.display = 'none';
   buildWatchDisplay(seq);
-  for (let i = 0; i < seq.length; i++) {
-    hiWatchNode(i);
-    await flashBtn(seq[i]);
-    await delay(spd.gap);
-    if (C.noise && Math.random() < 0.35) {
-      const rnd = Math.floor(Math.random() * NODES.length);
-      if (rnd !== seq[i]) flashBtn(rnd, spd.dur * 0.4);
+  var i = 0;
+  function step() {
+    if (myRun !== runId || isOver) return;
+    if (HTB.isPaused()) { setTimeout(step, 150); return; }
+    if (i >= seq.length) {
+      hiWatchNode(-1); seqDisp.style.display = 'none';
+      runCountdown(function () { if (myRun === runId && !isOver) startInput(seq); });
+      return;
     }
+    hiWatchNode(i);
+    var cur = seq[i];
+    flashBtn(cur, spd.dur, function () {
+      setTimeout(function () {
+        if (C.noise && Math.random() < 0.35) {
+          var rnd = Math.floor(Math.random() * NODES.length);
+          if (rnd !== cur) flashBtn(rnd, spd.dur * 0.4);
+        }
+        i++; step();
+      }, spd.gap);
+    });
   }
-  hiWatchNode(-1);
-  seqDisp.style.display = 'none';
-  await runCountdown();
-  startInput(seq);
+  step();
 }
 
 function startInput(seq) {
-  canInput = true; playerInput = []; seqIdx = 0;
+  canInput = true; seqIdx = 0;
   phaseEl.textContent = '— REPEAT SEQUENCE —';
-  seqDisp.style.display = 'none';
-  seqHidden.style.display = 'flex';
+  seqDisp.style.display = 'none'; seqHidden.style.display = 'flex';
   buildHiddenSlots(seq.length);
   setGridEnabled(true);
   startTimer();
 }
-
 function setGridEnabled(on) {
-  gridEl.querySelectorAll('.nodebtn').forEach(function(b){ b.classList.toggle('disabled', !on); });
+  each(gridEl.querySelectorAll('.nodebtn'), function (b) { if (on) b.classList.remove('disabled'); else b.classList.add('disabled'); });
 }
 
 function startTimer() {
   clearInterval(timerInterval);
-  tl = C.timePerSeq;
-  updateTimer();
-  timerInterval = setInterval(function() {
+  tl = C.timePerSeq; updateTimer();
+  timerInterval = setInterval(function () {
+    if (HTB.isPaused()) return;
     tl--; updateTimer();
-    if (tl <= 0) { clearInterval(timerInterval); triggerFail(); }
     if (tl === 10) vibe(VIB.warning);
+    if (tl <= 0) { clearInterval(timerInterval); triggerFail(); }
   }, 1000);
 }
 function updateTimer() {
   timerTxt.textContent = tl;
-  const off = CIRC * (1 - tl / C.timePerSeq);
-  ringFg.style.strokeDashoffset = off;
-  ringFg.classList.toggle('danger', tl <= 10);
+  ringFg.style.strokeDashoffset = CIRC * (1 - Math.max(0, tl) / C.timePerSeq);
+  if (tl <= 10) ringFg.classList.add('danger'); else ringFg.classList.remove('danger');
 }
 
 function onTap(id) {
-  if (!canInput || isOver) return;
+  if (!canInput || isOver || HTB.isPaused()) return;
   flashBtnTap(id);
-  playerInput.push(id);
-  const correct = (id === curSeq[seqIdx]);
+  var correct = (id === curSeq[seqIdx]);
   fillSlot(seqIdx, id, correct);
   if (!correct) {
     sfx('wrong'); canInput = false;
     clearInterval(timerInterval); setGridEnabled(false);
-    setTimeout(function(){ triggerFail(); }, 500);
+    setTimeout(triggerFail, 500);
     return;
   }
   seqIdx++;
@@ -649,156 +608,72 @@ function onTap(id) {
 }
 
 function nextSeq() {
+  if (isOver) return;
   seqNumEl.textContent = seqsDone + 1;
-  const len = C.baseLen + Math.floor(seqsDone * 0.7);
-  curSeq = Array.from({length: len}, function(){ return Math.floor(Math.random() * NODES.length); });
+  var len = C.baseLen + Math.floor(seqsDone * 0.7);
+  curSeq = [];
+  for (var i = 0; i < len; i++) curSeq.push(Math.floor(Math.random() * NODES.length));
   showSequence(curSeq);
 }
-
 function showMsg(text, dur) {
   msgEl.textContent = text; msgEl.style.display = 'block';
-  setTimeout(function(){ msgEl.style.display = 'none'; }, dur);
+  setTimeout(function () { msgEl.style.display = 'none'; }, dur);
 }
 
+function endRun() { isOver = true; canInput = false; runId++; clearInterval(timerInterval); helpUI.showFab(false); HTB.stopBGM(); }
 function triggerFail() {
-  if (isOver) return;
-  isOver = true; fbAttempts++; sessionStorage.setItem(_attemptKey, fbAttempts);
-  canInput = false; clearInterval(timerInterval);
-  stopBGM(); sfx('wrong'); vibe(VIB.lose);
-  showErrorPopups(function(){ document.getElementById('goscreen').style.display = 'flex'; });
+  if (isOver) return; endRun(); HTB.fail();
+  sfx('wrong'); vibe(VIB.lose);
+  HTB.errorBurst(LOSS_LINES, function () { document.getElementById('goscreen').style.display = 'flex'; });
 }
 function triggerWin() {
-  if (isOver) return; stopBGM();
-  isOver = true; sessionStorage.removeItem(_attemptKey);
-  fbReport({won:true, winTime:Date.now()});
+  if (isOver) return; endRun();
   sfx('win'); vibe(VIB.win);
-  document.getElementById('wincode').textContent = C.code;
-  document.getElementById('winscreen').style.display = 'flex';
-  const scb = document.getElementById('show-code-btn');
-  if(scb){scb.style.display='block';scb.onclick=function(){document.getElementById('winscreen').style.display='flex';};}
+  HTB.win();
 }
-function delay(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
 
-document.getElementById('startbtn').addEventListener('click', async function() {
-  if (audioCtx.state === 'suspended') audioCtx.resume(); startBGM();
+document.getElementById('startbtn').addEventListener('click', function () {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  HTB.startBGM(); HTB.startPlay();
   document.getElementById('startscreen').style.display = 'none';
-  document.getElementById('gamewrap').style.display    = 'flex';
+  document.getElementById('gamewrap').style.display = 'flex';
+  isOver = false; started = true; helpUI.showFab(true);
   buildGrid();
-  await delay(400);
-  nextSeq();
+  setTimeout(nextSeq, 400);
 });
-document.getElementById('rbtn').addEventListener('click', function() {
+document.getElementById('rbtn').addEventListener('click', function () {
   document.getElementById('goscreen').style.display = 'none';
-  isOver = false; canInput = false; seqsDone = 0; curSeq = [];
-  clearInterval(timerInterval); stopBGM();
+  isOver = false; canInput = false; started = false; seqsDone = 0; curSeq = [];
+  spd.dur = base.dur; spd.gap = base.gap;
+  progFill.style.width = '0%'; progLbl.textContent = '0 / ' + C.sequences; scoreEl.textContent = '0';
   document.getElementById('gamewrap').style.display = 'none';
   document.getElementById('startscreen').style.display = 'flex';
-  fbReport({});
+  HTB.heartbeat();
 });
 
-function initHelpSystem() {
-  const btn     = document.getElementById('help-btn');
-  const overlay = document.getElementById('help-overlay');
-  const input   = document.getElementById('help-input');
-  const msg     = document.getElementById('help-msg');
-  if (!btn) return;
-  const EFFECTS = {
-    T: { label: '⏱ +45 שניות', apply: function(){ C.timePerSeq+=45; spawnNierPopup('+45 שניות לכל רצף','זמן נוסף הופעל','','#5a8a4a',2000); } },
-    W: { label: '✓ פתירה אוטומטית', apply: function(){ seqsDone=C.sequences-1; sfx('correct'); canInput=false; clearInterval(timerInterval); setTimeout(function(){ seqsDone=C.sequences; triggerWin(); },300); } },
-    L: { label: '👁 הצג רצף שוב', apply: function(){ if(canInput&&curSeq.length>0){ canInput=false; clearInterval(timerInterval); spd.dur=700; spd.gap=200; setTimeout(async function(){await showSequence(curSeq);startInput(curSeq);},300); } spawnNierPopup('הרצף מוצג שוב','צפה בעיון','','#5a8a4a',2000); } },
-    E: { label: '↓ המשחק הוקל', apply: function(){ spd.dur=700; spd.gap=200; C.noise=false; spawnNierPopup('המשחק הוקל','מהירות איטית','','#5a8a4a',2000); } },
-  };
-  btn.addEventListener('click', function(){ overlay.classList.add('show'); input.value=''; msg.textContent=''; msg.className='help-msg'; setTimeout(function(){ input.focus(); },100); });
-  document.getElementById('help-cancel').addEventListener('click', function(){ overlay.classList.remove('show'); });
-  document.getElementById('help-submit').addEventListener('click', function(){
-    const val = input.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if (val.length < 4) { msg.textContent = 'קוד קצר מדי'; msg.className = 'help-msg bad'; return; }
-    const type = val[0];
-    if (!EFFECTS[type]) { msg.textContent = 'קוד לא מוכר'; msg.className = 'help-msg bad'; vibe([150]); return; }
-    const localUsed = localStorage.getItem('hc_'+val) === '1';
-    fbGet('helpCodes/'+val).then(function(fbData){
-      const firebaseUsed = fbData !== null && fbData.player;
-      if (localUsed && firebaseUsed) { msg.textContent = 'קוד זה כבר שומש'; msg.className = 'help-msg bad'; vibe([150]); return; }
-      localStorage.setItem('hc_'+val, '1');
-      fbReportCodeUsed(val, EFFECTS[type].label);
-      msg.textContent = EFFECTS[type].label; msg.className = 'help-msg ok';
-      EFFECTS[type].apply();
-      vibe([80,40,80,40,120]);
-      btn.textContent = '✓ ' + EFFECTS[type].label;
-      btn.style.color = '#5a8a4a'; btn.style.borderColor = '#5a8a4a';
-      setTimeout(function(){ overlay.classList.remove('show'); }, 1500);
-    }).catch(function(){});
-  });
-  input.addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('help-submit').click(); });
-}
-initHelpSystem();
-
-(function() {
-  const ns = document.getElementById('name-screen');
-  const inp = document.getElementById('player-name-input');
-  const btn = document.getElementById('name-submit');
-  if (!ns || !inp || !btn) return;
-  const saved = sessionStorage.getItem('htb_player_name');
-  if (saved) { fbPlayerName = saved; ns.style.display = 'none'; fbReport({won:false, startTime:Date.now()}); return; }
-  function submitName() {
-    const name = inp.value.trim();
-    if (!name) { inp.style.borderBottomColor='var(--red)'; inp.focus(); return; }
-    fbPlayerName = name;
-    sessionStorage.setItem('htb_player_name', name);
-    ns.style.display = 'none';
-    fbReport({won:false, startTime:Date.now()});
-  }
-  btn.addEventListener('click', submitName);
-  inp.addEventListener('keydown', function(e){ if(e.key==='Enter') submitName(); });
-  setTimeout(function(){ inp.focus(); }, 200);
-})();
-
-var FB_URL     = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
-var FB_API_KEY = 'AIzaSyBQylFseHge48iq3U5CqgJJZPdHM5QHbtA';
-var BOX_ID     = new URLSearchParams(location.search).get('box') || '?';
-var _fbToken = null, _fbCache = null;
-
-function fbAuth() {
-  if (_fbToken) return Promise.resolve(_fbToken);
-  return fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+FB_API_KEY,
-    {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
-    .then(function(r){return r.json();}).then(function(d){_fbToken=d.idToken||null;return _fbToken;}).catch(function(){return null;});
-}
-function fbKey(name){ return name.trim().toLowerCase().replace(/[.#$[\]/]/g,'_').replace(/\s+/g,'_').slice(0,30); }
-function fbGet(path){
-  return fbAuth().then(function(token){
-    const auth=token?'?auth='+token:'';
-    return fetch(FB_URL+'/'+path+'.json'+auth).then(function(r){return r.ok?(hideConnError(),r.json()):(showConnError(),null);}).catch(function(){showConnError();return null;});
-  });
-}
-function fbSet(path, data){
-  return fbAuth().then(function(token){
-    const auth=token?'?auth='+token:'';
-    return fetch(FB_URL+'/'+path+'.json'+auth,{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}}).then(function(){hideConnError();}).catch(function(){showConnError();});
-  });
-}
-function fbReport(extra){
-  if(!fbPlayerName) return;
-  extra=extra||{};
-  const key=fbKey(fbPlayerName), now=Date.now();
-  if(!_fbCache){
-    fbGet('players/'+key).then(function(existing){ _fbCache=existing||{}; _doReport(extra,key,now); });
-    return;
-  }
-  _doReport(extra,key,now);
-}
-function _doReport(extra,key,now){
-  const existing=_fbCache||{};
-  const update={name:fbPlayerName,lastSeen:now,firstSeen:existing.firstSeen||now,attempts:fbAttempts,totalWins:existing.totalWins||0,boxes:existing.boxes||{},currentBox:BOX_ID,currentBoxTitle:C.title,currentGame:'sequence',startTime:existing.startTime||extra.startTime||now};
-  if(extra.won){update.totalWins=(existing.totalWins||0)+1;const nb=Object.assign({},existing.boxes||{});nb[BOX_ID]={boxId:BOX_ID,boxTitle:C.title,game:'sequence',winTime:extra.winTime||now,attempts:fbAttempts};update.boxes=nb;}
-  _fbCache=Object.assign({},_fbCache,update);
-  fbSet('players/'+key,update);
-}
-function fbReportCodeUsed(code,effectLabel){ if(!fbPlayerName)return; fbSet('helpCodes/'+code,{player:fbPlayerName,boxId:BOX_ID,effect:effectLabel,ts:Date.now()}); }
-function showConnError(){ const el=document.getElementById('conn-status'); if(el) el.style.display='block'; }
-function hideConnError(){ const el=document.getElementById('conn-status'); if(el) el.style.display='none'; }
-setInterval(function(){ if(fbPlayerName) fbReport({}); }, 30000);
-fbAuth();
+// ── Help codes ──
+var helpUI = HTB.help({
+  T: { label:'⏱ +45 שניות',
+       can: function () { return isOver ? 'המשחק נגמר' : true; },
+       apply: function () { C.timePerSeq += 45; if (canInput) { tl += 45; updateTimer(); } HTB.popup('+45 שניות לכל רצף', 'זמן נוסף הופעל', '', '#5a8a4a', 2000); } },
+  W: { label:'✓ פתירה אוטומטית',
+       can: function () { return isOver ? 'המשחק נגמר' : true; },
+       apply: function () { seqsDone = C.sequences; progFill.style.width = '100%'; progLbl.textContent = C.sequences + ' / ' + C.sequences; sfx('correct'); setTimeout(triggerWin, 300); } },
+  L: { label:'👁 הצג רצף שוב',
+       can: function () { return (canInput && curSeq.length) ? true : 'זמין רק בזמן הקשת הרצף'; },
+       apply: function () {
+         canInput = false; clearInterval(timerInterval);
+         var keep = { dur:spd.dur, gap:spd.gap }; spd.dur = SLOW.dur; spd.gap = SLOW.gap;
+         HTB.popup('הרצף מוצג שוב', 'צפה בעיון', '', '#5a8a4a', 2000);
+         setTimeout(function () { showSequence(curSeq); }, 300);
+         // restore the box's normal speed for the next sequences (unless E was used)
+         var restore = setInterval(function () { if (canInput || isOver) { clearInterval(restore); if (!eased) { spd.dur = keep.dur; spd.gap = keep.gap; } } }, 200);
+       } },
+  E: { label:'↓ המשחק הוקל',
+       can: function () { return isOver ? 'המשחק נגמר' : eased ? 'כבר הוקל' : true; },
+       apply: function () { eased = true; spd.dur = SLOW.dur; spd.gap = SLOW.gap; C.noise = false; HTB.popup('המשחק הוקל', 'מהירות איטית', '', '#5a8a4a', 2000); } }
+}, { fab:'bottom' });
 </script>
+
 </body>
 </html>
