@@ -398,6 +398,8 @@ var HTB = (function () {
     startPlay: startPlay, win: win, fail: fail, showCode: showCode, heartbeat: heartbeat,
     help: help, popup: popup, errorBurst: errorBurst, vibe: vibe, esc: esc,
     sync: sync, syncInfo: syncInfo, registerSW: registerSW, hasName: function () { return !!S.name; },
+    flush: flushPending,
+    pendingCount: function () { return Object.keys(lsJSON('htb_pending', {})).length + Object.keys(lsJSON('htb_claims', {})).length; },
     setName: function (n) { S.name = n; lsSet('htb_name', n); },
     startBGM: startBGM, stopBGM: stopBGM
   };

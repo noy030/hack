@@ -2,7 +2,7 @@
 //  Service Worker — שומר את כל המשחק על הטלפון כדי שיעבוד ביער בלי קליטה.
 //  אחרי כל שינוי בקבצים: להעלות את VERSION באחד, כדי שהטלפונים יורידו מחדש.
 // ═══════════════════════════════════════════════════════════════════
-var VERSION = 'htb-v1';
+var VERSION = 'htb-v2';
 var FILES = [
   './', 'router.html', 'prep.html', 'shooter.html', 'sequence.html', 'nodes.html',
   'boxes.js', 'htbcrypto.js', 'htb.js', 'manifest.json', 'icon.svg',

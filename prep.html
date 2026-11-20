@@ -44,6 +44,7 @@ button{background:#e8e3da;color:#0e0d0b;border:none;padding:10px 28px;font-famil
       <div class="st" id="files-st">...</div>
     </div>
     <div class="row"><div>נתוני קודים</div><div class="st" id="data-st">...</div></div>
+    <div class="row"><div>ממתין לשליחה</div><div class="st" id="pend-st">...</div></div>
     <div class="row"><div>זהות</div><div id="name-cell"><input id="name" maxlength="20" placeholder="שם / מספר" autocomplete="off"/></div></div>
   </div>
 
@@ -113,6 +114,15 @@ button{background:#e8e3da;color:#0e0d0b;border:none;padding:10px 28px;font-famil
       setTimeout(ask, 700);
     })();
   }
+
+  // wins / help codes saved in the field get sent from here too (e.g. at the end of the event)
+  function pend() {
+    var n = HTB.pendingCount();
+    if (n) { set('pend-st', n + ' עדכונים · שולח...'); HTB.flush(); }
+    else set('pend-st', '✓ הכל נשלח', 'ok');
+  }
+  pend(); setInterval(pend, 3000);
+  window.addEventListener('online', function () { HTB.flush(); doSync(); });
 
   $('retry').addEventListener('click', function () { location.reload(); });
   pollFiles(); doSync(); check();
