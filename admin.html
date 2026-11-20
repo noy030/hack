@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="icon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>HACK THE BOX — לוח בקרה</title>
@@ -153,6 +154,7 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
   font-family:'Share Tech Mono',monospace;color:#000;page-break-inside:avoid;}
 .print-card .pc-t{font-size:10px;letter-spacing:3px;}
 .print-card .pc-c{font-size:24px;letter-spacing:6px;margin-top:6px;}
+.print-card svg{width:100%;max-width:170px;height:auto;display:block;margin:4px auto;}
 </style>
 </head>
 <body>
@@ -242,7 +244,12 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
       <div class="hint">הקוד שהשחקן מקבל בסוף המשחק — חייב להתאים למנעול הפיזי. נשמר ב-Firebase, לא בקוד ולא ב-URL.<br>
         מסגרת אדומה = קוד כפול · מסגרת זהובה = חסר קוד (השחקן יראה ✕)</div>
       <div class="box-grid" id="box-grid"></div>
-      <div style="margin-top:12px"><button class="action-btn ok" id="save-boxes">💾 שמור את כל הקודים</button></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="action-btn ok" id="save-boxes">💾 שמור את כל הקודים</button>
+        <button class="action-btn ok" id="print-qr">🖨 הדפס QR לכל התיבות + QR הכנה</button>
+      </div>
+      <div class="hint" style="margin-top:12px">כל QR מכיל מפתח שפותח רק את הקוד של התיבה שלו — כך הקוד מוצג גם בלי קליטה.<br>
+        אפשר לשנות קודים כמה שרוצים בלי להדפיס QR מחדש. ⬇ ליד כל תיבה = קובץ PNG נפרד של ה-QR שלה.</div>
     </div>
 
     <div id="tab-reset" class="tab-panel">
@@ -266,6 +273,8 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
 <div id="print-area"></div>
 
 <script src="boxes.js"></script>
+<script src="htbcrypto.js"></script>
+<script src="qrcode.js"></script>
 <script>
 // ═══ ADMIN — ES5 בלבד ═════════════════════════════════════════════
 // כניסה דרך Firebase Auth (אימייל+סיסמה). ההרשאות נאכפות ב-Firebase Rules —
@@ -274,9 +283,8 @@ var FB_URL     = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebaseda
 var FB_API_KEY = 'AIzaSyBQylFseHge48iq3U5CqgJJZPdHM5QHbtA';
 var TYPE_NAMES = { T:'⏱ זמן', W:'✓ פתירה', L:'💡 רמז', E:'↓ הקלה' };
 var GAME_ICONS = { shooter:'🔫', sequence:'🧠', blocks:'🧩' };
-var CODE_ALPHABET = 'ACDEFHJKLMNPQRTUVWXY34679';   // no 0/O, 1/I, 2/Z, 5/S, 8/B lookalikes
 
-var playersData = {}, claimsData = {}, defsData = {}, boxCodes = {};
+var playersData = {}, claimsData = {}, defsData = {}, boxCodes = {}, boxKeys = {}, hashesData = null;
 var soundOn = false, audioCtx = null;
 var auth = { token:null, refresh:null, exp:0 };
 var _lastP = null, _lastC = null, _lastD = null, boxesRendered = false;
@@ -399,10 +407,23 @@ function fetchDefs() {
     if (st !== 200) return;
     var h = JSON.stringify(d); if (h === _lastD) return; _lastD = h;
     defsData = d || {}; renderCodes();
+    db('GET', 'helpCodeHashes', null, function (st2, h2) { if (st2 === 200) { hashesData = h2 || {}; backfillHashes(); } });
   });
 }
+// every help code needs a hash in the public list, or phones can't check it offline
+function backfillHashes() {
+  var want = {}, missing = 0;
+  keys(defsData).forEach(function (c) { want[HTBCrypto.helpHash(c)] = defsData[c].type; });
+  keys(want).forEach(function (h) { if (hashesData[h] !== want[h]) missing++; });
+  var extra = keys(hashesData).filter(function (h) { return !(h in want); });
+  if (!missing && !extra.length) return;
+  db('PUT', 'helpCodeHashes', want, function (st) { if (st === 200) hashesData = want; });
+}
 function fetchBoxCodes() {
-  db('GET', 'boxCodes', null, function (st, d) { if (st === 200) { boxCodes = d || {}; renderBoxes(); } });
+  db('GET', 'boxKeys', null, function (st2, k) {
+    if (st2 === 200) boxKeys = k || {};
+    db('GET', 'boxCodes', null, function (st, d) { if (st === 200) { boxCodes = d || {}; renderBoxes(); } });
+  });
 }
 function setLive(ok, text) {
   var el = $('live-indicator');
@@ -484,6 +505,8 @@ function renderPlayers() {
   pl.forEach(function (x) {
     var codes = keys(claimsData).filter(function (c) { return claimsData[c] && claimsData[c].uid === x.uid; })
       .map(function (c) { return '<span class="code-badge code-' + esc(claimsData[c].type) + '">' + esc(TYPE_NAMES[claimsData[c].type] || claimsData[c].type) + '</span>'; }).join('') || '—';
+    var conf = keys(x.p.conflicts);
+    if (conf.length) codes += '<div class="flag" title="הקוד נוצל במקביל ע״י שחקן אחר בזמן שלא הייתה קליטה">⚠ שימוש כפול: ' + esc(conf.join(', ')) + '</div>';
     html += '<tr><td><div class="player-name">' + esc(x.name) + '</div></td><td>' + boxBadges(x.boxes) + '</td><td>' + codes + '</td>' +
       '<td class="time-ago">' + esc(x.p.currentBoxTitle || x.p.currentBox || '—') + '</td><td class="time-ago">' + timeAgo(x.p.lastSeen) + '</td>' +
       '<td><button class="action-btn" data-act="rm-player" data-id="' + esc(x.uid) + '">הסר</button></td></tr>';
@@ -521,7 +544,8 @@ function renderBoxes() {
     var b = BOXES[id], c = boxCodes[id] || '';
     html += '<div class="box-card' + (!c ? ' empty' : counts[c] > 1 ? ' dup' : '') + '">' +
       '<div class="bt">' + (GAME_ICONS[b.game] || '📦') + ' ' + esc(b.title) + '<br><small>#' + esc(id) + ' · ' + esc(b.game) +
-      ' · <a href="router.html?box=' + encodeURIComponent(id) + '" target="_blank" style="color:var(--mid)">בדיקה ↗</a></small></div>' +
+      ' · <a href="' + esc(qrUrl(id) || ('router.html?box=' + encodeURIComponent(id))) + '" target="_blank" style="color:var(--mid)">בדיקה ↗</a>' +
+      (boxKeys[id] ? ' · <a href="#" data-act="qr-png" data-id="' + esc(id) + '" style="color:var(--mid)">⬇ QR</a>' : '') + '</small></div>' +
       '<input data-box="' + esc(id) + '" value="' + esc(c) + '" inputmode="numeric" maxlength="8"/></div>';
   });
   grid.innerHTML = html; boxesRendered = true;
@@ -538,18 +562,25 @@ document.addEventListener('click', function (e) {
   if (!act) return;
   if (act === 'rm-player' && confirm('להסיר את השחקן?')) db('DELETE', 'players/' + id, null, refreshAll);
   if (act === 'release') db('DELETE', 'helpCodes/' + id, null, refreshAll);
-  if (act === 'rm-def' && confirm('למחוק את הקוד ' + id + '?')) db('DELETE', 'helpCodeDefs/' + id, null, refreshAll);
+  if (act === 'rm-def' && confirm('למחוק את הקוד ' + id + '?')) {
+    db('DELETE', 'helpCodeDefs/' + id, null, function () { db('DELETE', 'helpCodeHashes/' + HTBCrypto.helpHash(id), null, refreshAll); });
+  }
+  if (act === 'qr-png') { e.preventDefault(); downloadQrPng(id); }
 });
 $('refresh-btn').addEventListener('click', refreshAll);
 $('gen-btn').addEventListener('click', function () {
   var type = $('gen-type').value, n = Math.max(1, Math.min(60, parseInt($('gen-count').value, 10) || 10));
-  var patch = {}, made = 0, buf = new Uint32Array(6);
+  var patch = {}, hpatch = {}, made = 0;
   while (made < n) {
-    (window.crypto || window.msCrypto).getRandomValues(buf);
-    var code = ''; for (var i = 0; i < 6; i++) code += CODE_ALPHABET.charAt(buf[i] % CODE_ALPHABET.length);
-    if (!defsData[code] && !claimsData[code] && !patch[code]) { patch[code] = { type:type, created:Date.now() }; made++; }
+    var code = HTBCrypto.randomCode(6);
+    if (!defsData[code] && !claimsData[code] && !patch[code]) {
+      patch[code] = { type:type, created:Date.now() }; hpatch[HTBCrypto.helpHash(code)] = type; made++;
+    }
   }
-  db('PATCH', 'helpCodeDefs', patch, function (st) { if (st === 200) { _lastD = null; fetchDefs(); } else alert('שגיאה ביצירת קודים (' + st + ')'); });
+  db('PATCH', 'helpCodeDefs', patch, function (st) {
+    if (st !== 200) { alert('שגיאה ביצירת קודים (' + st + ')'); return; }
+    db('PATCH', 'helpCodeHashes', hpatch, function () { _lastD = null; fetchDefs(); });
+  });
 });
 $('print-btn').addEventListener('click', function () {
   var free = keys(defsData).filter(function (c) { return !claimsData[c]; }).sort();
@@ -560,15 +591,55 @@ $('print-btn').addEventListener('click', function () {
   $('print-area').style.display = 'block'; window.print(); $('print-area').style.display = 'none';
 });
 $('save-boxes').addEventListener('click', function () {
-  var inputs = document.querySelectorAll('#box-grid input'), patch = {};
+  var inputs = document.querySelectorAll('#box-grid input'), plain = {}, enc = {}, newKeys = {};
+  keys(BOXES).forEach(function (id) { if (!boxKeys[id]) newKeys[id] = HTBCrypto.randomCode(10); });   // one key per box, forever
   for (var i = 0; i < inputs.length; i++) {
-    var v = inputs[i].value.replace(/\s+/g, '');
-    patch[inputs[i].getAttribute('data-box')] = v || null;
+    var id = inputs[i].getAttribute('data-box'), v = inputs[i].value.replace(/\s+/g, '');
+    var key = boxKeys[id] || newKeys[id];
+    plain[id] = v || null;
+    enc[id] = v ? HTBCrypto.encryptCode(id, key, v) : null;
   }
-  db('PATCH', 'boxCodes', patch, function (st) {
-    if (st === 200) { showMsg('קודי התיבות נשמרו'); fetchBoxCodes(); alert('נשמר ✓'); } else alert('שגיאה בשמירה (' + st + ')');
+  function fail(st) { alert('שגיאה בשמירה (' + st + ')'); }
+  db('PATCH', 'boxKeys', keys(newKeys).length ? newKeys : {}, function (st0) {
+    if (st0 !== 200) return fail(st0);
+    db('PATCH', 'boxCodes', plain, function (st1) {
+      if (st1 !== 200) return fail(st1);
+      db('PATCH', 'boxCodesEnc', enc, function (st2) {
+        if (st2 !== 200) return fail(st2);
+        showMsg('קודי התיבות נשמרו'); fetchBoxCodes(); alert('נשמר ✓');
+      });
+    });
   });
 });
+// ── QR codes ──
+var SITE = location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '');
+function qrUrl(id) { return boxKeys[id] ? SITE + 'router.html?box=' + encodeURIComponent(id) + '&k=' + encodeURIComponent(boxKeys[id]) : null; }
+function qrSvg(text) { var q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2 }); }
+function downloadQrPng(id) {
+  var url = qrUrl(id); if (!url) return;
+  var q = qrcode(0, 'M'); q.addData(url); q.make();
+  var n = q.getModuleCount(), cell = 12, pad = 4 * cell, size = n * cell + pad * 2;
+  var cv = document.createElement('canvas'); cv.width = size; cv.height = size + 90;
+  var g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#000';
+  for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (q.isDark(r, c)) g.fillRect(pad + c * cell, pad + r * cell, cell, cell);
+  g.font = 'bold 34px monospace'; g.textAlign = 'center';
+  g.fillText(BOXES[id].title + '  #' + id, size / 2, size + 50);
+  var a = document.createElement('a');
+  a.download = 'qr-box-' + ('0' + id).slice(-2) + '-' + BOXES[id].title + '.png';
+  a.href = cv.toDataURL('image/png'); document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+$('print-qr').addEventListener('click', function () {
+  var ids = keys(BOXES);
+  if (ids.some(function (id) { return !boxKeys[id]; })) { alert('קודם לחץ "שמור את כל הקודים" — זה יוצר את המפתחות'); return; }
+  var html = '<div class="print-card"><div class="pc-t">הכנה לשטח · סרקו בכניסה</div>' + qrSvg(SITE + 'prep.html') + '<div class="pc-t">FIELD SYNC</div></div>';
+  ids.forEach(function (id) {
+    html += '<div class="print-card">' + qrSvg(qrUrl(id)) + '<div class="pc-t">' + esc(BOXES[id].title) + ' · #' + esc(id) + '</div></div>';
+  });
+  $('print-area').innerHTML = html;
+  $('print-area').style.display = 'block'; window.print(); $('print-area').style.display = 'none';
+});
+
 $('reset-claims').addEventListener('click', function () {
   if (!confirm('לשחרר את כל קודי העזרה שנוצלו? הם יעבדו שוב.')) return;
   db('DELETE', 'helpCodes', null, function () { showMsg('כל הקודים שוחררו'); refreshAll(); });

@@ -11,9 +11,8 @@
       }
     },
 
-    "boxCodes": {
-      "$box": { ".read": "auth != null" }
-    },
+    "boxCodesEnc": { ".read": true },
+    "helpCodeHashes": { ".read": true },
 
     "helpCodeDefs": {
       "$code": { ".read": "auth != null" }

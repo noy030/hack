@@ -1,0 +1,9 @@
+{
+  "name": "HACK THE BOX — Project Reboot",
+  "short_name": "HACK THE BOX",
+  "start_url": "prep.html",
+  "display": "standalone",
+  "background_color": "#0e0d0b",
+  "theme_color": "#0e0d0b",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
