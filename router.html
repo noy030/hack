@@ -2,6 +2,9 @@
 <html lang="he" dir="ltr">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0d0b">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YoRHa — Connecting...</title>
 <style>
@@ -29,6 +32,10 @@
     document.getElementById('err').style.display = 'block';
     return;
   }
+  // the key printed in this box's QR decrypts this box's code — keep it on the phone, out of the URL
+  var km = /[?&]k=([^&#]*)/.exec(location.search);
+  if (km) { try { localStorage.setItem('htb_k_' + boxId, decodeURIComponent(km[1])); } catch (e) {} }
+  if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js')['catch'](function () {}); } catch (e) {} }
   document.getElementById('status').textContent = 'ROUTING TO ' + cfg.title;
   setTimeout(function () {
     location.replace(GAME_FILES[cfg.game] + '?box=' + encodeURIComponent(boxId));
