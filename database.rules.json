@@ -1,0 +1,29 @@
+{
+  "rules": {
+    ".read": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
+    ".write": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
+
+    "players": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "name": { ".validate": "newData.isString() && newData.val().length <= 24" }
+      }
+    },
+
+    "boxCodes": {
+      "$box": { ".read": "auth != null" }
+    },
+
+    "helpCodeDefs": {
+      "$code": { ".read": "auth != null" }
+    },
+
+    "helpCodes": {
+      "$code": {
+        ".read": "auth != null && data.child('uid').val() === auth.uid",
+        ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid && root.child('helpCodeDefs').child($code).exists()"
+      }
+    }
+  }
+}
