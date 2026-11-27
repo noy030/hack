@@ -2,24 +2,32 @@
 //  Service Worker — שומר את כל המשחק על הטלפון כדי שיעבוד ביער בלי קליטה.
 //  אחרי כל שינוי בקבצים: להעלות את VERSION באחד, כדי שהטלפונים יורידו מחדש.
 // ═══════════════════════════════════════════════════════════════════
-var VERSION = 'htb-v2';
-var FILES = [
-  './', 'router.html', 'prep.html', 'shooter.html', 'sequence.html', 'nodes.html',
-  'boxes.js', 'htbcrypto.js', 'htb.js', 'manifest.json', 'icon.svg',
+var VERSION = 'htb-v3';
+// the game can't run without these — if one fails, the install fails and retries next visit
+var CORE = [
+  'router.html', 'prep.html', 'shooter.html', 'sequence.html', 'nodes.html',
+  'boxes.js', 'htbcrypto.js', 'htb.js', 'manifest.json', 'icon.svg'
+];
+// nice to have — a missing track must not block the whole offline install
+var MUSIC = [
   'music/01.mp3', 'music/02.mp3', 'music/03.mp3', 'music/04.mp3', 'music/05.mp3',
   'music/06.mp3', 'music/07.mp3', 'music/08.mp3', 'music/09.mp3', 'music/10.mp3'
 ];
+var FILES = CORE.concat(MUSIC);
 var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap';
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) {
     // cache:'reload' — skip the HTTP cache so a new VERSION really gets fresh files
-    return Promise.all(FILES.map(function (f) {
+    function grab(f) {
       return fetch(new Request(f, { cache: 'reload' })).then(function (r) {
         if (!r.ok) throw new Error(f + ' ' + r.status);
         return c.put(f, r);
       });
-    })).then(function () {
+    }
+    return Promise.all(CORE.map(grab)).then(function () {
+      return Promise.all(MUSIC.map(function (f) { return grab(f)['catch'](function () {}); }));
+    }).then(function () {
       // fonts are nice-to-have: never fail the install over them
       return fetch(FONT_CSS).then(function (r) { return c.put(FONT_CSS, r.clone()).then(function () { return r.text(); }); })
         .then(function (css) {
