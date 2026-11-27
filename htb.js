@@ -158,8 +158,14 @@ var HTB = (function () {
     initName();
     sync();
     flushPending();
-    window.addEventListener('online', function () { sync(); flushPending(); heartbeat(); });
-    setInterval(function () { heartbeat(); flushPending(); }, 30000);
+    // phones say "online" a few seconds before the connection really works, and freeze
+    // timers while the screen is off — so retry in a burst, and again whenever the page wakes up
+    window.addEventListener('online', retryBurst);
+    window.addEventListener('pageshow', retryBurst);
+    window.addEventListener('focus', retryBurst);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) retryBurst(); });
+    setInterval(function () { if (pendingCount()) flushPending(); updateSyncBadge(); }, 6000);
+    setInterval(heartbeat, 30000);
     return S.cfg;
   }
 
@@ -217,8 +223,35 @@ var HTB = (function () {
     lsDel(attemptsKey());
     // queue first, so a win is never lost if the network drops
     var pend = lsJSON('htb_pending', {}); pend[S.box] = rec; lsPut('htb_pending', pend);
-    flushPending();
     showCode();
+    updateSyncBadge();
+    retryBurst();
+  }
+
+  function pendingCount() { return Object.keys(lsJSON('htb_pending', {})).length + Object.keys(lsJSON('htb_claims', {})).length; }
+  var burstTimers = [];
+  function retryBurst() {
+    for (var i = 0; i < burstTimers.length; i++) clearTimeout(burstTimers[i]);
+    burstTimers = [];
+    var delays = [0, 1500, 4000, 8000, 15000, 25000, 40000];
+    for (var j = 0; j < delays.length; j++) burstTimers.push(setTimeout(function () { if (pendingCount()) flushPending(); updateSyncBadge(); }, delays[j]));
+    heartbeat();
+    burstTimers.push(setTimeout(function () { sync(); heartbeat(); }, 4000));
+  }
+
+  // line under the code on the win screen: is this win on the leaderboard yet?
+  function updateSyncBadge() {
+    var wc = $('wincode'); if (!wc || !S.box) return;
+    var ws = $('winscreen'); if (ws && ws.style.display !== 'flex') return;
+    var b = $('htb-sync');
+    if (!b) {
+      b = document.createElement('div'); b.id = 'htb-sync';
+      b.style.cssText = 'font-size:11px;letter-spacing:2px;margin:6px 0 10px;line-height:1.6;text-align:center;';
+      wc.parentNode.insertBefore(b, wc.nextSibling);
+    }
+    var waiting = !!lsJSON('htb_pending', {})[S.box];
+    b.textContent = waiting ? '⏳ נשמר בטלפון — יישלח ללוח כשתחזור קליטה' : '✓ נרשם בלוח';
+    b.style.color = waiting ? '#a89060' : '#5a8a4a';
   }
 
   // send queued wins + help-code claims whenever there is signal
@@ -231,7 +264,7 @@ var HTB = (function () {
     getToken(function (tok) {
       if (!tok) { flushing = false; return; }
       var left = pk.length + ck.length;
-      function done() { if (--left <= 0) flushing = false; }
+      function done() { if (--left <= 0) { flushing = false; updateSyncBadge(); } }
       pk.forEach(function (bx) {
         db('PUT', 'players/' + auth.uid + '/boxes/' + bx, pend[bx], function (st) {
           if (st === 200) {
@@ -248,6 +281,7 @@ var HTB = (function () {
           if (st !== 200) {
             // someone else used this code first (both offline) → flag it for the GM
             db('PUT', 'players/' + auth.uid + '/conflicts/' + code, { boxId: c.boxId, ts: c.ts, type: c.type });
+            db('PATCH', 'players/' + auth.uid, { name: S.name, lastSeen: Date.now() });
           }
           var cl = lsJSON('htb_claims', {}); delete cl[code]; lsPut('htb_claims', cl);
           done();
@@ -402,8 +436,7 @@ var HTB = (function () {
     startPlay: startPlay, win: win, fail: fail, showCode: showCode, heartbeat: heartbeat,
     help: help, popup: popup, errorBurst: errorBurst, vibe: vibe, esc: esc,
     sync: sync, syncInfo: syncInfo, registerSW: registerSW, hasName: function () { return !!S.name; },
-    flush: flushPending,
-    pendingCount: function () { return Object.keys(lsJSON('htb_pending', {})).length + Object.keys(lsJSON('htb_claims', {})).length; },
+    flush: flushPending, retryBurst: retryBurst, pendingCount: pendingCount,
     setName: function (n) { S.name = n; lsSet('htb_name', n); },
     startBGM: startBGM, stopBGM: stopBGM
   };

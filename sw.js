@@ -2,7 +2,7 @@
 //  Service Worker — שומר את כל המשחק על הטלפון כדי שיעבוד ביער בלי קליטה.
 //  אחרי כל שינוי בקבצים: להעלות את VERSION באחד, כדי שהטלפונים יורידו מחדש.
 // ═══════════════════════════════════════════════════════════════════
-var VERSION = 'htb-v4';
+var VERSION = 'htb-v5';
 // the game can't run without these — if one fails, the install fails and retries next visit
 var CORE = [
   'router.html', 'prep.html', 'shooter.html', 'sequence.html', 'nodes.html',
