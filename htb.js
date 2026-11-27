@@ -235,6 +235,7 @@ var HTB = (function () {
     burstTimers = [];
     var delays = [0, 1500, 4000, 8000, 15000, 25000, 40000];
     for (var j = 0; j < delays.length; j++) burstTimers.push(setTimeout(function () { if (pendingCount()) flushPending(); updateSyncBadge(); }, delays[j]));
+    heartbeat();
     burstTimers.push(setTimeout(function () { sync(); heartbeat(); }, 4000));
   }
 
@@ -280,6 +281,7 @@ var HTB = (function () {
           if (st !== 200) {
             // someone else used this code first (both offline) → flag it for the GM
             db('PUT', 'players/' + auth.uid + '/conflicts/' + code, { boxId: c.boxId, ts: c.ts, type: c.type });
+            db('PATCH', 'players/' + auth.uid, { name: S.name, lastSeen: Date.now() });
           }
           var cl = lsJSON('htb_claims', {}); delete cl[code]; lsPut('htb_claims', cl);
           done();
