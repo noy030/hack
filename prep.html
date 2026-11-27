@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0d0b">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HACK THE BOX — הכנה לשטח</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0e0d0b;color:#e8e3da;font-family:'Share Tech Mono',monospace;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px 20px;}
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);}
+.eye{font-size:10px;letter-spacing:6px;color:#6a6458;}
+h1{font-family:'Rajdhani',sans-serif;font-size:clamp(26px,8vw,40px);letter-spacing:6px;font-weight:700;}
+.line{width:140px;height:1px;background:linear-gradient(90deg,transparent,#e8e3da,transparent);}
+.list{width:min(360px,100%);border:1px solid rgba(232,227,218,0.18);}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(232,227,218,0.08);font-size:13px;letter-spacing:1px;}
+.row:last-child{border-bottom:none;}
+.st{font-size:12px;letter-spacing:2px;color:#a89060;white-space:nowrap;}
+.st.ok{color:#7ab86a;} .st.bad{color:#c43000;}
+.bar{height:3px;background:rgba(232,227,218,0.1);margin-top:6px;} .bar i{display:block;height:100%;width:0;background:#7ab86a;transition:width .3s;}
+#name{background:rgba(232,227,218,0.07);border:1px solid rgba(232,227,218,0.18);color:#e8e3da;font-family:inherit;
+  font-size:15px;letter-spacing:2px;padding:8px 10px;width:150px;text-align:center;outline:none;}
+#ready{display:none;text-align:center;border:2px solid #7ab86a;padding:16px 22px;width:min(360px,100%);}
+#ready b{display:block;font-family:'Rajdhani',sans-serif;font-size:24px;letter-spacing:5px;color:#7ab86a;margin-bottom:6px;}
+#ready span{font-size:12px;letter-spacing:1px;color:#c8c2b5;line-height:1.9;}
+.tips{width:min(360px,100%);font-size:11px;letter-spacing:1px;color:#8a8478;line-height:2;}
+button{background:#e8e3da;color:#0e0d0b;border:none;padding:10px 28px;font-family:inherit;font-size:12px;letter-spacing:3px;cursor:pointer;
+  clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+</style>
+</head>
+<body>
+  <div class="eye">HACK THE BOX // PROJECT REBOOT</div>
+  <h1>FIELD SYNC</h1>
+  <div class="line"></div>
+
+  <div class="list">
+    <div class="row">
+      <div style="flex:1">קבצי המשחק<div class="bar"><i id="files-bar"></i></div></div>
+      <div class="st" id="files-st">...</div>
+    </div>
+    <div class="row"><div>נתוני קודים</div><div class="st" id="data-st">...</div></div>
+    <div class="row"><div>ממתין לשליחה</div><div class="st" id="pend-st">...</div></div>
+    <div class="row"><div>זהות</div><div id="name-cell"><input id="name" maxlength="20" placeholder="שם / מספר" autocomplete="off"/></div></div>
+  </div>
+
+  <div id="ready"><b>✓ READY FOR FIELD</b><span>הטלפון מוכן. המשחקים יעבדו גם בלי קליטה.<br>ניצחונות וקודי עזרה יסונכרנו כשתחזור קליטה.</span></div>
+  <button id="retry" style="display:none">נסה שוב</button>
+
+  <div class="tips">
+    • בשטח — סרוק את ה-QR עם <b>המצלמה הרגילה</b> של הטלפון (לא אפליקציית סורק אחרת), כדי שייפתח באותו דפדפן.<br>
+    • אל תמחק נתוני גלישה ואל תשתמש בגלישה בסתר.
+  </div>
+
+<script src="boxes.js"></script>
+<script src="htbcrypto.js"></script>
+<script src="htb.js"></script>
+<script>
+(function () {
+  var st = { files: false, data: false, name: HTB.hasName() };
+  function $(id) { return document.getElementById(id); }
+  function set(id, text, cls) { $(id).textContent = text; $(id).className = 'st' + (cls ? ' ' + cls : ''); }
+  function check() {
+    var all = st.files && st.data && st.name;
+    $('ready').style.display = all ? 'block' : 'none';
+    $('retry').style.display = (!all && (st.filesFailed || st.dataFailed)) ? 'inline-block' : 'none';
+  }
+
+  // identity
+  function showName() {
+    var n = ''; try { n = localStorage.getItem('htb_name') || ''; } catch (e) {}
+    if (n) { $('name-cell').innerHTML = '<span class="st ok">✓ ' + HTB.esc(n) + '</span>'; st.name = true; check(); }
+  }
+  $('name').addEventListener('change', function () {
+    var v = this.value.replace(/^\s+|\s+$/g, '').slice(0, 20);
+    if (v) { HTB.setName(v); showName(); }
+  });
+  showName();
+
+  // code data
+  function doSync() {
+    set('data-st', 'מוריד...');
+    HTB.sync(function (ok) {
+      var info = HTB.syncInfo();
+      if (ok || info.synced) { st.data = true; set('data-st', '✓ ' + info.boxes + ' תיבות · ' + info.helpCodes + ' קודים', 'ok'); }
+      else { st.dataFailed = true; set('data-st', '✕ אין חיבור', 'bad'); }
+      check();
+    });
+  }
+
+  // game files (Service Worker cache)
+  function pollFiles() {
+    if (!('serviceWorker' in navigator)) { set('files-st', '✕ דפדפן לא נתמך', 'bad'); st.filesFailed = true; check(); return; }
+    HTB.registerSW();
+    navigator.serviceWorker.addEventListener('message', function (e) {
+      var d = e.data; if (!d || d.type !== 'status') return;
+      $('files-bar').style.width = Math.round(d.have / d.total * 100) + '%';
+      if (d.have >= d.total) { st.files = true; set('files-st', '✓ ' + d.total + '/' + d.total, 'ok'); check(); }
+      else set('files-st', d.have + '/' + d.total);
+    });
+    var tries = 0;
+    (function ask() {
+      if (st.files) return;
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        var w = reg && (reg.active || reg.waiting || reg.installing);
+        if (w && reg.active) reg.active.postMessage('status');
+        else set('files-st', 'מוריד...');
+      });
+      if (++tries > 120) { st.filesFailed = true; set('files-st', '✕ ההורדה נתקעה', 'bad'); check(); return; }
+      setTimeout(ask, 700);
+    })();
+  }
+
+  // wins / help codes saved in the field get sent from here too (e.g. at the end of the event)
+  function pend() {
+    var n = HTB.pendingCount();
+    if (n) { set('pend-st', n + ' עדכונים · שולח...'); HTB.flush(); }
+    else set('pend-st', '✓ הכל נשלח', 'ok');
+  }
+  pend(); setInterval(pend, 3000);
+  window.addEventListener('online', function () { HTB.flush(); doSync(); });
+
+  $('retry').addEventListener('click', function () { location.reload(); });
+  pollFiles(); doSync(); check();
+})();
+</script>
+</body>
+</html>

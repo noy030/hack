@@ -2,7 +2,9 @@
 //  HACK THE BOX — ליבה משותפת לכל המשחקים
 //  Firebase (REST), זהות שחקן, דיווח ניצחונות, קוד פתיחה, קודי עזרה.
 //  ES5 בלבד — בלי let/const/=>/`template`/async — בגלל WebView ישנים.
-//  דורש: boxes.js נטען לפני הקובץ הזה.
+//  דורש: boxes.js ו-htbcrypto.js נטענים לפני הקובץ הזה.
+//  מצב לא-מקוון: קבצים נשמרים ב-Service Worker (sw.js), קודי תיבות מוצפנים
+//  במפתח שב-QR, קודי עזרה נבדקים מול רשימת hash מקומית ומסונכרנים כשיש קליטה.
 // ═══════════════════════════════════════════════════════════════════
 var HTB = (function () {
   var FB_URL     = 'https://hack-the-box-larp-default-rtdb.europe-west1.firebasedatabase.app';
@@ -28,10 +30,10 @@ var HTB = (function () {
 
   // ── HTTP (XHR, callbacks) ───────────────────────────────────────
   // cb(status, json) — status 0 = network error / timeout
-  function http(method, url, body, contentType, cb) {
+  function http(method, url, body, contentType, cb, timeout) {
     var r = new XMLHttpRequest();
     r.open(method, url, true);
-    r.timeout = 12000;
+    r.timeout = timeout || 10000;
     if (body != null) r.setRequestHeader('Content-Type', contentType || 'application/json');
     r.onload = function () {
       var data = null;
@@ -85,22 +87,58 @@ var HTB = (function () {
   }
 
   // ── DB ──────────────────────────────────────────────────────────
-  function db(method, path, data, cb) {
+  function db(method, path, data, cb, timeout) {
+    if (navigator.onLine === false) { conn(false); if (cb) cb(0, null); return; }
     getToken(function (tok) {
       if (!tok) { conn(false); if (cb) cb(0, null); return; }
       http(method, FB_URL + '/' + path + '.json?auth=' + tok, data, null, function (st, d) {
         conn(st !== 0);
         if (cb) cb(st, d);
-      });
+      }, timeout);
     });
   }
-  function conn(ok) { var el = $('conn-status'); if (el) el.style.display = ok ? 'none' : 'block'; }
+  // offline is normal in the field — show a calm notice, not an error
+  function conn(ok) {
+    var el = $('conn-status'); if (!el) return;
+    el.textContent = '◌ OFFLINE — נשמר בטלפון';
+    el.style.color = '#e8e3da';
+    el.style.display = ok ? 'none' : 'block';
+  }
+  // public, no-auth read (encrypted box codes + help-code hashes)
+  function publicGet(path, cb) {
+    if (navigator.onLine === false) return cb(0, null);
+    http('GET', FB_URL + '/' + path + '.json', null, null, cb, 8000);
+  }
 
   // ── State ───────────────────────────────────────────────────────
   var S = {
     game: null, box: null, cfg: null, name: lsGet('htb_name') || '',
-    code: null, playStart: 0, helped: [], paused: false, effects: {}
+    playStart: 0, helped: [], paused: false, effects: {}
   };
+  function lsJSON(k, def) { try { return JSON.parse(lsGet(k) || 'null') || def; } catch (e) { return def; } }
+  function lsPut(k, v) { lsSet(k, JSON.stringify(v)); }
+
+  // ── Service Worker: keeps every game file on the phone ──────────
+  function registerSW() {
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      try { navigator.serviceWorker.register('sw.js')['catch'](function () {}); } catch (e) {}
+    }
+  }
+
+  // ── Sync: pull encrypted box codes + help-code hashes for offline use ──
+  function sync(cb) {
+    var left = 2, ok = 0;
+    function one(st) { if (st === 200) ok++; if (--left === 0) { if (ok === 2) lsSet('htb_synced', String(Date.now())); if (cb) cb(ok === 2); } }
+    publicGet('boxCodesEnc', function (st, d) { if (st === 200) lsPut('htb_enc', d || {}); one(st); });
+    publicGet('helpCodeHashes', function (st, d) { if (st === 200) lsPut('htb_hashes', d || {}); one(st); });
+  }
+  function syncInfo() {
+    return {
+      synced: parseInt(lsGet('htb_synced') || '0', 10),
+      boxes: Object.keys(lsJSON('htb_enc', {})).length,
+      helpCodes: Object.keys(lsJSON('htb_hashes', {})).length
+    };
+  }
   function attemptsKey() { return 'htb_attempts_' + S.box; }
   function attempts() { return parseInt(lsGet(attemptsKey()) || '0', 10); }
 
@@ -114,9 +152,13 @@ var HTB = (function () {
       throw new Error('HTB: unknown box ' + S.box);
     }
     S.cfg = extend({}, base);
+    var k = param('k');                      // direct link with key → remember it
+    if (k) lsSet('htb_k_' + S.box, k);
+    registerSW();
     initName();
-    prefetchCode();
+    sync();
     flushPending();
+    window.addEventListener('online', function () { sync(); flushPending(); heartbeat(); });
     setInterval(function () { heartbeat(); flushPending(); }, 30000);
     return S.cfg;
   }
@@ -153,13 +195,13 @@ var HTB = (function () {
     });
   }
 
-  // ── Box unlock code: fetched from DB, never in the URL ──────────
-  function prefetchCode(cb) {
-    if (S.code) { if (cb) cb(S.code); return; }
-    db('GET', 'boxCodes/' + S.box, null, function (st, d) {
-      if (st === 200 && d != null && d !== '') S.code = String(d);
-      if (cb) cb(S.code);
-    });
+  // ── Box unlock code: decrypted on the phone with the key from this box's QR ──
+  function boxCode() {
+    var key = lsGet('htb_k_' + S.box), enc = lsJSON('htb_enc', {})[S.box];
+    if (!key) return { err: 'NO KEY', msg: 'סרוק את ה-QR שעל התיבה עצמה' };
+    if (!enc) return { err: 'NO DATA', msg: 'אין נתוני קוד בטלפון — צריך קליטה פעם אחת' };
+    var code = HTBCrypto.decryptCode(S.box, key, enc);
+    return code ? { code: code } : { err: 'BAD KEY', msg: 'ה-QR לא תואם — פנה ל-GM' };
   }
 
   // ── Results ─────────────────────────────────────────────────────
@@ -174,22 +216,41 @@ var HTB = (function () {
     };
     lsDel(attemptsKey());
     // queue first, so a win is never lost if the network drops
-    var pend = pending(); pend[S.box] = rec; lsSet('htb_pending', JSON.stringify(pend));
+    var pend = lsJSON('htb_pending', {}); pend[S.box] = rec; lsPut('htb_pending', pend);
     flushPending();
     showCode();
   }
-  function pending() { try { return JSON.parse(lsGet('htb_pending') || '{}') || {}; } catch (e) { return {}; } }
+
+  // send queued wins + help-code claims whenever there is signal
+  var flushing = false;
   function flushPending() {
-    var pend = pending(), keys = Object.keys(pend);
-    if (!keys.length || !S.name) return;
+    var pend = lsJSON('htb_pending', {}), claims = lsJSON('htb_claims', {});
+    var pk = Object.keys(pend), ck = Object.keys(claims);
+    if ((!pk.length && !ck.length) || !S.name || flushing || navigator.onLine === false) return;
+    flushing = true;
     getToken(function (tok) {
-      if (!tok) return;
-      keys.forEach(function (bx) {
+      if (!tok) { flushing = false; return; }
+      var left = pk.length + ck.length;
+      function done() { if (--left <= 0) flushing = false; }
+      pk.forEach(function (bx) {
         db('PUT', 'players/' + auth.uid + '/boxes/' + bx, pend[bx], function (st) {
           if (st === 200) {
-            var p = pending(); delete p[bx]; lsSet('htb_pending', JSON.stringify(p));
+            var p = lsJSON('htb_pending', {}); delete p[bx]; lsPut('htb_pending', p);
             db('PATCH', 'players/' + auth.uid, { name: S.name, lastSeen: Date.now() });
           }
+          done();
+        });
+      });
+      ck.forEach(function (code) {
+        var c = claims[code]; c.uid = auth.uid;
+        db('PUT', 'helpCodes/' + code, c, function (st) {
+          if (st === 0) return done();
+          if (st !== 200) {
+            // someone else used this code first (both offline) → flag it for the GM
+            db('PUT', 'players/' + auth.uid + '/conflicts/' + code, { boxId: c.boxId, ts: c.ts, type: c.type });
+          }
+          var cl = lsJSON('htb_claims', {}); delete cl[code]; lsPut('htb_claims', cl);
+          done();
         });
       });
     });
@@ -199,11 +260,13 @@ var HTB = (function () {
     var wc = $('wincode'), ws = $('winscreen'), scb = $('show-code-btn');
     if (ws) ws.style.display = 'flex';
     if (scb) { scb.style.display = 'block'; scb.onclick = showCode; }
-    if (S.code) { wc.textContent = S.code; return; }
+    var r = boxCode();
+    if (r.code) { wc.textContent = r.code; return; }
     wc.textContent = '····';
-    prefetchCode(function (code) {
-      wc.textContent = code || '✕';
-      if (!code) popup('NO SIGNAL', 'אין חיבור — לחץ "הצג קוד" שוב', 'תיבה ' + S.box, '#c43000', 3000);
+    sync(function () {                      // maybe there's signal now
+      var r2 = boxCode();
+      wc.textContent = r2.code || '✕';
+      if (!r2.code) popup(r2.err, r2.msg, 'תיבה ' + S.box, '#c43000', 4000);
     });
   }
 
@@ -271,31 +334,53 @@ var HTB = (function () {
     $('help-cancel').addEventListener('click', close);
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) submitBtn.click(); });
 
+    function success(eff, type) {
+      S.helped.push(type);
+      vibe([80, 40, 80, 40, 120]);
+      if (btn) { btn.textContent = '✓ ' + eff.label; btn.style.color = '#5a8a4a'; btn.style.borderColor = '#5a8a4a'; }
+      setTimeout(function () { close(); eff.apply(); }, 900);
+    }
+    function markUsed(code) { var u = lsJSON('htb_used', {}); u[code] = 1; lsPut('htb_used', u); }
+
     submitBtn.addEventListener('click', function () {
       if (busy) return;
       var code = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (code.length < 4) { setMsg('קוד קצר מדי', 'bad'); return; }
       if (!S.name) { setMsg('הזדהה קודם', 'bad'); return; }
-      busy = true; setMsg('מאמת...');
-      db('GET', 'helpCodeDefs/' + code, null, function (st, def) {
-        if (st === 0) { busy = false; setMsg('אין חיבור — הקוד לא נוצל, נסה שוב', 'bad'); return; }
-        var eff = def && effects[def.type];
+      if (lsJSON('htb_used', {})[code]) { setMsg('קוד זה כבר שומש', 'bad'); vibe([150]); return; }
+      var hashes = lsJSON('htb_hashes', null);
+      if (!hashes) {
+        busy = true; setMsg('מסנכרן...');
+        sync(function (ok) { busy = false; if (ok) submitBtn.click(); else setMsg('אין נתוני קודים בטלפון — צריך קליטה פעם אחת', 'bad'); });
+        return;
+      }
+      setMsg('מאמת...');
+      busy = true;
+      setTimeout(function () {                 // let the message paint before the slow hash
+        var type = hashes[HTBCrypto.helpHash(code)], eff = type && effects[type];
+        if (!type && !submitBtn._resynced && navigator.onLine !== false) {
+          // maybe the GM created this code after our last sync
+          submitBtn._resynced = true;
+          sync(function () { busy = false; submitBtn.click(); });
+          return;
+        }
+        submitBtn._resynced = false;
         if (!eff) { busy = false; setMsg('קוד לא מוכר', 'bad'); vibe([150]); return; }
         var can = eff.can ? eff.can() : true;
         if (can !== true) { busy = false; setMsg(can + ' — הקוד לא נוצל', 'bad'); return; }
-        // one-time claim — enforced by DB rules (write only if it doesn't exist yet)
-        db('PUT', 'helpCodes/' + code, {
-          uid: auth.uid, player: S.name, boxId: S.box, type: def.type, effect: eff.label, ts: Date.now()
-        }, function (st2) {
+        var claim = { uid: '', player: S.name, boxId: S.box, type: type, effect: eff.label, ts: Date.now() };
+        // online: the DB rules make the claim one-time across all phones
+        getToken(function () { claim.uid = auth.uid || ''; db('PUT', 'helpCodes/' + code, claim, function (st) {
           busy = false;
-          if (st2 === 0) { setMsg('אין חיבור — הקוד לא נוצל, נסה שוב', 'bad'); return; }
-          if (st2 !== 200) { setMsg('קוד זה כבר שומש', 'bad'); vibe([150]); return; }
-          S.helped.push(def.type);
-          setMsg(eff.label, 'ok'); vibe([80, 40, 80, 40, 120]);
-          if (btn) { btn.textContent = '✓ ' + eff.label; btn.style.color = '#5a8a4a'; btn.style.borderColor = '#5a8a4a'; }
-          setTimeout(function () { close(); eff.apply(); }, 900);
-        });
-      });
+          if (st === 200) { markUsed(code); setMsg(eff.label, 'ok'); success(eff, type); return; }
+          if (st !== 0) { markUsed(code); setMsg('קוד זה כבר שומש', 'bad'); vibe([150]); return; }
+          // offline: accept, remember locally, sync later (double use gets flagged to the GM)
+          markUsed(code);
+          var cl = lsJSON('htb_claims', {}); cl[code] = claim; lsPut('htb_claims', cl);
+          setMsg(eff.label + ' · יסונכרן כשתהיה קליטה', 'ok');
+          success(eff, type);
+        }, 5000); });
+      }, 30);
     });
     return { showFab: function (on) { fab.style.display = on ? 'block' : 'none'; }, close: close };
   }
@@ -312,6 +397,10 @@ var HTB = (function () {
     isPaused: function () { return S.paused; },
     startPlay: startPlay, win: win, fail: fail, showCode: showCode, heartbeat: heartbeat,
     help: help, popup: popup, errorBurst: errorBurst, vibe: vibe, esc: esc,
+    sync: sync, syncInfo: syncInfo, registerSW: registerSW, hasName: function () { return !!S.name; },
+    flush: flushPending,
+    pendingCount: function () { return Object.keys(lsJSON('htb_pending', {})).length + Object.keys(lsJSON('htb_claims', {})).length; },
+    setName: function (n) { S.name = n; lsSet('htb_name', n); },
     startBGM: startBGM, stopBGM: stopBGM
   };
 })();
