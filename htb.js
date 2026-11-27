@@ -260,14 +260,18 @@ var HTB = (function () {
     var wc = $('wincode'), ws = $('winscreen'), scb = $('show-code-btn');
     if (ws) ws.style.display = 'flex';
     if (scb) { scb.style.display = 'block'; scb.onclick = showCode; }
-    var r = boxCode();
-    if (r.code) { wc.textContent = r.code; return; }
     wc.textContent = '····';
-    sync(function () {                      // maybe there's signal now
-      var r2 = boxCode();
-      wc.textContent = r2.code || '✕';
-      if (!r2.code) popup(r2.err, r2.msg, 'תיבה ' + S.box, '#c43000', 4000);
-    });
+    var shown = false;
+    function show() {
+      if (shown) return; shown = true;
+      var r = boxCode();
+      wc.textContent = r.code || '✕';
+      if (!r.code) popup(r.err, r.msg, 'תיבה ' + S.box, '#c43000', 4000);
+    }
+    // if there's signal, grab the latest code (the GM may have changed it); never wait more than 3s
+    if (navigator.onLine === false) return show();
+    setTimeout(show, 3000);
+    sync(show);
   }
 
   // ── Popups ──────────────────────────────────────────────────────

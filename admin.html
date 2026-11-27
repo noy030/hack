@@ -110,6 +110,20 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
 .toast-name{font-family:'Rajdhani',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);}
 .toast-box{font-size:10px;letter-spacing:3px;color:var(--mid);margin-top:4px;}
 
+#chk-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:900;
+  align-items:center;justify-content:center;padding:16px;}
+#chk-overlay.show{display:flex;}
+#chk-box{background:var(--bg2);border:1px solid var(--border);padding:20px 22px;width:min(460px,100%);max-height:90vh;overflow:auto;}
+#chk-box h3{font-size:13px;letter-spacing:4px;color:var(--accent);margin-bottom:14px;font-weight:normal;}
+.chk-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;letter-spacing:1px;line-height:1.7;}
+.chk-row:last-of-type{border-bottom:none;}
+.chk-ic{width:20px;flex-shrink:0;text-align:center;}
+.chk-ok{color:var(--green);} .chk-bad{color:var(--red);} .chk-warn{color:var(--gold);}
+.chk-row small{display:block;color:var(--mid);font-size:10px;}
+.chk-confirm{display:flex;gap:10px;align-items:center;margin:14px 0 4px;font-size:12px;letter-spacing:1px;cursor:pointer;}
+.chk-confirm input{width:18px;height:18px;accent-color:var(--green);}
+.chk-actions{display:flex;gap:8px;justify-content:flex-start;margin-top:14px;flex-wrap:wrap;}
+.action-btn:disabled{opacity:.35;cursor:not-allowed;}
 .reset-panel{background:var(--bg2);border:1px solid var(--border);padding:16px;margin-top:20px;}
 .reset-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
 .reset-input{background:rgba(232,227,218,0.07);border:1px solid var(--border);
@@ -247,6 +261,7 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="action-btn ok" id="save-boxes">💾 שמור את כל הקודים</button>
         <button class="action-btn ok" id="print-qr">🖨 הדפס QR לכל התיבות + QR הכנה</button>
+        <button class="action-btn ok" id="sync-qr">📲 QR סנכרון לשחקנים</button>
       </div>
       <div class="hint" style="margin-top:12px">כל QR מכיל מפתח שפותח רק את הקוד של התיבה שלו — כך הקוד מוצג גם בלי קליטה.<br>
         אפשר לשנות קודים כמה שרוצים בלי להדפיס QR מחדש. ⬇ ליד כל תיבה = קובץ PNG נפרד של ה-QR שלה.</div>
@@ -271,6 +286,21 @@ header{background:rgba(14,13,11,0.9);border-bottom:1px solid var(--border);paddi
   </div>
 </div>
 <div id="print-area"></div>
+
+<div id="chk-overlay">
+  <div id="chk-box">
+    <h3 id="chk-title">בדיקה לפני הדפסה</h3>
+    <div id="chk-list"></div>
+    <label class="chk-confirm"><input type="checkbox" id="chk-c1"/> החלפתי את קודי המנעולים הפיזיים לקודים שמופיעים כאן</label>
+    <label class="chk-confirm"><input type="checkbox" id="chk-c2"/> יצרתי את כל קודי העזרה שאני צריכה לאירוע</label>
+    <div class="hint" style="margin:10px 0 0">אפשר לשנות קודים גם אחרי ההדפסה — ה-QR לא משתנה. אבל שחקנים מקבלים קודים חדשים רק כשיש להם קליטה.</div>
+    <div class="chk-actions">
+      <button class="action-btn ok" id="chk-go" disabled>🖨 הדפס</button>
+      <button class="action-btn ok" id="chk-png" disabled style="display:none">⬇ PNG</button>
+      <button class="action-btn" id="chk-cancel">ביטול</button>
+    </div>
+  </div>
+</div>
 
 <script src="boxes.js"></script>
 <script src="htbcrypto.js"></script>
@@ -629,16 +659,88 @@ function downloadQrPng(id) {
   a.download = 'qr-box-' + ('0' + id).slice(-2) + '-' + BOXES[id].title + '.png';
   a.href = cv.toDataURL('image/png'); document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
+// ── Checklist before printing: are the codes really ready? ──
+var chkAction = null;
+function checklist(title, withPng, action) {
+  var ids = keys(BOXES), rows = [];
+  function row(state, text, sub) { rows.push('<div class="chk-row"><span class="chk-ic chk-' + state + '">' + (state === 'ok' ? '✓' : state === 'bad' ? '✕' : '!') + '</span><div>' + text + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>'); }
+  var inputs = document.querySelectorAll('#box-grid input'), unsaved = [];
+  for (var i = 0; i < inputs.length; i++) {
+    var id = inputs[i].getAttribute('data-box');
+    if (inputs[i].value.replace(/\s+/g, '') !== (boxCodes[id] || '')) unsaved.push(id);
+  }
+  var missing = ids.filter(function (id) { return !boxCodes[id]; });
+  var counts = {}; ids.forEach(function (id) { var c = boxCodes[id]; if (c) counts[c] = (counts[c] || 0) + 1; });
+  var dups = ids.filter(function (id) { return boxCodes[id] && counts[boxCodes[id]] > 1; });
+  var noKey = ids.filter(function (id) { return !boxKeys[id]; });
+  var defs = keys(defsData), free = defs.filter(function (c) { return !claimsData[c]; });
+  var byType = { T:0, L:0, E:0, W:0 }; free.forEach(function (c) { var t = defsData[c].type; if (t in byType) byType[t]++; });
+  var hashesOk = hashesData && keys(hashesData).length === defs.length;
+
+  if (unsaved.length) row('bad', 'יש שינויים שלא נשמרו', 'תיבות: ' + esc(unsaved.join(', ')) + ' — לחצי "שמור את כל הקודים"');
+  else row('ok', 'כל השינויים בקודי התיבות נשמרו');
+  if (missing.length) row('bad', missing.length + ' תיבות בלי קוד', esc(missing.join(', ')));
+  else row('ok', 'לכל 30 התיבות יש קוד');
+  if (dups.length) row('warn', 'קודים כפולים', 'תיבות: ' + esc(dups.join(', ')));
+  if (noKey.length) row('bad', 'חסרים מפתחות QR', 'לחצי "שמור את כל הקודים" כדי ליצור אותם');
+  if (!defs.length) row('bad', 'אין קודי עזרה', 'לשונית 🔑 קודי עזרה → צור קודים');
+  else row(free.length ? 'ok' : 'warn', free.length + ' קודי עזרה פנויים',
+    'זמן ' + byType.T + ' · רמז ' + byType.L + ' · הקלה ' + byType.E + ' · פתירה ' + byType.W);
+  if (defs.length) row(hashesOk ? 'ok' : 'warn', hashesOk ? 'קודי העזרה מוכנים לעבודה בלי קליטה' : 'קודי העזרה עדיין מתעדכנים לשטח', hashesOk ? '' : 'חכי כמה שניות ופתחי שוב');
+
+  var blocking = unsaved.length || missing.length || noKey.length;
+  $('chk-title').textContent = title;
+  $('chk-list').innerHTML = rows.join('');
+  $('chk-c1').checked = false; $('chk-c2').checked = false;
+  $('chk-png').style.display = withPng ? 'inline-block' : 'none';
+  chkAction = action;
+  function update() {
+    var ok = !blocking && $('chk-c1').checked && $('chk-c2').checked;
+    $('chk-go').disabled = !ok; $('chk-png').disabled = !ok;
+  }
+  $('chk-c1').onchange = $('chk-c2').onchange = update; update();
+  $('chk-overlay').classList.add('show');
+}
+function closeChecklist() { $('chk-overlay').classList.remove('show'); }
+$('chk-cancel').addEventListener('click', closeChecklist);
+$('chk-go').addEventListener('click', function () { closeChecklist(); if (chkAction) chkAction('print'); });
+$('chk-png').addEventListener('click', function () { closeChecklist(); if (chkAction) chkAction('png'); });
+
+function downloadSyncPng() {
+  var q = qrcode(0, 'M'); q.addData(SITE + 'prep.html'); q.make();
+  var n = q.getModuleCount(), cell = 14, pad = 4 * cell, size = n * cell + pad * 2;
+  var cv = document.createElement('canvas'); cv.width = size; cv.height = size + 100;
+  var g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#000';
+  for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (q.isDark(r, c)) g.fillRect(pad + c * cell, pad + r * cell, cell, cell);
+  g.font = 'bold 38px monospace'; g.textAlign = 'center'; g.fillText('FIELD SYNC', size / 2, size + 58);
+  var a = document.createElement('a'); a.download = 'qr-sync-field.png'; a.href = cv.toDataURL('image/png');
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+$('sync-qr').addEventListener('click', function () {
+  checklist('📲 QR סנכרון — בדיקה לפני הדפסה', true, function (how) {
+    if (how === 'png') return downloadSyncPng();
+    $('print-area').innerHTML = '<div style="text-align:center;padding-top:40px;font-family:monospace;color:#000">' +
+      '<div style="font-size:16px;letter-spacing:6px">HACK THE BOX · PROJECT REBOOT</div>' +
+      '<div style="width:60%;margin:24px auto">' + qrSvg(SITE + 'prep.html').replace('<svg ', '<svg style="width:100%;height:auto" ') + '</div>' +
+      '<div style="font-size:28px;letter-spacing:8px">FIELD SYNC</div>' +
+      '<div style="font-size:16px;margin-top:14px;direction:rtl">סרקו עם המצלמה, הזינו שם, וחכו ל-✓ READY FOR FIELD</div></div>';
+    $('print-area').style.display = 'block'; window.print(); $('print-area').style.display = 'none';
+  });
+});
+
 $('print-qr').addEventListener('click', function () {
+  checklist('🖨 QR לתיבות — בדיקה לפני הדפסה', false, printAllQr);
+});
+function printAllQr() {
   var ids = keys(BOXES);
-  if (ids.some(function (id) { return !boxKeys[id]; })) { alert('קודם לחץ "שמור את כל הקודים" — זה יוצר את המפתחות'); return; }
   var html = '<div class="print-card"><div class="pc-t">הכנה לשטח · סרקו בכניסה</div>' + qrSvg(SITE + 'prep.html') + '<div class="pc-t">FIELD SYNC</div></div>';
   ids.forEach(function (id) {
     html += '<div class="print-card">' + qrSvg(qrUrl(id)) + '<div class="pc-t">' + esc(BOXES[id].title) + ' · #' + esc(id) + '</div></div>';
   });
   $('print-area').innerHTML = html;
   $('print-area').style.display = 'block'; window.print(); $('print-area').style.display = 'none';
-});
+}
 
 $('reset-claims').addEventListener('click', function () {
   if (!confirm('לשחרר את כל קודי העזרה שנוצלו? הם יעבדו שוב.')) return;
